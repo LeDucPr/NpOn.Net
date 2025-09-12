@@ -1,82 +1,49 @@
-﻿namespace CommonDb.Connections;
+﻿using System.Data.Common;
+using System.Threading.Tasks;
+using IsolationLevel = System.Data.IsolationLevel;
 
-public class DbDriver<T> : IDbDriver, IAsyncDisposable where T : class
+namespace CommonDb.Connections;
+
+public abstract class DbDriver : IDbDriver, IAsyncDisposable
 {
-    private T? _connection;
     private bool _disposed = false;
-
-    public DbDriver(T? connection)
+    public abstract string Name { get; set; }
+    public abstract string Version { get; set; }
+    protected bool IsShutdownImmediate { get; private set; } = false;
+    protected bool IsWaitNextTransaction { get; private set; } = true;
+    public void SetShutdownImmediate(bool isShutdownImmediate = false)
     {
-        _connection = connection;
+        IsShutdownImmediate = isShutdownImmediate;
+    }
+    public void SetWaitNextTransaction(bool isWaitNextTransaction = true)
+    {
+        IsWaitNextTransaction = isWaitNextTransaction;
     }
 
-    // Triển khai từ IDbDriver
-    public Task Connect()
+    public ConnectOptions Options { get; }
+    public abstract Task ConnectAsync(CancellationToken cancellationToken);
+    public abstract Task DisconnectAsync();
+    public abstract Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken);
+    public abstract DbCommand CreateDbCommand();
+
+    protected DbDriver(ConnectOptions options)
     {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(nameof(DbDriver<T>));
-        }
-
-        // Logic kết nối thực tế sẽ ở đây
-        // Ví dụ: await _connection.OpenAsync();
-        Console.WriteLine("Connecting...");
-        return Task.CompletedTask;
+        Options = options;
     }
-
-    public Task<bool> DisConnect()
-    {
-        throw new NotImplementedException();
-    }
-
-    // Đổi tên từ DisConnect và thay đổi kiểu trả về
-    public async Task Disconnect()
-    {
-        if (_disposed)
-        {
-            return; // Đã được dọn dẹp, không làm gì cả
-        }
-
-        // Logic ngắt kết nối thực tế
-        // Ví dụ: await _connection.CloseAsync();
-        Console.WriteLine("Disconnecting...");
-        await Task.Delay(100); // Giả lập công việc bất đồng bộ
-    }
-
-    // --- Triển khai IAsyncDisposable ---
-
-    // Đây là phương thức chính được gọi bởi `await using`
+    
     public async ValueTask DisposeAsync()
     {
-        // Gọi phương thức dọn dẹp và ngăn chặn finalizer (nếu có)
         await DisposeAsyncCore();
         GC.SuppressFinalize(this);
     }
-
-    // Phương thức cốt lõi để thực hiện việc dọn dẹp
+    
     protected virtual async ValueTask DisposeAsyncCore()
     {
-        if (!_disposed)
+        if (_disposed)
         {
-            // Dọn dẹp tài nguyên managed (ví dụ: đối tượng connection)
-            // bằng cách gọi Disconnect()
-            await Disconnect();
-
-            // Đánh dấu là đã dọn dẹp
-            _disposed = true;
+            return;
         }
-    }
-
-    // Nếu lớp của bạn có quản lý tài nguyên không được quản lý (unmanaged resources),
-    // bạn sẽ cần thêm một finalizer (destructor).
-    // Tuy nhiên, trong hầu hết các trường hợp với .NET hiện đại, điều này là không cần thiết.
-    // ~DbDriver()
-    // {
-    //     // Không gọi code async ở đây!
-    //     // Chỉ dọn dẹp tài nguyên unmanaged.
-    // }
-    Task<bool> IDbDriver.Connect()
-    {
-        throw new NotImplementedException();
+        await DisconnectAsync();
+        _disposed = true;
     }
 }
