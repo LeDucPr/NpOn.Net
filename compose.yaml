@@ -1,0 +1,7 @@
+﻿services:
+  npon:
+    image: npon
+    build:
+      context: .
+      dockerfile: Dockerfile
+
