@@ -1,54 +1,64 @@
 ﻿using System.Data;
 using System.Data.Common;
-using Cassandra;
-using CommonDb.Connections; 
+using CommonDb.Connections;
 using IsolationLevel = System.Data.IsolationLevel;
+
+namespace Cassandra.Connections;
 
 public class CassandraDriver : DbDriver
 {
-    private readonly string[] _contactPoints;
-    private readonly string _keyspace;
+    // DRIVER 
+    private Builder? _cassandraBuilder;
     private ICluster? _cluster;
     private ISession? _session;
+    public sealed override string Name { get; set; }
+    public sealed override string Version { get; set; } 
+    public override int ValidSessions { get; set; }
 
-    public override string Name { get; set; }
-    public override string Version { get; set; } //> _cluster?.Metadata.ClusterName ?? "Unknown";
+    private ISession? NewSession =>
+        _cluster?.ConnectAsync(Options.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();
 
-    public CassandraDriver(ConnectOptions options) : base(options)
+    public CassandraDriver(CassandraConnectOptions options, bool isOpenConnectImmediate = false) : base(options)
     {
-        if (string.IsNullOrWhiteSpace(options.KeySpace))
-            throw new ArgumentNullException(nameof(options.KeySpace));
-        _keyspace = options.KeySpace;
-        _contactPoints = options.ContactAddresses ?? [];
+        _cassandraBuilder = Cluster.Builder();
+        _cluster = _cassandraBuilder.Build();
+        Name = _cassandraBuilder.ApplicationName;
+        Version = _cassandraBuilder.ApplicationVersion;
+        if (isOpenConnectImmediate)
+        {
+            _session = NewSession;
+        }
     }
+
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        if (IsWaitNextTransaction)
+        if (Options.IsWaitNextTransaction)
             if (_session is { IsDisposed: false })
                 return; // có session thì chặn kết nối
 
-        Builder cassandraBuilder = Cluster.Builder();
-        if (_contactPoints is { Length : > 0 })
-            cassandraBuilder = cassandraBuilder.AddContactPoints(_contactPoints);
-        _cluster = cassandraBuilder.Build();
-        _session = await _cluster.ConnectAsync(_keyspace).ConfigureAwait(false);
+
+        if (Options.ContactAddresses is { Length : > 0 })
+            _cassandraBuilder = _cassandraBuilder?.AddContactPoints(Options.ContactAddresses);
+
+        _session = NewSession;
     }
 
     public override async Task DisconnectAsync()
     {
-        if (!IsShutdownImmediate)
+        if (!Options.IsShutdownImmediate)
         {
             if (_session != null)
                 await _session.ShutdownAsync().ConfigureAwait(false); // chờ transaction hoàn tất
             if (_cluster != null)
                 await _cluster.ShutdownAsync().ConfigureAwait(false);
         }
+
         _session = null;
         _cluster = null;
         await base.DisposeAsync();
     }
-    
+
     public override Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel,
         CancellationToken cancellationToken)
     {
@@ -64,7 +74,7 @@ public class CassandraDriver : DbDriver
     {
         return new CassandraDbCommand(_session);
     }
-    
+
     protected override async ValueTask DisposeAsyncCore()
     {
         await DisconnectAsync().ConfigureAwait(false);
