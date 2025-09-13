@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Cassandra.Connections;
 
-public class CassandraConnectOptions : ConnectOptions<CassandraDriver>
+public class CassandraDbConnectOptions : DbConnectOptions<CassandraDriver>
 {
     public override bool IsValid()
     {

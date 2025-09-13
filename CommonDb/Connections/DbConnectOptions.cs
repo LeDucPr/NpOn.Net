@@ -7,7 +7,7 @@ public interface IConnectOptions
 {
     bool IsValid();
 
-    IConnectOptions? SetConnectionString(string connectionString);
+    IConnectOptions SetConnectionString(string connectionString);
     string? ConnectionString { get; }
 
     IConnectOptions? SetKeyspace<T>(string keyspace) where T : IDbDriver;
@@ -27,7 +27,7 @@ public interface IConnectOptions
     long ConnectionTimeoutSessions { get; }
 }
 
-public class ConnectOptions<T> : IConnectOptions
+public class DbConnectOptions<T> : IConnectOptions
 {
     // private bool _isUseMultiSessions = false;
     private bool _isShutdownImmediate = false;
@@ -36,7 +36,7 @@ public class ConnectOptions<T> : IConnectOptions
     private DateTime _currentConnectionTime;
     private DateTime _expiredConnectionTime;
     private string? _connectionString;
-    protected readonly ILogger<ConnectOptions<T>> _logger = new Logger<ConnectOptions<T>>(new NullLoggerFactory());
+    protected readonly ILogger<DbConnectOptions<T>> _logger = new Logger<DbConnectOptions<T>>(new NullLoggerFactory());
 
     public virtual bool IsValid()
     {
@@ -54,7 +54,7 @@ public class ConnectOptions<T> : IConnectOptions
 
     #region ConnectionString
 
-    public IConnectOptions? SetConnectionString(string connectionString)
+    public IConnectOptions SetConnectionString(string connectionString)
     {
         _connectionString = connectionString;
         return this;

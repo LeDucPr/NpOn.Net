@@ -12,13 +12,13 @@ public class CassandraDriver : DbDriver
     private ICluster? _cluster;
     private ISession? _session;
     public sealed override string Name { get; set; }
-    public sealed override string Version { get; set; } 
+    public sealed override string Version { get; set; }
     public override int ValidSessions { get; set; }
 
     private ISession? NewSession =>
         _cluster?.ConnectAsync(Options.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();
 
-    public CassandraDriver(CassandraConnectOptions options, bool isOpenConnectImmediate = false) : base(options)
+    public CassandraDriver(CassandraDbConnectOptions options, bool isOpenConnectImmediate = false) : base(options)
     {
         _cassandraBuilder = Cluster.Builder();
         _cluster = _cassandraBuilder.Build();
@@ -29,7 +29,6 @@ public class CassandraDriver : DbDriver
             _session = NewSession;
         }
     }
-
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
