@@ -1,28 +1,37 @@
 ﻿using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;
 
-public class DbConnect<T> : DbConnection where T : IDbDriver
+public class DbConnection<T> : DbConnection where T : IDbDriver
 {
     private T _dbDriver;
-    private readonly ILogger<DbConnect<T>> _logger = new Logger<DbConnect<T>>(new NullLoggerFactory());
+    private readonly ILogger<DbConnection<T>> _logger = new Logger<DbConnection<T>>(new NullLoggerFactory());
     private ConnectionState _state = ConnectionState.Closed;
 
     // Properties từ lớp DbConnection
-    public sealed override string ConnectionString { get; set; }
     public sealed override string Database => _dbDriver.Name;
     public sealed override string DataSource => _dbDriver.Name;
     public sealed override string ServerVersion => _dbDriver.Version;
     public sealed override ConnectionState State => _state;
 
-    public DbConnect(string connectionString)
+    public DbConnection(string connectionString)
     {
-        ConnectionString = connectionString;
-        _dbDriver = (T)Activator.CreateInstance(typeof(T), ConnectionString)!;
+        _dbDriver = (T)Activator.CreateInstance(typeof(T), connectionString)!;
+    }
+
+    public DbConnection(IConnectOptions options)
+    {
+        _dbDriver = (T)Activator.CreateInstance(typeof(T), options)!;
+    }
+    
+    public DbConnection(IDbDriver driver)
+    {
+        _dbDriver = ((T?)driver)!; 
     }
     
     public override async Task OpenAsync(CancellationToken cancellationToken)
@@ -72,6 +81,11 @@ public class DbConnect<T> : DbConnection where T : IDbDriver
         }
     }
 
+    protected override DbCommand CreateDbCommand()
+    {
+        throw new NotImplementedException();
+    }
+
     protected override async ValueTask<DbTransaction> BeginDbTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Beginning a new transaction with isolation level: {IsolationLevel}", isolationLevel);
@@ -109,16 +123,9 @@ public class DbConnect<T> : DbConnection where T : IDbDriver
     }
     
     // override
+    [AllowNull] public override string ConnectionString { get; set; }
     public override void Open() => OpenAsync(CancellationToken.None).GetAwaiter().GetResult();
     public override void Close() => CloseAsync().GetAwaiter().GetResult();
     public override void ChangeDatabase(string databaseName) => ChangeDatabaseAsync(databaseName).GetAwaiter().GetResult();
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => BeginDbTransactionAsync(isolationLevel, CancellationToken.None).GetAwaiter().GetResult();
-
-    protected override DbCommand CreateDbCommand()
-    {
-        _logger.LogDebug("Creating a new DbCommand.");
-        var command = _dbDriver.CreateDbCommand();
-        command.Connection = this; 
-        return command;
-    }
 }

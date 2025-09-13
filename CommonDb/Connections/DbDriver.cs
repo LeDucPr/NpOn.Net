@@ -1,5 +1,4 @@
 ﻿using System.Data.Common;
-using System.Threading.Tasks;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;
@@ -10,11 +9,9 @@ public interface IDbDriver
     string Version { get; }
     public int ValidSessions { get; set; }
     public IConnectOptions Options { get; }
-
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken);
-    DbCommand CreateDbCommand();
 }
 
 public abstract class DbDriver : IDbDriver, IAsyncDisposable
@@ -23,15 +20,12 @@ public abstract class DbDriver : IDbDriver, IAsyncDisposable
     public abstract string Name { get; set; }
     public abstract string Version { get; set; }
     public abstract int ValidSessions { get; set; }
-
     public virtual IConnectOptions Options { get; }
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
     public abstract Task DisconnectAsync();
 
     public abstract Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel,
         CancellationToken cancellationToken);
-
-    public abstract DbCommand CreateDbCommand();
 
     protected DbDriver(IConnectOptions options)
     {

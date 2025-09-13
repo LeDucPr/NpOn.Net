@@ -63,15 +63,7 @@ public class CassandraDriver : DbDriver
     {
         // Ném lỗi rõ ràng để người dùng biết tính năng này không được hỗ trợ.
         throw new NotSupportedException(
-            "Cassandra does not support ACID transactions in the same way as relational databases. Consider using Batches for atomicity or Lightweight Transactions for compare-and-set operations.");
-    }
-
-    /// <summary>
-    /// Tạo một đối tượng command tùy chỉnh để bọc các câu lệnh CQL.
-    /// </summary>
-    public override DbCommand CreateDbCommand()
-    {
-        return new CassandraDbCommand(_session);
+            "CassandraCM does not support ACID transactions in the same way as relational databases. Consider using Batches for atomicity or Lightweight Transactions for compare-and-set operations.");
     }
 
     protected override async ValueTask DisposeAsyncCore()
@@ -81,7 +73,7 @@ public class CassandraDriver : DbDriver
 }
 
 /// <summary>
-/// Lớp tùy chỉnh để ánh xạ khái niệm DbCommand sang Cassandra's IStatement.
+/// Lớp tùy chỉnh để ánh xạ khái niệm DbCommand sang CassandraCM's IStatement.
 /// </summary>
 public class CassandraDbCommand : DbCommand
 {
@@ -107,7 +99,7 @@ public class CassandraDbCommand : DbCommand
 
     public override void Cancel()
     {
-        // Cassandra driver không hỗ trợ cancel một query đang chạy một cách trực tiếp
+        // CassandraCM driver không hỗ trợ cancel một query đang chạy một cách trực tiếp
     }
 
     public override int ExecuteNonQuery()
@@ -119,7 +111,7 @@ public class CassandraDbCommand : DbCommand
     {
         var statement = new SimpleStatement(CommandText);
         RowSet result = await _session.ExecuteAsync(statement).ConfigureAwait(false);
-        // ExecuteNonQuery thường trả về số dòng bị ảnh hưởng, nhưng Cassandra API không cung cấp thông tin này một cách trực tiếp.
+        // ExecuteNonQuery thường trả về số dòng bị ảnh hưởng, nhưng CassandraCM API không cung cấp thông tin này một cách trực tiếp.
         // Trả về 1 nếu thành công, 0 nếu không.
         return result.IsFullyFetched ? 1 : 0;
     }
@@ -151,16 +143,16 @@ public class CassandraDbCommand : DbCommand
     protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
-        // Việc triển khai DbDataReader cho Cassandra khá phức tạp.
+        // Việc triển khai DbDataReader cho CassandraCM khá phức tạp.
         // Để đơn giản, bạn có thể thực thi query và trả về một DataReader đã được đổ dữ liệu.
         // Tuy nhiên, điều này không tận dụng được streaming.
         throw new NotImplementedException(
-            "Implementing a full DbDataReader for Cassandra is complex. Consider using the driver's native RowSet API for querying data.");
+            "Implementing a full DbDataReader for CassandraCM is complex. Consider using the driver's native RowSet API for querying data.");
     }
 
     public override void Prepare()
     {
-        // Có thể ánh xạ tới PreparedStatement của Cassandra, nhưng sẽ phức tạp hơn.
+        // Có thể ánh xạ tới PreparedStatement của CassandraCM, nhưng sẽ phức tạp hơn.
         throw new NotImplementedException();
     }
 }
