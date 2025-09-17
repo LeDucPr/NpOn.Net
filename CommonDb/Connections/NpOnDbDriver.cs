@@ -1,33 +1,36 @@
 ﻿using System.Data.Common;
+using CommonDb.DbCommands;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;
 
-public interface IDbDriver
+public interface INpOnDbDriver
 {
     string Name { get; }
     string Version { get; }
-    public int ValidSessions { get; set; }
-    public IConnectOptions Options { get; }
+    public bool ValidSessions { get; }
+    public INpOnConnectOptions Options { get; }
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
-    Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken);
+    Task<INpOnDbResult> Query(INpOnDbCommand? command);
 }
 
-public abstract class DbDriver : IDbDriver, IAsyncDisposable
+public abstract class NpOnNpOnDbDriver : INpOnDbDriver, IAsyncDisposable
 {
     private bool _disposed = false;
     public abstract string Name { get; set; }
     public abstract string Version { get; set; }
-    public abstract int ValidSessions { get; set; }
-    public virtual IConnectOptions Options { get; }
+    public abstract bool ValidSessions { get; }
+    public virtual INpOnConnectOptions Options { get; }
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
     public abstract Task DisconnectAsync();
 
-    public abstract Task<DbTransaction> BeginTransactionAsync(IsolationLevel isolationLevel,
-        CancellationToken cancellationToken);
+    public virtual Task<INpOnDbResult> Query(INpOnDbCommand? command)
+    {
+        throw new NotImplementedException("Need to override this method");
+    }
 
-    protected DbDriver(IConnectOptions options)
+    protected NpOnNpOnDbDriver(INpOnConnectOptions options)
     {
         if (!options.IsValid())
             return;

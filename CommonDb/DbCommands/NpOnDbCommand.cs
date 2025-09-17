@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CommonDb.DbCommands;
 
-public interface IDbCommand
+public interface INpOnDbCommand
 {
     string CommandText { get; }
     bool IsValidCommandText { get; }
@@ -11,14 +11,14 @@ public interface IDbCommand
     EDbLanguage? DatabaseLanguage { get; }
 }
 
-public class DbCommand : IDbCommand
+public class NpOnDbCommand : INpOnDbCommand
 {
     private readonly EDb _eDb;
     private readonly string? _commandText;
     private readonly EDbLanguage? _dbLanguage;
-    private readonly ILogger<DbCommand> _logger = new Logger<DbCommand>(new NullLoggerFactory());
+    private readonly ILogger<NpOnDbCommand> _logger = new Logger<NpOnDbCommand>(new NullLoggerFactory());
 
-    public DbCommand(EDb eDb, string? commandText)
+    public NpOnDbCommand(EDb eDb, string? commandText)
     {
         _commandText = commandText ?? string.Empty;
         try

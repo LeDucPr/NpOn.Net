@@ -8,18 +8,18 @@ namespace DbFactory;
 
 public interface IDbDriverFactory
 {
-    IDbDriver? CreateDriver(EDb eDb, IConnectOptions options);
+    INpOnDbDriver? CreateDriver(EDb eDb, INpOnConnectOptions options);
 }
 
 public class DbDriverFactory : IDbDriverFactory
 {
     private ILogger<DbDriverFactory> _logger = new Logger<DbDriverFactory>(new NullLoggerFactory());
-    public IDbDriver? CreateDriver(EDb eDb, IConnectOptions options)
+    public INpOnDbDriver? CreateDriver(EDb eDb, INpOnConnectOptions options)
     {
         try
         {
             // logger.LogInformation("Creating a database driver for {DatabaseType}", eDb);
-            IDbDriver? driver = eDb switch
+            INpOnDbDriver? driver = eDb switch
             {
                 EDb.Cassandra => CreateCassandraDriver(options),
                 // EDb.Postgres => CreatePostgresDriver(options),
@@ -40,9 +40,9 @@ public class DbDriverFactory : IDbDriverFactory
         return null;
     }
 
-    private IDbDriver? CreateCassandraDriver(IConnectOptions options)
+    private INpOnDbDriver? CreateCassandraDriver(INpOnConnectOptions options)
     {
-        if (options is not CassandraDbConnectOptions cassandraOptions)
+        if (options is not CassandraNpOnConnectOptions cassandraOptions)
         {
             throw new ArgumentException("Invalid options provided for CassandraCM. Expected CassandraConnectOptions.",
                 nameof(options));

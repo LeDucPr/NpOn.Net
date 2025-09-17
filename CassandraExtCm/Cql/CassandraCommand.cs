@@ -2,7 +2,7 @@
 
 namespace CassandraExtCm.Cql;
 
-public class CassandraCommand : DbCommand
+public class CassandraCommand : NpOnDbCommand
 {
     private CassandraCommand(string? commandText)
         : base(EDb.Cassandra, commandText)

@@ -3,29 +3,37 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CommonDb.DbCommands;
 
-public interface IDbResult<T> where T : class 
+public interface INpOnDbResult
 {
-    void SetSuccess();
-    void SetFail();
-    void SetFail(Exception ex);
-    void SetFail(string errorMessage);
+    INpOnDbResult SetSuccess();
+    INpOnDbResult SetFail();
+    INpOnDbResult SetFail(Exception ex);
+    INpOnDbResult SetFail(string errorMessage);
     bool? IsHasResult { get; }
     EDb DataBaseType { get; }
     EDbLanguage? DatabaseLanguage { get; }
+}
+
+public interface INpOnDbResult<T> : INpOnDbResult where T : class
+{
+    Type ResultType { get; }
     void SetResult(T output);
     T? Result { get; }
 }
 
-public class DbResult<T> : IDbResult<T> where T : class 
+public abstract class NpOnDbResult<T> : INpOnDbResult<T> where T : class 
 {
     private bool? _isHasResult;
     private Exception? _exception;
     private readonly EDb _eDb; 
     private readonly EDbLanguage _dbLanguage; 
-    private readonly ILogger<DbResult<T>> _logger = new Logger<DbResult<T>>(new NullLoggerFactory());
+    private readonly ILogger<NpOnDbResult<T>> _logger = new Logger<NpOnDbResult<T>>(new NullLoggerFactory());
     private T? _result = null;
+    private INpOnDbResult<T> _npOnDbResultImplementation;
 
-    public DbResult(EDb eDb)
+    public Type ResultType => typeof(T);
+
+    public NpOnDbResult(EDb eDb)
     {
         try
         {
@@ -39,20 +47,31 @@ public class DbResult<T> : IDbResult<T> where T : class
         }
     }
 
-    public void SetSuccess() => _isHasResult = true;
-    public void SetFail() => _isHasResult = false;
+    public INpOnDbResult SetSuccess()
+    {
+        _isHasResult = true;
+        return this;
+    }
 
-    public void SetFail(Exception ex)
+    public INpOnDbResult SetFail()
+    {
+        _isHasResult = false;
+        return this;
+    }
+
+    public INpOnDbResult SetFail(Exception ex)
     {
         _isHasResult = false;
         _exception = ex;
         _logger.LogError(ex.Message);
+        return this;
     }
 
-    public void SetFail(string errorMessage)
+    public INpOnDbResult SetFail(string errorMessage)
     {
         _isHasResult = false;
         _logger.LogError(errorMessage);
+        return this;
     }
 
     public bool? IsHasResult => _isHasResult;
