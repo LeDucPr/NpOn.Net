@@ -74,7 +74,6 @@ public class CassandraDriver : NpOnNpOnDbDriver
         try
         {
             IEnumerable<RowSet> results = await _mapper.FetchAsync<RowSet>(command.CommandText).ConfigureAwait(false);
-            int count = results.Count();
             return new CassandraResult(results.FirstOrDefault());
         }
         catch (Exception ex)
