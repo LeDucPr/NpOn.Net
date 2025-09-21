@@ -1,10 +1,11 @@
-﻿namespace CommonDb.DbCommands;
+﻿using System.ComponentModel.DataAnnotations;
 
-[Flags]
+namespace CommonDb.DbCommands;
+
 public enum EDbLanguage
 {
-    Unknown = 1 << 0,
-    Sql = 1 << 1,
-    Cql = 1 << 2,
-    Bson = 1 << 3,
+    [Display(Name = "Unknown")] Unknown = 1 << 0,
+    [Display(Name = "Sql")] Sql = 1 << 1,
+    [Display(Name = "Cql")] Cql = 1 << 2,
+    [Display(Name = "Bson")] Bson = 1 << 3,
 }

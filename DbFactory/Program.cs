@@ -21,12 +21,15 @@ class Program
             .SetKeyspace<CassandraDriver>("ScarLight".ToLower());
     
         var factory = new DbDriverFactory();
-        INpOnDbDriver driver = factory.CreateDriver(EDb.Cassandra, cassandraOptions);
     
         // var logger = new NullLogger<DbConnection<CassandraDriver>>(); 
     
-        // await using (var connection = new DbConnection<CassandraDriver>(cassandraOptions!))
-        await using (var connection = new NpOnDbConnection<CassandraDriver>(driver!))
+        //// initializer option 1 
+        // INpOnDbDriver driver = factory.CreateDriver(EDb.Cassandra, cassandraOptions);
+        // await using (var connection = new NpOnDbConnection<CassandraDriver>(driver!))
+        
+        //// initializer option 2
+        await using (var connection = new NpOnDbConnection<CassandraDriver>(cassandraOptions!))
         {
             CancellationToken token = CancellationToken.None;
             await connection.Driver.ConnectAsync(token);

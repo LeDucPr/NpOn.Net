@@ -1,12 +1,14 @@
-﻿namespace CommonDb.DbCommands;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CommonDb.DbCommands;
 
 public enum EDb : byte
 {
-    Unknown = 0,
-    Cassandra = 1,
-    ScyllaDb = 2, 
-    Postgres = 3,
-    MongoDb = 4,
+    [Display(Name = "Unknown")] Unknown = 0,
+    [Display(Name = "Cassandra")] Cassandra = 1,
+    [Display(Name = "ScyllaDb")] ScyllaDb = 2, 
+    [Display(Name = "Postgres")] Postgres = 3,
+    [Display(Name = "MongoDb")] MongoDb = 4,
 }
 
 public static class EDbExtension{

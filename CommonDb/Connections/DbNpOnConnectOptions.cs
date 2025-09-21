@@ -5,7 +5,7 @@ namespace CommonDb.Connections;
 
 public interface INpOnConnectOptions
 {
-    bool IsValid();
+    bool IsValid(); // validate when initialize 
 
     INpOnConnectOptions SetConnectionString(string connectionString);
     string? ConnectionString { get; }

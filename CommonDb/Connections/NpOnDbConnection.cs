@@ -20,11 +20,6 @@ public class NpOnDbConnection<T> : DbConnection where T : INpOnDbDriver
     public sealed override ConnectionState State => _state;
     public T Driver => _dbDriver;
 
-    public NpOnDbConnection(string connectionString)
-    {
-        _dbDriver = (T)Activator.CreateInstance(typeof(T), connectionString)!;
-    }
-
     public NpOnDbConnection(INpOnConnectOptions options)
     {
         _dbDriver = (T)Activator.CreateInstance(typeof(T), options)!;
