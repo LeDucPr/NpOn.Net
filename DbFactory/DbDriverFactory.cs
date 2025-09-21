@@ -8,25 +8,173 @@ namespace DbFactory;
 
 public interface IDbDriverFactory
 {
-    INpOnDbDriver? CreateDriver(EDb eDb, INpOnConnectOptions options);
+    #region properties
+
+    public int GetAliveConnectionNumbers { get; }
+    public List<NpOnDbConnection>? ValidConnections { get; }
+    public NpOnDbConnection? FirstValidConnection { get; }
+
+    #endregion properties
+
+    #region Create Connections
+
+    IDbDriverFactory WithDatabaseType(EDb eDb);
+    IDbDriverFactory WithOption(INpOnConnectOptions option);
+    IDbDriverFactory CreateConnections(int connectionNumber = 1);
+    Task<IDbDriverFactory> Reset(bool isResetParameters = false);
+
+    Task<int> OpenConnections(int connectionNumber = 1, bool isAutoFixConnectionNumber = true);
+
+    #endregion Create Connections
 }
 
 public class DbDriverFactory : IDbDriverFactory
 {
-    private ILogger<DbDriverFactory> _logger = new Logger<DbDriverFactory>(new NullLoggerFactory());
-    public INpOnDbDriver? CreateDriver(EDb eDb, INpOnConnectOptions options)
+    #region private parameters
+
+    private EDb? _eDb;
+    private INpOnConnectOptions? _option;
+    private int? _connectionNumber;
+
+    #endregion private parameters
+
+    #region implement properties
+
+    private readonly ILogger<DbDriverFactory> _logger = new Logger<DbDriverFactory>(new NullLoggerFactory());
+    private List<NpOnDbConnection>? _connections;
+    public int GetAliveConnectionNumbers => _connections?.Count(c => c.Driver.IsValidSession) ?? 0;
+
+    public List<NpOnDbConnection>? ValidConnections =>
+        _connections?.Where(c => c.Driver.IsValidSession).ToList();
+
+    private List<NpOnDbConnection>? InvalidConnections =>
+        _connections?.Where(c => !c.Driver.IsValidSession).ToList();
+
+    public NpOnDbConnection? FirstValidConnection => _connections?.FirstOrDefault(c => c.Driver.IsValidSession);
+
+    #endregion implement properties
+
+    #region Create Connections
+
+    public DbDriverFactory(EDb eDb, INpOnConnectOptions option, int connectionNumber = 1)
+    {
+        _eDb = eDb;
+        _option = option;
+        _connectionNumber = connectionNumber;
+        SelfCreateConnections();
+    }
+
+    public IDbDriverFactory WithDatabaseType(EDb eDb)
+    {
+        _eDb = eDb;
+        SelfCreateConnections();
+        return this;
+    }
+
+    public IDbDriverFactory WithOption(INpOnConnectOptions option)
+    {
+        _option = option;
+        SelfCreateConnections();
+        return this;
+    }
+
+    public IDbDriverFactory CreateConnections(int connectionNumber = 1)
+    {
+        _connectionNumber = connectionNumber;
+        SelfCreateConnections();
+        return this;
+    }
+
+    public async Task<IDbDriverFactory> Reset(bool isResetParameters = false)
+    {
+        if (isResetParameters)
+        {
+            _eDb = null;
+            _option = null;
+            _connectionNumber = null;
+        }
+
+        if (_connections == null) return this;
+        foreach (var connection in _connections) await connection.CloseAsync();
+        return this;
+    }
+
+    public async Task<int> OpenConnections(int connectionNumber = 1, bool isAutoFixConnectionNumber = true)
     {
         try
         {
-            // logger.LogInformation("Creating a database driver for {DatabaseType}", eDb);
-            INpOnDbDriver? driver = eDb switch
+            if (_connections == null)
+                throw new Exception("connection not initialized");
+
+            if (connectionNumber <= _connectionNumber || isAutoFixConnectionNumber)
+                connectionNumber = (int)_connectionNumber!;
+            else
+                throw new Exception("The number of connections attempted to be initiated has exceeded the limit");
+
+            List<NpOnDbConnection>? invalidConnections = InvalidConnections;
+            if (invalidConnections is not { Count : > 0 })
             {
-                EDb.Cassandra => CreateCassandraDriver(options),
-                // EDb.Postgres => CreatePostgresDriver(options),
-                _ => throw new NotSupportedException($"The database type '{eDb}' is not supported by this factory.")
-            };
-            // logger.LogInformation("Successfully created a {DriverType}", driver.GetType().Name);
-            return driver;
+                throw new Exception(
+                    $"no longer available connection. Full connection ({connectionNumber}/{_connectionNumber})");
+            }
+
+            foreach (var invalidConnection in invalidConnections)
+            {
+                await invalidConnection.OpenAsync();
+            }
+
+            return invalidConnections.Count;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception.Message);
+            return 0;
+        }
+    }
+
+
+    private IDbDriverFactory SelfCreateConnections()
+    {
+        try
+        {
+            if (_eDb == null)
+            {
+                throw new InvalidOperationException(
+                    "Database type has not been set. Call WithDatabaseType() before creating connections.");
+            }
+
+            if (_option == null || !_option.IsValid())
+            {
+                throw new InvalidOperationException(
+                    "Connection options have not been set or are invalid. Call WithOptions() with valid options before creating connections.");
+            }
+
+            if (_connectionNumber == null || !_option.IsValid())
+            {
+                throw new InvalidOperationException(
+                    "Connection number have not been set or are invalid. Call CreateConnections() before creating connections.");
+            }
+
+            if (typeof(INpOnConnectOptions) == _option.GetType())
+            {
+                throw new TypeInitializationException(typeof(INpOnConnectOptions).ToString(),
+                    new Exception("Need to configure driver correctly"));
+            }
+
+            _connections = new List<NpOnDbConnection>();
+            for (int i = 0; i++ < _connectionNumber; i++)
+            {
+                // logger.LogInformation("Creating a database driver for {DatabaseType}", eDb);
+                NpOnDbConnection newConnection = _eDb switch
+                {
+                    EDb.Cassandra => CreateCassandraConnection(_option),
+                    // EDb.Postgres => CreatePostgresConnection(options), 
+                    _ => throw new NotSupportedException($"The database type '{_eDb}' is not supported.")
+                };
+                var connection = newConnection;
+                _connections?.Add(connection);
+                // logger.LogInformation("Successfully created a {DriverType}", driver.GetType().Name);
+            }
         }
         catch (ArgumentException exception)
         {
@@ -36,11 +184,31 @@ public class DbDriverFactory : IDbDriverFactory
         {
             _logger.LogError(exception.Message);
         }
+        catch (InvalidOperationException exception)
+        {
+            _logger.LogError(exception.Message);
+        }
 
-        return null;
+        return this;
     }
 
-    private INpOnDbDriver? CreateCassandraDriver(INpOnConnectOptions options)
+    #endregion Create Connections
+
+    #region Cassandra
+
+    private NpOnDbConnection CreateCassandraConnection(INpOnConnectOptions options)
+    {
+        if (options is not CassandraNpOnConnectOptions cassandraOptions)
+        {
+            throw new ArgumentException("Invalid options for Cassandra. Expected CassandraNpOnConnectOptions.",
+                nameof(options));
+        }
+
+        INpOnDbDriver driver = CreateCassandraDriver(cassandraOptions);
+        return new NpOnDbConnection<CassandraDriver>(driver);
+    }
+
+    private INpOnDbDriver CreateCassandraDriver(INpOnConnectOptions options)
     {
         if (options is not CassandraNpOnConnectOptions cassandraOptions)
         {
@@ -51,11 +219,13 @@ public class DbDriverFactory : IDbDriverFactory
         return new CassandraDriver(cassandraOptions);
     }
 
+    #endregion Cassandra
+
     // private IDbDriver CreatePostgresDriver(IConnectOptions options)
     // {
     //     if (options is not PostgresConnectOptions postgresOptions)
     //     {
-    //         throw new ArgumentException("Invalid options provided for PostgreSQL. Expected PostgresConnectOptions.", nameof(options));
+    //         throw new ArgumentException("Invalid options provided for PostgresSQL. Expected PostgresConnectOptions.", nameof(options));
     //     }
     //     
     //     return new PostgresDriver(postgresOptions.ConnectionString);

@@ -9,9 +9,9 @@ class Program
     static async Task Main(string[] args)
     {
         Console.WriteLine("Hello, World!");
-        await RunCassandraExample(); 
+        await RunCassandraExample();
     }
-    
+
     [Obsolete("Obsolete")]
     public static async Task RunCassandraExample()
     {
@@ -19,15 +19,28 @@ class Program
             .SetContactAddresses<INpOnDbDriver>(["127.0.0.1"])?
             .SetConnectionString("127.0.0.1:9042")
             .SetKeyspace<CassandraDriver>("ScarLight".ToLower());
-    
-        var factory = new DbDriverFactory();
-    
+
+        IDbDriverFactory factory = new DbDriverFactory(EDb.Cassandra, cassandraOptions!);
+        // factory = (await factory.Reset(true)).WithDatabaseType(EDb.Cassandra).WithOption(cassandraOptions!).CreateConnections(3);
+        var aliveConnections = factory.GetAliveConnectionNumbers;
+        var listConnections = factory.GetAliveConnectionNumbers;
+        await factory.OpenConnections(); 
+        var firstConnection = factory.FirstValidConnection;
+        if (firstConnection != null)
+        {
+            CancellationToken newToken = CancellationToken.None;
+            await firstConnection?.Driver.ConnectAsync(newToken)!;
+            INpOnDbCommand availableCommand = new NpOnDbCommand(EDb.Cassandra, "select * from SEMAST limit 10");
+            var availableResult = await firstConnection.Driver.Query(availableCommand);
+            var af = availableResult.IsHasResult;
+        }
+
         // var logger = new NullLogger<DbConnection<CassandraDriver>>(); 
-    
+
         //// initializer option 1 
         // INpOnDbDriver driver = factory.CreateDriver(EDb.Cassandra, cassandraOptions);
         // await using (var connection = new NpOnDbConnection<CassandraDriver>(driver!))
-        
+
         //// initializer option 2
         await using (var connection = new NpOnDbConnection<CassandraDriver>(cassandraOptions!))
         {
@@ -38,7 +51,7 @@ class Program
 
             INpOnDbCommand command = new NpOnDbCommand(EDb.Cassandra, "select * from SEMAST limit 10");
 
-            var a =  await connection.Driver.Query(command);
+            var a = await connection.Driver.Query(command);
         }
     }
 }

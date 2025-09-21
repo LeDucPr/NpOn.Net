@@ -8,11 +8,12 @@ public interface INpOnDbDriver
 {
     string Name { get; }
     string Version { get; }
-    public bool ValidSessions { get; }
+    public bool IsValidSession { get; }
     public INpOnConnectOptions Options { get; }
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnDbResult> Query(INpOnDbCommand? command);
+    Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
 }
 
 public abstract class NpOnNpOnDbDriver : INpOnDbDriver, IAsyncDisposable
@@ -20,7 +21,7 @@ public abstract class NpOnNpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     private bool _disposed = false;
     public abstract string Name { get; set; }
     public abstract string Version { get; set; }
-    public abstract bool ValidSessions { get; }
+    public abstract bool IsValidSession { get; }
     public virtual INpOnConnectOptions Options { get; }
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
     public abstract Task DisconnectAsync();
@@ -53,4 +54,7 @@ public abstract class NpOnNpOnDbDriver : INpOnDbDriver, IAsyncDisposable
         await DisconnectAsync();
         _disposed = true;
     }
+
+    public virtual Task<bool> IsAliveAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(IsValidSession && !_disposed);
 }

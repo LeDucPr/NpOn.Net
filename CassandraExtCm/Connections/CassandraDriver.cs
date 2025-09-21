@@ -15,7 +15,7 @@ public class CassandraDriver : NpOnNpOnDbDriver
     public sealed override string Name { get; set; }
     public sealed override string Version { get; set; }
 
-    public override bool ValidSessions => _session is { IsDisposed: false };
+    public override bool IsValidSession => _session is { IsDisposed: false };
 
     private ISession? NewSession =>
         _cluster?.ConnectAsync(Options.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();

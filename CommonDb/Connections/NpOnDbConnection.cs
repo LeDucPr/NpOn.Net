@@ -7,7 +7,43 @@ using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;
 
-public class NpOnDbConnection<T> : DbConnection where T : INpOnDbDriver
+public abstract class NpOnDbConnection : DbConnection
+{
+    public abstract INpOnDbDriver Driver { get; }
+    protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void ChangeDatabase(string databaseName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Close()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Open()
+    {
+        throw new NotImplementedException();
+    }
+
+    [AllowNull] public override string ConnectionString { get; set; }
+    public override string Database { get; }
+    public override ConnectionState State { get; }
+    public override string DataSource { get; }
+    public override string ServerVersion { get; }
+
+    protected override DbCommand CreateDbCommand()
+    {
+        throw new NotImplementedException();
+    }
+    
+} 
+
+public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
 {
     private T _dbDriver;
     private readonly ILogger<NpOnDbConnection<T>> _logger = new Logger<NpOnDbConnection<T>>(new NullLoggerFactory());
@@ -18,7 +54,7 @@ public class NpOnDbConnection<T> : DbConnection where T : INpOnDbDriver
     public sealed override string DataSource => _dbDriver.Name;
     public sealed override string ServerVersion => _dbDriver.Version;
     public sealed override ConnectionState State => _state;
-    public T Driver => _dbDriver;
+    public override INpOnDbDriver Driver => _dbDriver;
 
     public NpOnDbConnection(INpOnConnectOptions options)
     {
@@ -119,6 +155,7 @@ public class NpOnDbConnection<T> : DbConnection where T : INpOnDbDriver
     {
         throw new NotImplementedException();
     }
+
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
     {
         throw new NotImplementedException();
