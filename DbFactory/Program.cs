@@ -9,7 +9,7 @@ class Program
     static async Task Main(string[] args)
     {
         Console.WriteLine("Hello, World!");
-        await RunCassandraExample();
+        // await RunCassandraExample();
     }
 
     [Obsolete("Obsolete")]

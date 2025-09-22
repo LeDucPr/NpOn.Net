@@ -13,6 +13,9 @@ public interface INpOnConnectOptions
     INpOnConnectOptions? SetKeyspace<T>(string keyspace) where T : INpOnDbDriver;
     string? Keyspace { get; }
 
+    INpOnConnectOptions? SetDatabaseName(string databaseName);
+    string? DatabaseName { get; }
+    
     INpOnConnectOptions? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver;
     string[]? ContactAddresses { get; }
 
@@ -122,6 +125,36 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     public string[]? ContactAddresses => _contactAddresses;
 
     #endregion ContactAddresses
+    
+    #region Database name
+    
+    
+
+    private string? _databaseName = string.Empty; // postgres
+
+    [Obsolete("Obsolete")]
+    public virtual INpOnConnectOptions? SetDatabaseName(string databaseName) 
+    {
+        try
+        {
+            if (IsValid())
+            {
+                _logger.LogError($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+                throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+            }
+
+            _databaseName = databaseName;
+        }
+        catch (ExecutionEngineException)
+        {
+            _databaseName = null;
+        }
+
+        return this;
+    }
+
+    public string? DatabaseName => _databaseName;
+    #endregion Database name
 
     // generic 
 

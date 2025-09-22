@@ -16,7 +16,7 @@ public interface INpOnDbDriver
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
 }
 
-public abstract class NpOnNpOnDbDriver : INpOnDbDriver, IAsyncDisposable
+public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
 {
     private bool _disposed = false;
     public abstract string Name { get; set; }
@@ -31,7 +31,7 @@ public abstract class NpOnNpOnDbDriver : INpOnDbDriver, IAsyncDisposable
         throw new NotImplementedException("Need to override this method");
     }
 
-    protected NpOnNpOnDbDriver(INpOnConnectOptions options)
+    protected NpOnDbDriver(INpOnConnectOptions options)
     {
         if (!options.IsValid())
             return;

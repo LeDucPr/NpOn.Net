@@ -6,7 +6,7 @@ using CommonDb.DbCommands;
 
 namespace CassandraExtCm.Connections;
 
-public class CassandraDriver : NpOnNpOnDbDriver
+public class CassandraDriver : NpOnDbDriver
 {
     // DRIVER 
     private ICluster? _cluster;
@@ -46,8 +46,7 @@ public class CassandraDriver : NpOnNpOnDbDriver
         Name = cassandraBuilder.ApplicationName;
         Version = cassandraBuilder.ApplicationVersion;
     }
-
-
+    
     public override async Task DisconnectAsync()
     {
         if (!Options.IsShutdownImmediate)
@@ -61,6 +60,7 @@ public class CassandraDriver : NpOnNpOnDbDriver
         _session = null;
         _cluster = null;
         _mapper = null;
+        // ReSharper disable once RedundantBaseQualifier
         await base.DisposeAsync();
     }
 
@@ -76,7 +76,7 @@ public class CassandraDriver : NpOnNpOnDbDriver
             IEnumerable<RowSet> results = await _mapper.FetchAsync<RowSet>(command.CommandText).ConfigureAwait(false);
             return new CassandraResult(results.FirstOrDefault());
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return new CassandraResult().SetFail();
         }
