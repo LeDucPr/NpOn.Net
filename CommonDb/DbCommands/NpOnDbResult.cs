@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Reflection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CommonDb.DbCommands;
@@ -18,15 +19,23 @@ public interface INpOnDbResult<T> : INpOnDbResult where T : class
 {
     Type ResultType { get; }
     void SetResult(T output);
+
     T? Result { get; }
 }
 
-public abstract class NpOnDbResult<T> : INpOnDbResult<T> where T : class 
+public interface INpOnDbResult<T, TRow> : INpOnDbResult where T : class
+{
+    // Special
+    [NpOnDbSupport(EDb.Cassandra, EDb.Postgres)]
+    TRow[]? GetRows();
+}
+
+public abstract class NpOnDbResult<T> : INpOnDbResult<T> where T : class
 {
     private bool? _isHasResult;
     private Exception? _exception;
-    private readonly EDb _eDb; 
-    private readonly EDbLanguage _dbLanguage; 
+    private readonly EDb _eDb;
+    private readonly EDbLanguage _dbLanguage;
     private readonly ILogger<NpOnDbResult<T>> _logger = new Logger<NpOnDbResult<T>>(new NullLoggerFactory());
     private T? _result = null;
     private INpOnDbResult<T> _npOnDbResultImplementation;
@@ -78,6 +87,29 @@ public abstract class NpOnDbResult<T> : INpOnDbResult<T> where T : class
     public EDb DataBaseType => _eDb;
     public EDbLanguage? DatabaseLanguage => _dbLanguage;
 
+    protected void ValidateMethodDbSupport([System.Runtime.CompilerServices.CallerMemberName] string methodName = "")
+    {
+        MethodInfo? method = GetType()
+            .GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (method == null)
+        {
+            throw new InvalidOperationException(
+                $"Method '{methodName}' not found for validation in type '{GetType().FullName}'.");
+        }
+
+        var attribute = method.GetCustomAttribute<NpOnDbSupportAttribute>();
+        if (attribute != null)
+        {
+            if (!attribute.IsSupported(DataBaseType))
+            {
+                throw new NotSupportedException(
+                    $"Method '{methodName}' is not supported for database type '{DataBaseType}'. " +
+                    $"Supported types are: {string.Join(", ", attribute.SupportedDatabases?.ToArray() ?? [])}.");
+            }
+        }
+        // pass
+    }
+
     public void SetResult(T? output)
     {
         _result = output;
@@ -86,4 +118,22 @@ public abstract class NpOnDbResult<T> : INpOnDbResult<T> where T : class
     }
 
     public T? Result => _result;
+}
+
+public abstract class NpOnDbResult<T, TRow> : NpOnDbResult<T>, INpOnDbResult<T, TRow> where T : class
+{
+    protected NpOnDbResult(EDb eDb) : base(eDb)
+    {
+    }
+    
+    public virtual TRow[]? GetRows()
+    {
+        ValidateMethodDbSupport();
+        if (GetType() == typeof(INpOnDbResult) || GetType() == typeof(INpOnDbResult<T>) || GetType() == typeof(INpOnDbResult<T, TRow>))
+        {
+            throw new NotSupportedException(
+                $"Method '{nameof(GetRows)}' not found for validation in type '{GetType().FullName}'.");
+        }
+        return null;
+    }
 }

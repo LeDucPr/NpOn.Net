@@ -5,25 +5,33 @@ using System.Threading.Tasks;
 
 namespace PostgresExtCm.Sql;
 
-public class PostgresResult : NpOnDbResult<DataTable> // <-- Thay đổi kiểu generic
+public class PostgresResult : NpOnDbResult<DataTable, DataRow>
 {
-    public List<Dictionary<string, object?>> ExtractedData { get; private set; }
-    private PostgresResult(DataTable? data, int recordsAffected) 
-        : base(EDb.Postgres) 
+    public List<Dictionary<string, object?>>? ExtractedData { get; private set; }
+    public int RecordsAffected { get; }
+
+    public PostgresResult(DataTable? data, int recordsAffected = 0) : base(EDb.Postgres)
     {
         ExtractedData = new List<Dictionary<string, object?>>();
+        RecordsAffected = recordsAffected;
+    }
+
+    public PostgresResult() : base(EDb.Postgres) // null 
+    {
+    }
+
+    public override DataRow[]? GetRows()
+    {
+        base.GetRows();
+        if (Result == null || Result.Rows.Count == 0)
+            return null;
+        return Result.Rows.Cast<DataRow>().ToArray();
     }
 
     public static async Task<PostgresResult> CreateAsync(NpgsqlDataReader reader)
     {
         var dataTable = new DataTable();
-
-        await using (reader)
-        {
-            dataTable.Load(reader);
-        }
-
-        // reader.RecordsAffected vẫn có thể truy cập được sau khi reader đã được load và đóng.
+        await using (reader) dataTable.Load(reader);
         return new PostgresResult(dataTable, reader.RecordsAffected);
     }
 }
