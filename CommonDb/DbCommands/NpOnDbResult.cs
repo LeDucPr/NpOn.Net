@@ -120,20 +120,24 @@ public abstract class NpOnDbResult<T> : INpOnDbResult<T> where T : class
     public T? Result => _result;
 }
 
-public abstract class NpOnDbResult<T, TRow> : NpOnDbResult<T>, INpOnDbResult<T, TRow> where T : class
+public abstract class NpOnDbResult<T, TRow> : NpOnDbResult<T>, INpOnDbResult<T, TRow>
+    where T : class
+    where TRow : INpOnRow
 {
     protected NpOnDbResult(EDb eDb) : base(eDb)
     {
     }
-    
+
     public virtual TRow[]? GetRows()
     {
         ValidateMethodDbSupport();
-        if (GetType() == typeof(INpOnDbResult) || GetType() == typeof(INpOnDbResult<T>) || GetType() == typeof(INpOnDbResult<T, TRow>))
+        if (GetType() == typeof(INpOnDbResult) || GetType() == typeof(INpOnDbResult<T>) ||
+            GetType() == typeof(INpOnDbResult<T, TRow>))
         {
             throw new NotSupportedException(
                 $"Method '{nameof(GetRows)}' not found for validation in type '{GetType().FullName}'.");
         }
+
         return null;
     }
 }

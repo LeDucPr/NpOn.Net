@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace PostgresExtCm.Sql;
 
-public class PostgresResult : NpOnDbResult<DataTable, DataRow>
+public class PostgresResult : NpOnDbResult<DataTable, PostgresRow>
 {
     public List<Dictionary<string, object?>>? ExtractedData { get; private set; }
     public int RecordsAffected { get; }
@@ -20,12 +20,12 @@ public class PostgresResult : NpOnDbResult<DataTable, DataRow>
     {
     }
 
-    public override DataRow[]? GetRows()
+    public override PostgresRow[]? GetRows()
     {
         base.GetRows();
         if (Result == null || Result.Rows.Count == 0)
             return null;
-        return Result.Rows.Cast<DataRow>().ToArray();
+        return Result.Rows.Cast<DataRow>().Select(x => new PostgresRow(x)).ToArray();
     }
 
     public static async Task<PostgresResult> CreateAsync(NpgsqlDataReader reader)
