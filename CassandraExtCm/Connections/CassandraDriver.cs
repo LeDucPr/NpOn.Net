@@ -86,7 +86,7 @@ public class CassandraDriver : NpOnDbDriver
         }
         catch (Exception ex)
         {
-            return new CassandraResultSetWrapper().SetFail(EDbError.CannotGetData);
+            return new CassandraResultSetWrapper().SetFail(EDbError.CommandTextSyntax);
         }
     }
 

@@ -27,6 +27,9 @@ public enum EDbError
     [Display(Name = "CommandText Invalid")]
     CommandText,
     
+    [Display(Name = "CommandText Syntax Invalid")]
+    CommandTextSyntax,
+    
     #endregion Query/Command
 
 
