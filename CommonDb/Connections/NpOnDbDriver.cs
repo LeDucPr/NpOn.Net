@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using CommonDb.DbCommands;
+using CommonDb.DbResults;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;
@@ -12,7 +13,7 @@ public interface INpOnDbDriver
     public INpOnConnectOptions Options { get; }
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
-    Task<INpOnDbResult> Query(INpOnDbCommand? command);
+    Task<INpOnWrapperResult> Query(INpOnDbCommand? command);
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
 }
 
@@ -26,7 +27,7 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
     public abstract Task DisconnectAsync();
 
-    public virtual Task<INpOnDbResult> Query(INpOnDbCommand? command)
+    public virtual Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
     {
         throw new NotImplementedException("Need to override this method");
     }

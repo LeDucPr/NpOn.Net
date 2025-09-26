@@ -32,7 +32,7 @@ class Program
             await firstConnection?.Driver.ConnectAsync(newToken)!;
             INpOnDbCommand availableCommand = new NpOnDbCommand(EDb.Cassandra, "select * from SEMAST limit 10");
             var availableResult = await firstConnection.Driver.Query(availableCommand);
-            var af = availableResult.IsHasResult;
+            var af = availableResult.Status;
         }
 
         // var logger = new NullLogger<DbConnection<CassandraDriver>>(); 

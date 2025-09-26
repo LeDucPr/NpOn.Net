@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
+      <ProjectReference Include="..\PostgresExtCm\PostgresExtCm.csproj" />
     </ItemGroup>
 
     <ItemGroup>

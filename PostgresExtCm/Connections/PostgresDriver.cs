@@ -4,6 +4,8 @@ using CommonDb.Connections;
 using CommonDb.DbCommands;
 using Npgsql; // Quan trọng: Sử dụng thư viện Npgsql
 using System.Data;
+using CommonDb.DbResults;
+using PostgresExtCm.Results;
 using PostgresExtCm.Sql;
 
 namespace PostgresExtCm.Connections;
@@ -48,23 +50,23 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnDbResult> Query(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
     {
         // Kiểm tra trạng thái kết nối hợp lệ.
         if (!IsValidSession || _connection == null)
-            return new PostgresResult().SetFail("Connection is not yet open. Call ConnectAsync first");
+            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (command == null || string.IsNullOrWhiteSpace(command.CommandText))
-            return new PostgresResult().SetFail("Command cannot be empty or have a missing CommandText");
+            return new PostgresResultSetWrapper().SetFail(EDbError.Command);
         try
         {
             await using var pgCommand = _connection.CreateCommand();
             pgCommand.CommandText = command.CommandText;
             await using var reader = await pgCommand.ExecuteReaderAsync();
-            return await PostgresResult.CreateAsync(reader);
+            return new PostgresResultSetWrapper(reader);
         }
         catch (Exception ex)
         {
-            return new PostgresResult().SetFail(ex);
+            return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
 }

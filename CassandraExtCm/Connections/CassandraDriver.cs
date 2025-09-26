@@ -1,8 +1,10 @@
 ﻿using Cassandra;
 using Cassandra.Mapping;
 using CassandraExtCm.Cql;
+using CassandraExtCm.Results;
 using CommonDb.Connections;
 using CommonDb.DbCommands;
+using CommonDb.DbResults;
 
 namespace CassandraExtCm.Connections;
 
@@ -32,8 +34,10 @@ public class CassandraDriver : NpOnDbDriver
             {
                 return; // Đã có session hợp lệ và option yêu cầu chờ.
             }
+
             await DisconnectAsync();
         }
+
         var cassandraBuilder = Cluster.Builder();
         if (Options.ContactAddresses is { Length: > 0 })
         {
@@ -46,7 +50,7 @@ public class CassandraDriver : NpOnDbDriver
         Name = cassandraBuilder.ApplicationName;
         Version = cassandraBuilder.ApplicationVersion;
     }
-    
+
     public override async Task DisconnectAsync()
     {
         if (!Options.IsShutdownImmediate)
@@ -64,21 +68,25 @@ public class CassandraDriver : NpOnDbDriver
         await base.DisposeAsync();
     }
 
-    public override async Task<INpOnDbResult> Query(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
     {
-        if (_mapper == null || command == null || string.IsNullOrWhiteSpace(command.CommandText))
-        {
-            return new CassandraResult();
-        }
-
+        // 1. Guard Clauses: Kiểm tra trạng thái hợp lệ và đầu vào
+        if (!IsValidSession || _session == null)
+            return new CassandraResultSetWrapper().SetFail(EDbError.Session);
+        if (command == null)
+            return new CassandraResultSetWrapper().SetFail(EDbError.Command);
+        if (string.IsNullOrWhiteSpace(command.CommandText))
+            return new CassandraResultSetWrapper().SetFail(EDbError.CommandText);
         try
         {
-            IEnumerable<RowSet> results = await _mapper.FetchAsync<RowSet>(command.CommandText).ConfigureAwait(false);
-            return new CassandraResult(results.FirstOrDefault());
+            var statement = new SimpleStatement(command.CommandText);
+            RowSet rowSet = await _session.ExecuteAsync(statement)
+                .ConfigureAwait(false);
+            return new CassandraResultSetWrapper(rowSet);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return new CassandraResult().SetFail();
+            return new CassandraResultSetWrapper().SetFail(EDbError.CannotGetData);
         }
     }
 

@@ -1,13 +1,54 @@
-﻿namespace CommonDb.DbResults;
+﻿using CommonMode;
+
+namespace CommonDb.DbResults;
 
 public interface INpOnWrapperResult
 {
+    void SetSuccess();
+    INpOnWrapperResult SetFail(EDbError error);
+    INpOnWrapperResult SetFail(string errorString);
+    INpOnWrapperResult SetFail(Exception ex);
+    bool Status { get; }
 }
 
 public interface INpOnWrapperResult<out TParent, out TChild> : INpOnWrapperResult where TParent : class
 {
     TParent Parent { get; }
     TChild Result { get; }
+}
+
+public abstract class NpOnWrapperResult : INpOnWrapperResult
+{
+    private bool _isSuccess = false;
+    private string? _errorString = null;
+    
+    public void SetSuccess()
+    {
+        _isSuccess = true;
+    }
+
+    public INpOnWrapperResult SetFail(EDbError error)
+    {
+        _errorString = error.GetDisplayName();
+        _isSuccess = false;
+        return this;
+    }
+
+    public INpOnWrapperResult SetFail(Exception ex)
+    {
+        _errorString = ex.Message;
+        _isSuccess = false;
+        return this;
+    }
+
+    public INpOnWrapperResult SetFail(string errorString)
+    {
+        _errorString = errorString;
+        _isSuccess = false;
+        return this;
+    }
+
+    public bool Status => _isSuccess;
 }
 
 /// <summary>
@@ -22,6 +63,8 @@ public abstract class NpOnWrapperResult<TParent, TChild>
     private readonly Lazy<TChild> _lazyResult;
     public TChild Result => _lazyResult.Value;
 
+    private bool _isSuccess = false;
+    private string? _errorString = null;
     protected NpOnWrapperResult(TParent parent)
     {
         Parent = parent;
@@ -29,4 +72,31 @@ public abstract class NpOnWrapperResult<TParent, TChild>
     }
 
     protected abstract TChild CreateResult();
+    public void SetSuccess()
+    {
+        _isSuccess = true;
+    }
+
+    public INpOnWrapperResult SetFail(EDbError error)
+    {
+        _errorString = error.GetDisplayName();
+        _isSuccess = false;
+        return this;
+    }
+
+    public INpOnWrapperResult SetFail(Exception ex)
+    {
+        _errorString = ex.Message;
+        _isSuccess = false;
+        return this;
+    }
+
+    public INpOnWrapperResult SetFail(string errorString)
+    {
+        _errorString = errorString;
+        _isSuccess = false;
+        return this;
+    }
+
+    public bool Status => _isSuccess;
 }
