@@ -10,7 +10,7 @@ class Program
     static async Task Main(string[] args)
     {
         Console.WriteLine("Hello, World!");
-        // await RunCassandraExample();
+        await RunCassandraExample();
     }
 
     /// <summary>
@@ -20,7 +20,7 @@ class Program
     public static async Task RunCassandraExample()
     {
         var cassandraOptions = new CassandraNpOnConnectOptions()
-            .SetContactAddresses<INpOnDbDriver>(["127.0.0.1"])?
+            .SetContactAddresses<CassandraDriver>(["127.0.0.1"])?
             .SetConnectionString("127.0.0.1:9042")
             .SetKeyspace<CassandraDriver>("ScarLight".ToLower());
 
