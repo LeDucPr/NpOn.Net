@@ -5,7 +5,8 @@ namespace CommonDb.Connections;
 
 public interface INpOnConnectOptions
 {
-    bool IsValid(); // validate when initialize 
+    bool IsValidWithConnect(); // validate when initialize 
+    bool IsValid([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
 
     INpOnConnectOptions SetConnectionString(string connectionString);
     string? ConnectionString { get; }
@@ -15,7 +16,10 @@ public interface INpOnConnectOptions
 
     INpOnConnectOptions? SetDatabaseName(string databaseName);
     string? DatabaseName { get; }
-    
+
+    INpOnConnectOptions? SetCollectionName<T>(string keyspace) where T : INpOnDbDriver;
+    string? CollectionName { get; }
+
     INpOnConnectOptions? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver;
     string[]? ContactAddresses { get; }
 
@@ -30,7 +34,7 @@ public interface INpOnConnectOptions
     long ConnectionTimeoutSessions { get; }
 }
 
-public class DbNpOnConnectOptions<T> : INpOnConnectOptions
+public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
 {
     // private bool _isUseMultiSessions = false;
     private bool _isShutdownImmediate = false;
@@ -39,9 +43,15 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     private DateTime _currentConnectionTime;
     private DateTime _expiredConnectionTime;
     private string? _connectionString;
-    protected readonly ILogger<DbNpOnConnectOptions<T>> _logger = new Logger<DbNpOnConnectOptions<T>>(new NullLoggerFactory());
 
-    public virtual bool IsValid()
+    protected readonly ILogger<DbNpOnConnectOptions<T>> _logger =
+        new Logger<DbNpOnConnectOptions<T>>(new NullLoggerFactory());
+
+    #region Validate
+
+    public abstract bool IsValidWithConnect();
+
+    public virtual bool IsValid(string? propertyName = null)
     {
         try
         {
@@ -55,6 +65,9 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
         }
     }
 
+    #endregion Validate
+
+
     #region ConnectionString
 
     public INpOnConnectOptions SetConnectionString(string connectionString)
@@ -67,6 +80,7 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #endregion ConnectionString
 
+
     // for databases
 
     #region Keyspace
@@ -78,12 +92,8 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     {
         try
         {
-            if (IsValid())
-            {
-                _logger.LogError($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+            if (!IsValid())
                 throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
-            }
-
             _keyspace = keyspace;
         }
         catch (ExecutionEngineException)
@@ -98,6 +108,33 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #endregion Keyspace
 
+
+    #region Collection
+
+    private string? _collection = string.Empty; // mongoDb
+
+    [Obsolete("Obsolete")]
+    public virtual INpOnConnectOptions SetCollectionName<T>(string collection) where T : INpOnDbDriver
+    {
+        try
+        {
+            if (!IsValid())
+                throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+            _collection = collection;
+        }
+        catch (ExecutionEngineException)
+        {
+            _collection = null;
+        }
+
+        return this;
+    }
+
+    public string? CollectionName => _collection;
+
+    #endregion Keyspace
+
+
     #region ContactAddresses
 
     private string[]? _contactAddresses;
@@ -107,11 +144,8 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     {
         try
         {
-            if (IsValid())
-            {
+            if (!IsValid())
                 throw new ExecutionEngineException($"Keyspace is not valid for {typeof(INpOnDbDriver)}");
-            }
-
             _contactAddresses = contactAddresses;
         }
         catch (ExecutionEngineException)
@@ -125,24 +159,19 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     public string[]? ContactAddresses => _contactAddresses;
 
     #endregion ContactAddresses
-    
+
+
     #region Database name
-    
-    
 
     private string? _databaseName = string.Empty; // postgres
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOptions? SetDatabaseName(string databaseName) 
+    public virtual INpOnConnectOptions? SetDatabaseName(string databaseName)
     {
         try
         {
-            if (IsValid())
-            {
-                _logger.LogError($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
+            if (!IsValid())
                 throw new ExecutionEngineException($"ConnectOptions is not valid for {typeof(INpOnDbDriver)}");
-            }
-
             _databaseName = databaseName;
         }
         catch (ExecutionEngineException)
@@ -154,7 +183,9 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     }
 
     public string? DatabaseName => _databaseName;
+
     #endregion Database name
+
 
     // generic 
 
@@ -170,6 +201,7 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #endregion SetShutdownImmediate
 
+
     #region WaitNextTransaction
 
     public INpOnConnectOptions SetWaitNextTransaction(bool isWaitNextTransaction = true)
@@ -181,6 +213,7 @@ public class DbNpOnConnectOptions<T> : INpOnConnectOptions
     public bool IsWaitNextTransaction => _isWaitNextTransaction;
 
     #endregion WaitNextTransaction
+
 
     #region UseMultiSessions
 

@@ -23,13 +23,13 @@ public enum EDbError
 
     [Display(Name = "Command Execution Error")]
     Command,
-    
+
     [Display(Name = "CommandText Invalid")]
     CommandText,
-    
+
     [Display(Name = "CommandText Syntax Invalid")]
     CommandTextSyntax,
-    
+
     #endregion Query/Command
 
 
@@ -40,7 +40,7 @@ public enum EDbError
 
     [Display(Name = "Internal Application Error")]
     Internal,
-    
+
     [Display(Name = "Get Data Error (Result is null)")]
     CannotGetData,
 
@@ -49,7 +49,9 @@ public enum EDbError
 
     [Display(Name = "Postgres DataTable (Result is null)")]
     PostgresDataTableNull,
-    
+
+    [Display(Name = "MongoDb BsonDocument (Result is null)")] 
+    MongoDbBsonDocumentNull,
 
     #endregion Result
 }

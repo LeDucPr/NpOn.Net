@@ -204,9 +204,14 @@ public class MongoResultSetWrapper : NpOnWrapperResult
     public IReadOnlyDictionary<int, MongoRowWrapper> Rows { get; }
     public MongoColumnCollection Columns { get; }
 
-    public MongoResultSetWrapper(List<BsonDocument>? documents)
+    public MongoResultSetWrapper(List<BsonDocument>? documents = null)
     {
-        _allRows = documents ?? new List<BsonDocument>();
+        if (documents == null)
+        {
+            SetFail(EDbError.MongoDbBsonDocumentNull);
+            return;
+        }
+        _allRows = new List<BsonDocument>();
 
         var schemaMap = new Dictionary<string, MongoColumnInfo>();
         var allKeys = _allRows.SelectMany(doc => doc.Names).Distinct();

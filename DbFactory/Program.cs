@@ -2,6 +2,10 @@
 using CassandraExtCm.Results;
 using CommonDb.Connections;
 using CommonDb.DbCommands;
+using CommonDb.DbResults;
+using MongoDbExtCm.Bsons;
+using MongoDbExtCm.Connections;
+using MongoDbExtCm.Results;
 
 namespace DbFactory;
 
@@ -10,8 +14,103 @@ class Program
     static async Task Main(string[] args)
     {
         Console.WriteLine("Hello, World!");
-        await RunCassandraExample();
+        // await RunCassandraExample();
+        // await RunMongoDbExample();
     }
+
+    [Obsolete("Obsolete")]
+    public static async Task RunMongoDbExample()
+    {
+        var mongoOptions =
+                new MongoDbConnectOptions().SetConnectionString(
+                        "mongodb://root:password@localhost:27017/?authSource=admin")
+                    .SetDatabaseName("config")?
+                    .SetCollectionName<MongoDbDriver>($"config{DateTime.Now:DDMMYYYY}")
+            ;
+        IDbDriverFactory factory = new DbDriverFactory(EDb.MongoDb, mongoOptions!);
+        // Driver & connection
+        var aliveConnections = factory.GetAliveConnectionNumbers;
+        var listConnections = factory.GetAliveConnectionNumbers;
+        await factory.OpenConnections();
+        var firstConnection = factory.FirstValidConnection;
+        INpOnDbDriver driver = firstConnection!.Driver;
+        try
+        {
+            Console.WriteLine("Connecting to MongoDB...");
+            CancellationToken newToken = CancellationToken.None;
+            await driver.ConnectAsync(newToken);
+            Console.WriteLine($"Successfully connected to {driver.Name}");
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Failed to connect to MongoDB: {ex.Message}");
+            Console.ResetColor();
+            return;
+        }
+
+        INpOnDbCommand command = MongoCommand.Create("{ }");
+        Console.WriteLine($"Executing query: {command.CommandText}\n");
+        var result = await driver.Query(command);
+
+        if (result is MongoResultSetWrapper mongoResult)
+        {
+            PrintMongoTable(mongoResult);
+        }
+    }
+
+    private static void PrintMongoTable(MongoResultSetWrapper table, string indent = "")
+    {
+        if (table.Rows.Count == 0)
+        {
+            Console.WriteLine($"{indent}Query executed successfully but returned 0 rows.");
+            return;
+        }
+        // 1. Lấy và in Header
+        var columnNames = table.Columns.Keys.ToList();
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"{indent}{string.Join(" | ", columnNames.Select(h => h.PadRight(20)))}");
+        Console.ResetColor();
+        Console.WriteLine($"{indent}{new string('-', columnNames.Count * 23)}");
+        // 2. Lặp qua các hàng để in dữ liệu
+        foreach (var rowWrapper in table.Rows.Values)
+        {
+            var rowData = new List<string>();
+            foreach (var columnName in columnNames)
+            {
+                var cell = rowWrapper.Result[columnName];
+                string cellDisplayValue;
+                // Nếu ô dữ liệu là một "bảng con", hiển thị một placeholder
+                if (cell is INpOnCell<MongoResultSetWrapper> subTableCell && subTableCell.Value != null &&
+                    subTableCell.Value.Rows.Count > 0)
+                    cellDisplayValue = $"[SUB-TABLE: {subTableCell.Value.Rows.Count} rows]";
+                else
+                    cellDisplayValue = cell.ValueAsObject?.ToString() ?? "NULL";
+                rowData.Add(cellDisplayValue.PadRight(20));
+            }
+            Console.WriteLine($"{indent}{string.Join(" | ", rowData)}");
+        }
+
+        Console.WriteLine();
+        foreach (var rowWrapper in table.Rows.Values)
+        {
+            foreach (var columnName in columnNames)
+            {
+                var cell = rowWrapper.Result[columnName];
+                if (cell is INpOnCell<MongoResultSetWrapper> subTableCell && subTableCell.Value != null &&
+                    subTableCell.Value.Rows.Count > 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"{indent}  -> Details for sub-table in column '{columnName}':");
+                    Console.ResetColor();
+                    // Gọi đệ quy để in bảng con với thụt lề
+                    PrintMongoTable(subTableCell.Value, indent + "    ");
+                    Console.WriteLine();
+                }
+            }
+        }
+    }
+
 
     /// <summary>
     /// Cassandra test
@@ -19,7 +118,7 @@ class Program
     [Obsolete("Obsolete")]
     public static async Task RunCassandraExample()
     {
-        var cassandraOptions = new CassandraNpOnConnectOptions()
+        var cassandraOptions = new CassandraConnectOptions()
             .SetContactAddresses<CassandraDriver>(["127.0.0.1"])?
             .SetConnectionString("127.0.0.1:9042")
             .SetKeyspace<CassandraDriver>("ScarLight".ToLower());

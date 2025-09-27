@@ -22,7 +22,7 @@ public class CassandraDriver : NpOnDbDriver
     private ISession? NewSession =>
         _cluster?.ConnectAsync(Options.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();
 
-    public CassandraDriver(CassandraNpOnConnectOptions options) : base(options)
+    public CassandraDriver(CassandraConnectOptions options) : base(options)
     {
     }
 
@@ -50,7 +50,7 @@ public class CassandraDriver : NpOnDbDriver
         Name = cassandraBuilder.ApplicationName;
         Version = cassandraBuilder.ApplicationVersion;
     }
-
+    
     public override async Task DisconnectAsync()
     {
         if (!Options.IsShutdownImmediate)

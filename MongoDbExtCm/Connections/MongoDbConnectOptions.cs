@@ -1,9 +1,9 @@
 ﻿using CommonDb.Connections;
 using Microsoft.Extensions.Logging;
 
-namespace PostgresExtCm.Connections;
+namespace MongoDbExtCm.Connections;
 
-public class PostgresConnectOptions : DbNpOnConnectOptions<PostgresDriver>
+public class MongoDbConnectOptions : DbNpOnConnectOptions<MongoDbDriver>
 {
     public override bool IsValidWithConnect()
     {
@@ -13,6 +13,12 @@ public class PostgresConnectOptions : DbNpOnConnectOptions<PostgresDriver>
             {
                 _logger.LogError($"ConnectionString is require for {GetType()}");
                 throw new ArgumentNullException($"{GetType()} is require {nameof(ConnectionString)}");
+            }
+
+            if (string.IsNullOrWhiteSpace(DatabaseName))
+            {
+                _logger.LogError($"DatabaseName is require for {GetType()}");
+                throw new ArgumentNullException($"{GetType()} is require {nameof(DatabaseName)}");
             }
         }
         catch (ArgumentNullException)
@@ -31,7 +37,8 @@ public class PostgresConnectOptions : DbNpOnConnectOptions<PostgresDriver>
         {
             nameof(SetConnectionString) => !string.IsNullOrWhiteSpace(ConnectionString),
             nameof(SetDatabaseName) => !string.IsNullOrWhiteSpace(DatabaseName),
-            _ => false
+            nameof(SetCollectionName) => !string.IsNullOrWhiteSpace(CollectionName),
+            _ => true
         };
     }
 }

@@ -3,6 +3,8 @@ using CommonDb.Connections;
 using CommonDb.DbCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using MongoDbExtCm.Connections;
+using PostgresExtCm.Connections;
 
 namespace DbFactory;
 
@@ -16,6 +18,7 @@ public interface IDbDriverFactory
 
     #endregion properties
 
+
     #region Create Connections
 
     IDbDriverFactory WithDatabaseType(EDb eDb);
@@ -23,7 +26,8 @@ public interface IDbDriverFactory
     IDbDriverFactory CreateConnections(int connectionNumber = 1);
     Task<IDbDriverFactory> Reset(bool isResetParameters = false);
 
-    Task<int> OpenConnections(int connectionNumber = 1, bool isAutoFixConnectionNumber = true);
+    Task<int> OpenConnections(int connectionNumber = 1, bool isAutoFixConnectionNumber = true,
+        bool isUseException = false);
 
     #endregion Create Connections
 }
@@ -37,6 +41,7 @@ public class DbDriverFactory : IDbDriverFactory
     private int? _connectionNumber;
 
     #endregion private parameters
+
 
     #region implement properties
 
@@ -54,10 +59,13 @@ public class DbDriverFactory : IDbDriverFactory
 
     #endregion implement properties
 
+
     #region Create Connections
 
     public DbDriverFactory(EDb eDb, INpOnConnectOptions option, int connectionNumber = 1)
     {
+        if (!option.IsValidWithConnect())
+            throw new ArgumentException("Config Option for Database is Invalid.", nameof(option));
         _eDb = eDb;
         _option = option;
         _connectionNumber = connectionNumber;
@@ -99,7 +107,8 @@ public class DbDriverFactory : IDbDriverFactory
         return this;
     }
 
-    public async Task<int> OpenConnections(int connectionNumber = 1, bool isAutoFixConnectionNumber = true)
+    public async Task<int> OpenConnections(int connectionNumber = 1, bool isAutoFixConnectionNumber = true,
+        bool isUseException = false)
     {
         try
         {
@@ -123,11 +132,18 @@ public class DbDriverFactory : IDbDriverFactory
                 await invalidConnection.OpenAsync();
             }
 
-            return invalidConnections.Count;
+            if (ValidConnections is not { Count : > 0 } && isUseException)
+            {
+                throw new Exception("Cannot open any Connections");
+            }
+
+            return ValidConnections?.Count ?? 0;
         }
         catch (Exception exception)
         {
             _logger.LogError(exception.Message);
+            if (isUseException)
+                throw new Exception("Cannot open any Connections");
             return 0;
         }
     }
@@ -165,12 +181,18 @@ public class DbDriverFactory : IDbDriverFactory
             for (int i = 0; i++ < _connectionNumber; i++)
             {
                 // logger.LogInformation("Creating a database driver for {DatabaseType}", eDb);
-                NpOnDbConnection newConnection = _eDb switch
+                NpOnDbConnection? newConnection = _eDb switch
                 {
                     EDb.Cassandra => CreateCassandraConnection(_option),
-                    // EDb.Postgres => CreatePostgresConnection(options), 
+                    EDb.Postgres => CreatePostgresConnection(_option),
+                    EDb.MongoDb => CreateMongoDbConnection(_option),
                     _ => throw new NotSupportedException($"The database type '{_eDb}' is not supported.")
                 };
+                if (newConnection == null)
+                {
+                    throw new NotSupportedException($"The database type '{_eDb}' is not supported.");
+                }
+
                 var connection = newConnection;
                 _connections?.Add(connection);
                 // logger.LogInformation("Successfully created a {DriverType}", driver.GetType().Name);
@@ -194,13 +216,14 @@ public class DbDriverFactory : IDbDriverFactory
 
     #endregion Create Connections
 
+
     #region Cassandra
 
     private NpOnDbConnection CreateCassandraConnection(INpOnConnectOptions options)
     {
-        if (options is not CassandraNpOnConnectOptions cassandraOptions)
+        if (options is not CassandraConnectOptions cassandraOptions)
         {
-            throw new ArgumentException("Invalid options for Cassandra. Expected CassandraNpOnConnectOptions.",
+            throw new ArgumentException("Invalid options for Cassandra. Expected CassandraConnectOptions.",
                 nameof(options));
         }
 
@@ -210,7 +233,7 @@ public class DbDriverFactory : IDbDriverFactory
 
     private INpOnDbDriver CreateCassandraDriver(INpOnConnectOptions options)
     {
-        if (options is not CassandraNpOnConnectOptions cassandraOptions)
+        if (options is not CassandraConnectOptions cassandraOptions)
         {
             throw new ArgumentException("Invalid options provided for CassandraCM. Expected CassandraConnectOptions.",
                 nameof(options));
@@ -221,13 +244,59 @@ public class DbDriverFactory : IDbDriverFactory
 
     #endregion Cassandra
 
-    // private IDbDriver CreatePostgresDriver(IConnectOptions options)
-    // {
-    //     if (options is not PostgresConnectOptions postgresOptions)
-    //     {
-    //         throw new ArgumentException("Invalid options provided for PostgresSQL. Expected PostgresConnectOptions.", nameof(options));
-    //     }
-    //     
-    //     return new PostgresDriver(postgresOptions.ConnectionString);
-    // }
+
+    #region Postgres
+
+    private NpOnDbConnection CreatePostgresConnection(INpOnConnectOptions options)
+    {
+        if (options is not PostgresConnectOptions postgresOptions)
+        {
+            throw new ArgumentException("Invalid options for Postgres. Expected PostgresConnectOptions.",
+                nameof(options));
+        }
+
+        INpOnDbDriver driver = CreatePostgresDriver(postgresOptions);
+        return new NpOnDbConnection<PostgresDriver>(driver);
+    }
+
+    private INpOnDbDriver CreatePostgresDriver(INpOnConnectOptions options)
+    {
+        if (options is not PostgresConnectOptions postgresOptions)
+        {
+            throw new ArgumentException("Invalid options provided for PostgresSQL. Expected PostgresConnectOptions.",
+                nameof(options));
+        }
+
+        return new PostgresDriver(postgresOptions);
+    }
+
+    #endregion Postgres
+
+
+    #region MongoDb
+
+    private NpOnDbConnection CreateMongoDbConnection(INpOnConnectOptions options)
+    {
+        if (options is not MongoDbConnectOptions mongoOptions)
+        {
+            throw new ArgumentException("Invalid options for MongoDB. Expected MongoDbConnectOptions.",
+                nameof(options));
+        }
+
+        INpOnDbDriver driver = CreateMongoDbDriver(mongoOptions);
+        return new NpOnDbConnection<MongoDbDriver>(driver);
+    }
+
+    private INpOnDbDriver CreateMongoDbDriver(INpOnConnectOptions options)
+    {
+        if (options is not MongoDbConnectOptions mongoOptions)
+        {
+            throw new ArgumentException("Invalid options provided for MongoDB. Expected MongoDbConnectOptions.",
+                nameof(options));
+        }
+
+        return new MongoDbDriver(mongoOptions);
+    }
+
+    #endregion MongoDb
 }

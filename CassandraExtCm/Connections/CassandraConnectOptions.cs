@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 
 namespace CassandraExtCm.Connections;
 
-public class CassandraNpOnConnectOptions : DbNpOnConnectOptions<CassandraDriver>
+public class CassandraConnectOptions : DbNpOnConnectOptions<CassandraDriver>
 {
-    public override bool IsValid()
+    public override bool IsValidWithConnect()
     {
         try
         {
@@ -26,5 +26,19 @@ public class CassandraNpOnConnectOptions : DbNpOnConnectOptions<CassandraDriver>
             return false;
         }
         return base.IsValid();
+    }
+
+    public override bool IsValid(string? propertyName = null)
+    {
+        if (propertyName == null)
+            return true;
+        return propertyName switch
+        {
+            nameof(SetConnectionString) => !string.IsNullOrWhiteSpace(ConnectionString),
+            nameof(SetKeyspace) => !string.IsNullOrWhiteSpace(Keyspace),
+            nameof(SetDatabaseName) => !string.IsNullOrWhiteSpace(DatabaseName),
+            nameof(SetCollectionName) => !string.IsNullOrWhiteSpace(CollectionName),
+            _ => true
+        };
     }
 }
