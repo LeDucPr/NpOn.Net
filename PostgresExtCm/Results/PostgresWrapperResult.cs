@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using Npgsql;
 
@@ -37,16 +36,18 @@ public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary
 
         foreach (var schemaInfo in _schemaMap.Values)
         {
-            object cellValue = Parent[schemaInfo.ColumnName];
+            object? cellValue = Parent[schemaInfo.ColumnName];
             Type columnType = schemaInfo.DataType;
-
             Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
+
+            if (cellValue == DBNull.Value)
+                cellValue = null;
 
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 cellValue,
                 columnType.ToDbType(),
-                schemaInfo.ProviderDataTypeName // SỬ DỤNG THÔNG TIN CHÍNH XÁC TỪ SCHEMA
+                schemaInfo.ProviderDataTypeName // THÔNG TIN CHÍNH XÁC SCHEMA
             )!;
 
             dictionary.Add(schemaInfo.ColumnName, cell);
