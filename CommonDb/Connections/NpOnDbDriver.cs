@@ -1,6 +1,7 @@
 ﻿using System.Data.Common;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
+using CommonMode;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;
@@ -34,7 +35,7 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
 
     protected NpOnDbDriver(INpOnConnectOptions options)
     {
-        if (!options.IsValid())
+        if (!options.IsValid() && !options.IsValidRequireFromBase(EConnectLink.SelfValidateConnection.GetDisplayName()))
             return;
         Options = options;
     }

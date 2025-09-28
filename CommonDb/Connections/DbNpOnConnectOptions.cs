@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommonMode;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CommonDb.Connections;
@@ -7,7 +8,8 @@ public interface INpOnConnectOptions
 {
     bool IsValidWithConnect(); // validate when initialize 
     bool IsValid([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
-
+    bool IsValidRequireFromBase([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
+    
     INpOnConnectOptions SetConnectionString(string connectionString);
     string? ConnectionString { get; }
 
@@ -65,6 +67,17 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
         }
     }
 
+
+    public bool IsValidRequireFromBase(string? propertyName)
+    {
+        var validPropertyNames = new HashSet<string>
+        {
+            EConnectLink.SelfValidateConnection.GetDisplayName(),
+        };
+        if (propertyName == null)
+            return false;
+        return validPropertyNames.Contains(propertyName);
+    }
     #endregion Validate
 
 

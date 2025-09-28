@@ -25,12 +25,14 @@ public class PostgresConnectOptions : DbNpOnConnectOptions<PostgresDriver>
 
     public override bool IsValid(string? propertyName = null)
     {
+        if (!base.IsValid())
+            return false;
         if (propertyName == null)
             return true;
         return propertyName switch
         {
             nameof(SetConnectionString) => !string.IsNullOrWhiteSpace(ConnectionString),
-            nameof(SetDatabaseName) => !string.IsNullOrWhiteSpace(DatabaseName),
+            // nameof(SetDatabaseName) => !string.IsNullOrWhiteSpace(DatabaseName),
             _ => false
         };
     }

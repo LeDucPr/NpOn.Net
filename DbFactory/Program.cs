@@ -6,6 +6,8 @@ using CommonDb.DbResults;
 using MongoDbExtCm.Bsons;
 using MongoDbExtCm.Connections;
 using MongoDbExtCm.Results;
+using PostgresExtCm.Connections;
+using PostgresExtCm.Results;
 
 namespace DbFactory;
 
@@ -16,7 +18,127 @@ class Program
         Console.WriteLine("Hello, World!");
         // await RunCassandraExample();
         // await RunMongoDbExample();
+        await RunPostgresExample();
     }
+
+    #region Postgres Test
+
+    [Obsolete("Obsolete")]
+    public static async Task RunPostgresExample()
+    {
+        try
+        {
+            var postgresOptions = new PostgresConnectOptions()
+                .SetConnectionString("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
+            IDbDriverFactory factory = new DbDriverFactory(EDb.Postgres, postgresOptions);
+            var aliveConnections = factory.GetAliveConnectionNumbers;
+            var listConnections = factory.GetAliveConnectionNumbers;
+            await factory.OpenConnections();
+            var firstConnection = factory.FirstValidConnection;
+            if (firstConnection == null)
+            {
+                // Dòng này sẽ không được chạy nếu OpenConnections ném lỗi, nhưng để đây cho an toàn
+                throw new Exception("Không thể thiết lập kết nối hợp lệ tới PostgreSQL.");
+            }
+
+            INpOnDbDriver driver = firstConnection.Driver;
+            Console.WriteLine($"Successfully connected to {driver.Name}");
+
+            // 4. Tạo và thực thi câu lệnh SQL
+            // Một câu lệnh an toàn để test, lấy danh sách các database
+            INpOnDbCommand command = new NpOnDbCommand(EDb.Postgres, "select * from connection_ctrl;");
+            Console.WriteLine($"Executing query: {command.CommandText}\n");
+            var result = await driver.Query(command);
+
+            // 5. Xử lý và hiển thị kết quả bằng hàm generic
+            PrintGenericTable(result);
+        }
+        catch (Exception ex)
+        {
+            // Bắt tất cả các lỗi từ validation, connection, query...
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\n--- AN ERROR OCCURRED ---");
+            Console.WriteLine($"Error Type: {ex.GetType().Name}");
+            Console.WriteLine($"Message: {ex.Message}");
+            Console.ResetColor();
+        }
+    }
+
+    private static void PrintGenericTable(INpOnWrapperResult result, string indent = "")
+    {
+        if (result is not PostgresResultSetWrapper pgResult)
+        {
+            Console.WriteLine($"{indent}Result is not in a printable PostgresSQL format.");
+            return;
+        }
+
+        if (!pgResult.Status)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"{indent}Query failed or did not return a valid result set.");
+            Console.ResetColor();
+            return;
+        }
+
+        if (pgResult.Rows.Count == 0)
+        {
+            Console.WriteLine($"{indent}Query executed successfully but returned 0 rows.");
+            return;
+        }
+
+        // In Header
+        var columnNames = pgResult.Columns.Keys.ToList();
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"{indent}{string.Join(" | ", columnNames.Select(h => h.PadRight(20)))}");
+        Console.ResetColor();
+        Console.WriteLine($"{indent}{new string('-', columnNames.Count * 23)}");
+
+        // 2. SỬA LỖI: Làm cho vòng lặp trở nên mạnh mẽ (robust)
+        foreach (var rowWrapper in pgResult.Rows.Values)
+        {
+            var rowData = new List<string>();
+            try
+            {
+                // Truy cập Result một lần để kích hoạt Lazy<T> và bắt lỗi nếu có
+                var resultDictionary = rowWrapper.Result;
+
+                foreach (var columnName in columnNames)
+                {
+                    // Sử dụng TryGetValue để tránh KeyNotFoundException
+                    string cellDisplayValue;
+                    if (resultDictionary.TryGetValue(columnName, out var cell))
+                    {
+                        cellDisplayValue = cell.ValueAsObject?.ToString() ?? "NULL";
+                    }
+                    else
+                    {
+                        // Xử lý trường hợp key không tồn tại (dù không nên xảy ra với logic hiện tại)
+                        cellDisplayValue = "[MISSING]";
+                    }
+
+                    rowData.Add(cellDisplayValue.PadRight(20));
+                }
+
+                // Chỉ in ra nếu không có lỗi
+                Console.WriteLine($"{indent}{string.Join(" | ", rowData)}");
+            }
+            catch (Exception ex)
+            {
+                // Bắt lỗi từ việc khởi tạo Lazy<T> của rowWrapper.Result
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                // In ra thông báo lỗi ngay tại hàng bị hỏng
+                Console.WriteLine($"{indent}Error processing row: {ex.Message.PadRight(columnNames.Count * 23)}");
+                Console.ResetColor();
+                // Quan trọng: Tiếp tục với hàng tiếp theo thay vì làm crash toàn bộ chương trình
+                continue;
+            }
+        }
+    }
+
+    #endregion Postgres Test
+
+
+    #region MongoDb Test
 
     [Obsolete("Obsolete")]
     public static async Task RunMongoDbExample()
@@ -66,6 +188,7 @@ class Program
             Console.WriteLine($"{indent}Query executed successfully but returned 0 rows.");
             return;
         }
+
         // 1. Lấy và in Header
         var columnNames = table.Columns.Keys.ToList();
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -88,6 +211,7 @@ class Program
                     cellDisplayValue = cell.ValueAsObject?.ToString() ?? "NULL";
                 rowData.Add(cellDisplayValue.PadRight(20));
             }
+
             Console.WriteLine($"{indent}{string.Join(" | ", rowData)}");
         }
 
@@ -111,6 +235,10 @@ class Program
         }
     }
 
+    #endregion MongoDb Test
+
+
+    #region Casandra Test
 
     /// <summary>
     /// Cassandra test
@@ -187,4 +315,6 @@ class Program
             var a = await connection.Driver.Query(command);
         }
     }
+
+    #endregion Casandra Test
 }
