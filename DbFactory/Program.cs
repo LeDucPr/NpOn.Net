@@ -3,6 +3,7 @@ using CassandraExtCm.Results;
 using CommonDb.Connections;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
+using DbFactory.HandlerFlows;
 using Enums;
 using MongoDbExtCm.Bsons;
 using MongoDbExtCm.Connections;
@@ -20,6 +21,10 @@ class Program
         // await RunCassandraExample();
         // await RunMongoDbExample();
         // await RunPostgresExample();
+        var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
+        var rs = a.GetAllCtrls();
+        if (rs != null)
+            PrintGenericTable(rs);
     }
 
     #region Postgres Test

@@ -1,6 +1,7 @@
 ﻿using CommonDb.Connections;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
+using Enums;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDbExtCm.Results;

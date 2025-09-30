@@ -5,6 +5,7 @@ using CassandraExtCm.Results;
 using CommonDb.Connections;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
+using Enums;
 
 namespace CassandraExtCm.Connections;
 

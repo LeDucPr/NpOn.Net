@@ -1,5 +1,6 @@
 ﻿using Cassandra;
 using CommonDb.DbResults;
+using Enums;
 using PostgresExtCm.Results;
 
 namespace CassandraExtCm.Results;

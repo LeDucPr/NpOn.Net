@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using CommonDb.DbResults;
+using Enums;
 using Npgsql;
 
 namespace PostgresExtCm.Results;

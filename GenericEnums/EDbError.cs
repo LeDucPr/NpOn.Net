@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CommonDb.DbResults;
+namespace Enums;
 
 public enum EDbError
 {
@@ -15,6 +15,10 @@ public enum EDbError
     Infrastructure,
 
     [Display(Name = "Session Error")] Session,
+    
+    [Display(Name = "Not Has Any Alive Connection")] AliveConnection,
+    
+    [Display(Name = "Can Not Create Connection")] CreateConnection,
 
     #endregion Connection
 

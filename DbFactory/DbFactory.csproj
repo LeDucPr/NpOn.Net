@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Algorithm\Algorithm.csproj" />
       <ProjectReference Include="..\CassandraExtCm\CassandraExtCm.csproj" />
       <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
       <ProjectReference Include="..\MongoDbExtCm\MongoDbExtCm.csproj" />

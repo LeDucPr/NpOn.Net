@@ -14,7 +14,11 @@ public interface IDbDriverFactory
 {
     #region properties
 
-    public int GetAliveConnectionNumbers { get; }
+    /// <summary>
+    /// Connection khả dụng
+    /// </summary>
+    public int GetAliveConnectionNumbers { get; } 
+    public int GetConnectionNumbers { get; } 
     public List<NpOnDbConnection>? ValidConnections { get; }
     public NpOnDbConnection? FirstValidConnection { get; }
 
@@ -50,7 +54,7 @@ public class DbDriverFactory : IDbDriverFactory
     private readonly ILogger<DbDriverFactory> _logger = new Logger<DbDriverFactory>(new NullLoggerFactory());
     private List<NpOnDbConnection>? _connections;
     public int GetAliveConnectionNumbers => _connections?.Count(c => c.Driver.IsValidSession) ?? 0;
-
+    public int GetConnectionNumbers => _connections?.Count() ?? 0;
     public List<NpOnDbConnection>? ValidConnections =>
         _connections?.Where(c => c.Driver.IsValidSession).ToList();
 

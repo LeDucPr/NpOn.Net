@@ -5,6 +5,7 @@ using CommonDb.DbCommands;
 using Npgsql; // Quan trọng: Sử dụng thư viện Npgsql
 using System.Data;
 using CommonDb.DbResults;
+using Enums;
 using PostgresExtCm.Results;
 using PostgresExtCm.Sql;
 
