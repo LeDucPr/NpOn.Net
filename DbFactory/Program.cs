@@ -18,7 +18,7 @@ class Program
         Console.WriteLine("Hello, World!");
         // await RunCassandraExample();
         // await RunMongoDbExample();
-        await RunPostgresExample();
+        // await RunPostgresExample();
     }
 
     #region Postgres Test
