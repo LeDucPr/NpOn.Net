@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CommonDb.DbCommands;
+namespace Enums;
 
 public enum EDb : byte
 {

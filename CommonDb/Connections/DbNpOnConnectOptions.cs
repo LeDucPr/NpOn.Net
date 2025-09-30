@@ -1,4 +1,5 @@
 ﻿using CommonMode;
+using Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

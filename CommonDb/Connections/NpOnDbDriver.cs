@@ -2,6 +2,7 @@
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using CommonMode;
+using Enums;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace CommonDb.Connections;

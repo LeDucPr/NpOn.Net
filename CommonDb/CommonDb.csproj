@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CommonMode\CommonMode.csproj" />
+      <ProjectReference Include="..\GenericEnums\GenericEnums.csproj" />
     </ItemGroup>
 
 </Project>

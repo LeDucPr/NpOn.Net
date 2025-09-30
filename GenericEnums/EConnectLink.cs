@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CommonDb.Connections;
+namespace Enums;
 
 public enum EConnectLink
 {

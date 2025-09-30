@@ -1,8 +1,12 @@
-﻿namespace Algorithm.AlgObjs.CtrlObjs;
+﻿using Enums;
+
+namespace Algorithm.AlgObjs.CtrlObjs;
 
 public record ConnectionCtrl : BaseCtrl
 {
     public string? DatabaseName { get; set; }
+    public EDb? DatabaseType { get; set; }
+    public EDbLanguage? QueryLanguageUse { get; set; }
     public string? Name { get; set; }
     public string? Host { get; set; }
     public string? Port { get; set; }
