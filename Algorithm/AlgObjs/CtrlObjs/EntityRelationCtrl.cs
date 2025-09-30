@@ -1,4 +1,4 @@
-﻿namespace Algorithm.AlgObjs.Ctrls;
+﻿namespace Algorithm.AlgObjs.CtrlObjs;
 
 public record EntityRelationCtrl : BaseCtrl
 {
