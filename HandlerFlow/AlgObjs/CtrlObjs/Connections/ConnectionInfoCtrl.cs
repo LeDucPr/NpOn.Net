@@ -1,14 +1,16 @@
-﻿using Enums;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Enums;
+using HandlerFlow.AlgObjs.Attributes;
 
-namespace Algorithm.AlgObjs.CtrlObjs;
+namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
-/// <summary>
-/// Được sử dụng cấu hình Database, thay đổi thông tin DB được thiết lập lại tại đây 
-/// </summary>
 public record ConnectionInfoCtrl : BaseCtrl
 {
-    public string? ServerId { get; set; }
+    [ForeignKey(nameof(ServerId))] public string? ServerId { get; set; }
+
+    [RelationshipMetadata<ServerCtrl>($"{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl)}.{nameof(ServerCtrl.Id)}")]
     public ServerCtrl? Server { get; set; }
+
     public string? DatabaseName { get; set; }
     public EDb? DatabaseType { get; set; }
     public string? Name { get; set; }

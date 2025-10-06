@@ -22,10 +22,10 @@ class Program
         // await RunMongoDbExample();
         // await RunPostgresExample();
         var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
-        var rs = a.GetAllCtrls();
+        var rs = await a.GetAllCtrls();
         if (rs != null)
             PrintGenericTable(rs);
-        var rs2 = a.GetAllCtrls();
+        var rs2 = await a.GetAllCtrls();
         if (rs2 != null)
             PrintGenericTable(rs2);
     }

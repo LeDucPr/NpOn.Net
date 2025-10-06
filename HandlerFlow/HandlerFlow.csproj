@@ -5,12 +5,16 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>HandlerFlow</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CassandraExtCm\CassandraExtCm.csproj" />
-      <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
-      <ProjectReference Include="..\MongoDbExtCm\MongoDbExtCm.csproj" />
+        <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
+        <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="AlgObjs\RaisingRouters\" />
     </ItemGroup>
 
 </Project>

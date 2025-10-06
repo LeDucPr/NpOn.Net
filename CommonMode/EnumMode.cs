@@ -1,10 +1,34 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
-namespace CommonMode; 
+namespace CommonMode;
 
 public static class EnumMode
 {
+    #region Flag Operations
+
+    public static bool HasFlag<TEnum>(this TEnum value, TEnum flag) where TEnum : struct, Enum
+    {
+        return value.HasFlag(flag);
+    }
+
+    public static bool HasAllFlags<TEnum>(this TEnum value, params TEnum[]? flags) where TEnum : struct, Enum
+    {
+        if (flags == null || flags.Length == 0) // always exist flag (0)
+            return true;
+        return flags.All(@enum => value.HasFlag(@enum));
+    }
+
+    public static bool HasAnyFlag<TEnum>(this TEnum value, params TEnum[]? flags) where TEnum : struct, Enum
+    {
+        if (flags == null || flags.Length == 0)
+            return false;
+        return flags.Any(@enum => value.HasFlag(@enum));
+    }
+
+    #endregion
+
+
     #region Get Name from Enum
 
     public static string GetDisplayName<TEnum>(this TEnum enumValue) where TEnum : struct, Enum
@@ -27,19 +51,23 @@ public static class EnumMode
 
     #endregion
 
+
     #region Get Enum from Name
 
-    public static TEnum GetEnumValueFromDisplayName<TEnum>(string displayName, bool ignoreCase = false) where TEnum : struct, Enum
+    public static TEnum GetEnumValueFromDisplayName<TEnum>(string displayName, bool ignoreCase = false)
+        where TEnum : struct, Enum
     {
         return GetValueFromDisplayAttribute<TEnum>(displayName, attr => attr.Name, ignoreCase);
     }
 
-    public static TEnum GetEnumValueFromShortName<TEnum>(string shortName, bool ignoreCase = false) where TEnum : struct, Enum
+    public static TEnum GetEnumValueFromShortName<TEnum>(string shortName, bool ignoreCase = false)
+        where TEnum : struct, Enum
     {
         return GetValueFromDisplayAttribute<TEnum>(shortName, attr => attr.ShortName, ignoreCase);
     }
 
     #endregion
+
 
     #region Generic Attribute Getter
 
@@ -53,9 +81,11 @@ public static class EnumMode
 
     #endregion
 
+
     #region Private Helpers
 
-    private static TEnum GetValueFromDisplayAttribute<TEnum>(string valueToFind, Func<DisplayAttribute, string?> propertySelector, bool ignoreCase) where TEnum : struct, Enum
+    private static TEnum GetValueFromDisplayAttribute<TEnum>(string valueToFind,
+        Func<DisplayAttribute, string?> propertySelector, bool ignoreCase) where TEnum : struct, Enum
     {
         var stringComparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
@@ -84,7 +114,9 @@ public static class EnumMode
             }
         }
 
-        throw new ArgumentException($"No enum value of type '{enumType.Name}' found for the display value '{valueToFind}'.", nameof(valueToFind));
+        throw new ArgumentException(
+            $"No enum value of type '{enumType.Name}' found for the display value '{valueToFind}'.",
+            nameof(valueToFind));
     }
 
     #endregion
