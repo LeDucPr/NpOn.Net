@@ -65,7 +65,7 @@ public class DbDriverFactoryCreator
         {
             DbErrors ??= [];
             IDbDriverFactory factory = new DbDriverFactory(EDb.Postgres, _connectOptions!, _connectionNumber);
-            if (factory.GetConnectionNumbers == 0)
+            if (factory.GetConnectionNumbers != 0)
             {
                 if (factory.FirstValidConnection == null)
                     _ = await factory.OpenConnections();

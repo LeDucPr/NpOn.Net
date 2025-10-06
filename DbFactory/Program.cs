@@ -25,6 +25,9 @@ class Program
         var rs = a.GetAllCtrls();
         if (rs != null)
             PrintGenericTable(rs);
+        var rs2 = a.GetAllCtrls();
+        if (rs2 != null)
+            PrintGenericTable(rs2);
     }
 
     #region Postgres Test
@@ -43,20 +46,16 @@ class Program
             var firstConnection = factory.FirstValidConnection;
             if (firstConnection == null)
             {
-                // Dòng này sẽ không được chạy nếu OpenConnections ném lỗi, nhưng để đây cho an toàn
                 throw new Exception("Không thể thiết lập kết nối hợp lệ tới PostgreSQL.");
             }
 
             INpOnDbDriver driver = firstConnection.Driver;
             Console.WriteLine($"Successfully connected to {driver.Name}");
 
-            // 4. Tạo và thực thi câu lệnh SQL
-            // Một câu lệnh an toàn để test, lấy danh sách các database
             INpOnDbCommand command = new NpOnDbCommand(EDb.Postgres, "select * from connection_ctrl;");
             Console.WriteLine($"Executing query: {command.CommandText}\n");
             var result = await driver.Query(command);
 
-            // 5. Xử lý và hiển thị kết quả bằng hàm generic
             PrintGenericTable(result);
         }
         catch (Exception ex)

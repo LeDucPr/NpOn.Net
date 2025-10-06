@@ -10,6 +10,7 @@ namespace CommonDb.Connections;
 public abstract class NpOnDbConnection : DbConnection
 {
     public abstract INpOnDbDriver Driver { get; }
+
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
     {
         throw new NotImplementedException();
@@ -40,8 +41,7 @@ public abstract class NpOnDbConnection : DbConnection
     {
         throw new NotImplementedException();
     }
-    
-} 
+}
 
 public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
 {
@@ -60,12 +60,12 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
     {
         _dbDriver = (T)Activator.CreateInstance(typeof(T), options)!;
     }
-    
+
     public NpOnDbConnection(INpOnDbDriver driver)
     {
-        _dbDriver = ((T?)driver)!; 
+        _dbDriver = ((T?)driver)!;
     }
-    
+
     public override async Task OpenAsync(CancellationToken cancellationToken)
     {
         if (_state != ConnectionState.Closed)
@@ -112,8 +112,9 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
             _state = ConnectionState.Closed;
         }
     }
-    
-    public async Task ChangeDriverAsync(T newDbDriver, string connectionString, CancellationToken? cancellationToken = default)
+
+    public async Task ChangeDriverAsync(T newDbDriver, string connectionString,
+        CancellationToken? cancellationToken = default)
     {
         try
         {
@@ -121,14 +122,18 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
             {
                 throw new ArgumentNullException(nameof(newDbDriver));
             }
+
             var currentDriverType = _dbDriver.GetType();
             var newDriverType = newDbDriver.GetType();
             if (currentDriverType != newDriverType)
             {
-                _logger.LogError("Cannot change driver: Mismatched driver types. Current: {CurrentType}, New: {NewType}",
+                _logger.LogError(
+                    "Cannot change driver: Mismatched driver types. Current: {CurrentType}, New: {NewType}",
                     currentDriverType.FullName, newDriverType.FullName);
-                throw new InvalidOperationException($"Cannot switch from driver type '{currentDriverType.Name}' to '{newDriverType.Name}'.");
+                throw new InvalidOperationException(
+                    $"Cannot switch from driver type '{currentDriverType.Name}' to '{newDriverType.Name}'.");
             }
+
             _logger.LogInformation("Changing database driver. Closing current connection...");
             await CloseAsync();
             // Replace driver
@@ -142,15 +147,17 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
             _state = ConnectionState.Closed;
         }
     }
-    
+
     // override
     [AllowNull] public override string ConnectionString { get; set; }
-    public override void Open() => OpenAsync(CancellationToken.None).GetAwaiter().GetResult();
+    public override void Open() => OpenAsync(new CancellationToken(true)).GetAwaiter().GetResult();
     public override void Close() => CloseAsync().GetAwaiter().GetResult();
-    
-    public override void ChangeDatabase(string databaseName) => ChangeDatabaseAsync(databaseName).GetAwaiter().GetResult();
-    
+
+    public override void ChangeDatabase(string databaseName) =>
+        ChangeDatabaseAsync(databaseName).GetAwaiter().GetResult();
+
     #region unUse
+
     protected override DbCommand CreateDbCommand()
     {
         throw new NotImplementedException();
@@ -160,5 +167,6 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
     {
         throw new NotImplementedException();
     }
+
     #endregion unUse
 }
