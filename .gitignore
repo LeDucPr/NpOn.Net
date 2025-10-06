@@ -1,6 +1,40 @@
-bin/
-obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
-/.idea
+# .gitignore for .NET projects (Visual Studio, Rider, VS Code)
+
+## Build artifacts
+[Bb]in/
+[Oo]bj/
+
+## Dependency directories
+packages/
+*.nupkg
+
+## IDE and user-specific files
+# Rider (.idea)
+.idea/
+*.iml
+modules.xml
+workspace.xml
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+## Other generated files
+*.log
+TestResult/
+*.VisualState.xml
+
+## OS-generated files
+Thumbs.db
+.DS_Store
