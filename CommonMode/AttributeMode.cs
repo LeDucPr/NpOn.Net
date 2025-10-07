@@ -76,4 +76,49 @@ public static class AttributeMode
     }
 
     #endregion
+
+    public static IEnumerable<(PropertyInfo propertyInfo, Type propertyType, object? value)> GetPropertiesWithAttribute<TAttribute>(this object? source, bool inherit = true)
+        where TAttribute : Attribute
+    {
+        if (source == null)
+        {
+            return []; 
+        }
+        return source.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(prop => prop.IsDefined(typeof(TAttribute), inherit))
+            .Select(prop => (
+                propertyInfo: prop,
+                propertyType: prop.PropertyType,
+                value: prop.GetValue(source) 
+            ));
+    }
+    
+    public static IEnumerable<(PropertyInfo propertyInfo, Attribute attribute)> GetPropertiesWithGenericAttribute(this object? source, Type openGenericAttributeType, bool inherit = true)
+    {
+        if (source == null)
+        {
+            yield break; 
+        }
+
+        if (!openGenericAttributeType.IsGenericTypeDefinition)
+        {
+            throw new ArgumentException("The provided type must be an open generic type definition, e.g., typeof(RelationshipAttribute<>).", nameof(openGenericAttributeType));
+        }
+
+        var properties = source.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var prop in properties)
+        {
+            var attributes = prop.GetCustomAttributes(inherit);
+            foreach (var attr in attributes)
+            {
+                var attrType = attr.GetType();
+                if (attrType.IsGenericType && attrType.GetGenericTypeDefinition() == openGenericAttributeType)
+                {
+                    yield return (prop, (Attribute)attr);
+                }
+            }
+        }
+    }
 }
