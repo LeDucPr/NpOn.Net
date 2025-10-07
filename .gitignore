@@ -12,6 +12,7 @@ packages/
 # Rider (.idea)
 .idea/
 *.iml
+**/.name
 modules.xml
 workspace.xml
 
@@ -38,3 +39,6 @@ TestResult/
 ## OS-generated files
 Thumbs.db
 .DS_Store
+
+## ops self 
+NpOn.sln.DotSettings.user
