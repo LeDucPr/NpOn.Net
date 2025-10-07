@@ -6,27 +6,27 @@ using HandlerFlow.AlgObjs.CtrlObjs;
 namespace HandlerFlow.AlgObjs.Attributes;
 
 [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-public sealed class RelationshipMetadataAttribute<T> : Attribute where T : BaseCtrl
+public sealed class RelationshipAttribute<T> : Attribute where T : BaseCtrl
 {
     /// <summary>
     /// Type (T) BaseCtrl
     /// </summary>
-    public Type RelatedCtrlType => typeof(T);
+    public Type RelatedType => typeof(T);
 
     /// <summary>
     /// Thuộc tính khóa ngoại
     /// </summary>
-    public string? ForeignKeyPropertyName { get; }
+    public string? ForeignKeyName { get; }
 
     // public PropertyInfo? ForeignKeyProperty { get; }
 
-    public RelationshipMetadataAttribute(string foreignKeyPropertyName)
+    public RelationshipAttribute(string foreignKeyName)
     {
         // 1. Kiểm tra tên thuộc tính không được rỗng
-        if (string.IsNullOrWhiteSpace(foreignKeyPropertyName))
-            throw new ArgumentNullException(nameof(foreignKeyPropertyName));
+        if (string.IsNullOrWhiteSpace(foreignKeyName))
+            throw new ArgumentNullException(nameof(foreignKeyName));
 
-        ForeignKeyPropertyName = foreignKeyPropertyName;
+        ForeignKeyName = foreignKeyName;
 
         // // info of property 
         // var propertyInfo = typeof(T).GetProperty(

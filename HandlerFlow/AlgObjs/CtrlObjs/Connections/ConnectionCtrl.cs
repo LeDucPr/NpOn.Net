@@ -8,7 +8,7 @@ public record ConnectionCtrl : BaseCtrl
 {
     [ForeignKey(nameof(ConnectionInfoId))] public string? ConnectionInfoId { get; set; }
 
-    [RelationshipMetadata<ConnectionInfoCtrl>(
+    [Relationship<ConnectionInfoCtrl>(
         $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]
     public ConnectionInfoCtrl? ConnectionInfo { get; set; }
 

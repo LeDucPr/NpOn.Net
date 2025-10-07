@@ -13,8 +13,4 @@
         <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="AlgObjs\RaisingRouters\" />
-    </ItemGroup>
-
 </Project>
