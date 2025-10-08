@@ -1,9 +1,7 @@
-﻿using CommonDb.Connections;
-using CommonDb.DbCommands;
+﻿using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using DbFactory.FactoryResults;
 using Enums;
-using PostgresExtCm.Connections;
 
 namespace DbFactory.HandlerFlows;
 
@@ -26,7 +24,7 @@ public class Ctrls
             await _pgFactory.OpenConnections();
         if (_pgFactory.FirstValidConnection == null)
             return null;
-        INpOnDbCommand command = new NpOnDbCommand(_dbType, StaticCommands.ConnectionCtrlGetAll);
+        INpOnDbCommand command = new NpOnDbCommand(_dbType, "select * from connection_ctrl;");
         INpOnWrapperResult result = _pgFactory.FirstValidConnection.Driver.Query(command).GetAwaiter().GetResult();
         return result;
     }

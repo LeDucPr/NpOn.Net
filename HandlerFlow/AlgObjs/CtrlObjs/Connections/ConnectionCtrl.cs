@@ -4,9 +4,11 @@ using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
+[TableLoader("connection_ctrl")]
 public class ConnectionCtrl : BaseCtrl
 {
-    [ForeignKey(nameof(ConnectionInfoId))] public string? ConnectionInfoId { get; set; }
+    [FkId<ConnectionInfoCtrl>(nameof(ConnectionInfoId))]
+    public string? ConnectionInfoId { get; set; }
 
     [Fk<ConnectionInfoCtrl>(
         $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]

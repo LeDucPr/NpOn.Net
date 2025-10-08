@@ -1,7 +1,9 @@
 ﻿using Enums;
+using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
+[TableLoader("server_ctrl")]
 public class ServerCtrl : BaseCtrl
 {
     public string? ServerName { get; set; }

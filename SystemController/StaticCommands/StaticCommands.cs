@@ -1,4 +1,4 @@
-﻿namespace DbFactory.HandlerFlows;
+﻿namespace SystemController;
 
 public static class StaticCommands
 {

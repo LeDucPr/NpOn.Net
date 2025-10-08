@@ -4,5 +4,5 @@ namespace DbFactory;
 
 public interface IDbFactoryWrapper
 {
-    Task<INpOnWrapperResult?> QueryAsync();
+    Task<INpOnWrapperResult?> QueryAsync(string queryString);
 }

@@ -5,11 +5,11 @@ using CommonMode;
 
 namespace HandlerFlow.AlgObjs.RaisingRouters;
 
-public static class RaisingIndexer
+public static partial class RaisingIndexer
 {
     // Caching struct
     private static readonly ConcurrentDictionary<Type, KeyMetadataInfo> MetadataCache = new();
-
+    private static readonly ConcurrentDictionary<Type, bool> EnableObjectCache = new();
 
     #region Cache
 
@@ -28,8 +28,18 @@ public static class RaisingIndexer
             var fkInfos = t.GetPropertiesWithGenericAttribute(typeof(FkAttribute<>))
                 .Select(p => new KeyInfo(p.propertyInfo, p.attribute))
                 .ToList();
-            return new KeyMetadataInfo(pkInfos, fkInfos); // cache
+            // FkIdAttribute
+            var fkIdInfos = t.GetPropertiesWithGenericAttribute(typeof(FkIdAttribute<>))
+                .Select(p => new KeyInfo(p.propertyInfo, p.attribute))
+                .ToList();
+            return new KeyMetadataInfo(pkInfos, fkInfos, fkIdInfos); // cache
         });
+    }
+
+    private static bool GetOrScanTypeEnableObjectCache(Type? type)
+    {
+        if (type == null) return false;
+        return EnableObjectCache.GetOrAdd(type, _ => AttributeMode.HasClassAttribute<TableLoaderAttribute>(type));
     }
 
     #endregion Cache
@@ -37,6 +47,11 @@ public static class RaisingIndexer
 
     #region Public Methods
 
+    /// <summary>
+    /// For stater
+    /// </summary>
+    /// <param name="ctrl"></param>
+    /// <returns></returns>
     public static BaseCtrl? AnalyzeAndDisplayKeys(this BaseCtrl? ctrl)
     {
         if (ctrl == null)
@@ -71,5 +86,71 @@ public static class RaisingIndexer
         return fks;
     }
 
+    public static IEnumerable<KeyInfo>? ForeignKeyIds(this BaseCtrl? ctrl)
+    {
+        if (ctrl == null)
+            return null;
+        var fkIds = GetOrScanTypeMetadata(ctrl.GetType()).ForeignKeyIds;
+        return fkIds;
+    }
+
+    public static bool IsTableLoaderAttached(this BaseCtrl? ctrl)
+        => GetOrScanTypeEnableObjectCache(ctrl?.GetType());
+
     #endregion Public Methods
+}
+
+public static partial class RaisingIndexer
+{
+    public static void JoinList(this BaseCtrl? ctrl)
+    {
+        if (!IsTableLoaderAttached(ctrl))
+            return;
+
+        KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
+        if (fks is not { Length: > 0 })
+            return;
+        KeyInfo[]? fkIds = ctrl.ForeignKeyIds()?.ToArray();
+        if (fkIds is not { Length: > 0 })
+            return;
+
+        // validate foreign keys and foreign key ids
+        Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
+        Type fkAttrType = fkAttrs.First().GetType();
+        if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
+        {
+            return;
+        }
+
+        Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
+        Type fkIdAttrType = fkIdAttrs.First().GetType();
+        if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
+        {
+            return;
+        }
+
+        Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
+            .ToArray();
+        Type?[] fkIsTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType)))
+            .ToArray();
+
+        fkTypes = fkTypes.Where(x => fkIsTypes.Contains(x)).ToArray();
+        fkIsTypes = fkIsTypes.Where(x => fkTypes.Contains(x)).ToArray();
+
+        if (fkIds.Length == 0 || fkIds.Length != fks.Length)
+            return;
+
+        // fks.GetOrScanTypeMetadata()
+        foreach (Type? fkType in fkTypes)
+        {
+            if (fkType == null)
+                continue;
+            if (GetOrScanTypeMetadata(fkType).ForeignKeys.Count == 0)
+            {
+                return;
+            }
+        }
+
+        // KeyInfo? pk = ctrl.PrimaryKeys()?.FirstOrDefault(x => x.Property.Name.ToLower().Contains(nameof(BaseCtrl.Id)));
+    }
 }

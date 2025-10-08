@@ -18,7 +18,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         _factory = factoryCreator.GetDbDriverFactory;
     }
 
-    public async Task<INpOnWrapperResult?> QueryAsync()
+    public async Task<INpOnWrapperResult?> QueryAsync(string queryString)
     {
         if (_factory == null) return null;
         if (_factory.FirstValidConnection == null)
@@ -27,7 +27,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
             return null;
         try
         {
-            INpOnDbCommand command = new NpOnDbCommand(_dbType, StaticCommands.ConnectionCtrlGetAll);
+            INpOnDbCommand command = new NpOnDbCommand(_dbType, queryString);
             INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Query(command).GetAwaiter().GetResult();
             return result;
         }

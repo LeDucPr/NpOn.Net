@@ -55,6 +55,7 @@ public static class AttributeMode
 
     #endregion
 
+
     #region Get Attributes from Type or MemberInfo
 
     /// <summary>
@@ -76,7 +77,10 @@ public static class AttributeMode
     }
 
     #endregion
-    
+
+
+    #region Generic Mode
+
     public static IEnumerable<(PropertyInfo propertyInfo, Attribute attribute, Type propertyType)>
         GetPropertiesWithAttribute<TAttribute>(this object? source, bool inherit = true)
         where TAttribute : Attribute
@@ -133,4 +137,23 @@ public static class AttributeMode
         }
     }
 
+    /// <summary>
+    /// Validate Attribute that attached
+    /// </summary>
+    /// <param name="type"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static bool HasClassAttribute<T>(Type? type) where T : Attribute
+        => type?.GetCustomAttribute<T>(inherit: true) != null;
+
+    public static Type? GetPropertyTypeFromAttribute(this Attribute attr, string propertyName)
+    {
+        Type attrType = attr.GetType();
+        PropertyInfo? relatedTypeProp = attrType.GetProperty(propertyName);
+        if (relatedTypeProp == null)
+            return null;
+        return (Type)relatedTypeProp.GetValue(attr)!;
+    }
+    
+    #endregion Generic Mode
 }

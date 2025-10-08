@@ -5,13 +5,10 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>HandlerFlow</RootNamespace>
-        <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
-        <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
+      <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
     </ItemGroup>
-
+    
 </Project>
