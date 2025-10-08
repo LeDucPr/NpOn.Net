@@ -1,6 +1,6 @@
 ﻿namespace HandlerFlow.AlgObjs.CtrlObjs;
 
-public record DatastoreCtrl : BaseCtrl
+public class DatastoreCtrl : BaseCtrl
 {
     public required string ConnectionId { get; set; }
     public string? Name { get; set; }

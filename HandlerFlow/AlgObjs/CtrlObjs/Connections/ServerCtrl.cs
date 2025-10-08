@@ -2,7 +2,7 @@
 
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
-public record ServerCtrl : BaseCtrl
+public class ServerCtrl : BaseCtrl
 {
     public string? ServerName { get; set; }
     public EServer? ServerType { get; set; } 

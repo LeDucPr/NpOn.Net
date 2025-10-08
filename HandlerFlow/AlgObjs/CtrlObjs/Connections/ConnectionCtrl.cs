@@ -4,11 +4,11 @@ using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
-public record ConnectionCtrl : BaseCtrl
+public class ConnectionCtrl : BaseCtrl
 {
     [ForeignKey(nameof(ConnectionInfoId))] public string? ConnectionInfoId { get; set; }
 
-    [Relationship<ConnectionInfoCtrl>(
+    [Fk<ConnectionInfoCtrl>(
         $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]
     public ConnectionInfoCtrl? ConnectionInfo { get; set; }
 

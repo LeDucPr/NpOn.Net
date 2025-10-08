@@ -1,6 +1,6 @@
 ﻿namespace HandlerFlow.AlgObjs.CtrlObjs;
 
-public record FieldCtrl : BaseCtrl
+public class FieldCtrl : BaseCtrl
 {
     public required string EntityId { get; set; }
     public string? Name { get; set; }

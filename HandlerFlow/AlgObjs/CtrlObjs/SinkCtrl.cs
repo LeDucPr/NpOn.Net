@@ -1,6 +1,6 @@
 ﻿namespace HandlerFlow.AlgObjs.CtrlObjs;
 
-public record SinkCtrl : BaseCtrl
+public class SinkCtrl : BaseCtrl
 {
     public string? Name { get; set; }
     public string? SinkType { get; set; }

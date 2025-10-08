@@ -5,11 +5,11 @@ using HandlerFlow.AlgObjs.Attributes;
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
 [Table("connection_info")]
-public record ConnectionInfoCtrl : BaseCtrl
+public class ConnectionInfoCtrl : BaseCtrl
 {
     [ForeignKey(nameof(ServerId))] public string? ServerId { get; set; }
 
-    [Relationship<ServerCtrl>($"{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl)}.{nameof(ServerCtrl.Id)}")]
+    [Fk<ServerCtrl>($"{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl)}.{nameof(ServerCtrl.Id)}")]
     public ServerCtrl? Server { get; set; }
 
     public string? DatabaseName { get; set; }

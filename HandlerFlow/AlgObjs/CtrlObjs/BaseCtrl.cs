@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.CtrlObjs
 {
-    public record BaseCtrl
+    public class BaseCtrl
     {
-        [Key]
+        [Pk(nameof(BaseCtrl.Id))]
         public required string Id { get; set; }
         public DateTime? CreatedAt { get; set; } 
         public DateTime? UpdatedAt { get; set; } 

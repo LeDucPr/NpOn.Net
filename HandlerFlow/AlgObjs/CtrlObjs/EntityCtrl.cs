@@ -1,6 +1,6 @@
 ﻿namespace HandlerFlow.AlgObjs.CtrlObjs;
 
-public record EntityCtrl : BaseCtrl
+public class EntityCtrl : BaseCtrl
 {
     public required string DatastoreId { get; set; }
     public required string SchemaId { get; set; }

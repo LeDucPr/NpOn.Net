@@ -1,48 +1,75 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Reflection;
+﻿using System.Collections.Concurrent;
+using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
-using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.RaisingRouters;
 
 public static class RaisingIndexer
 {
-    public static void V1(this BaseCtrl ctrl)
-    {
-        var keyProperties = ctrl.GetPropertiesWithAttribute<KeyAttribute>().ToArray();
-        // Case
-        var idProperty = keyProperties.FirstOrDefault(x => x.propertyInfo.Name == nameof(BaseCtrl.Id));
-        if (idProperty.propertyInfo != null)
-        {
-            string id = ctrl.Id;
-        }
+    // Caching struct
+    private static readonly ConcurrentDictionary<Type, KeyMetadataInfo> MetadataCache = new();
 
-        keyProperties = keyProperties.Except([idProperty]).ToArray(); // các khóa khác nếu dùng cluster indexers
-        var relationshipProperties = ctrl.GetPropertiesWithGenericAttribute(typeof(RelationshipAttribute<>)).ToArray();
-        
-        foreach (var keyProperty in keyProperties)
+
+    #region Cache
+
+    private static KeyMetadataInfo GetOrScanTypeMetadata(Type type)
+    {
+        return MetadataCache.GetOrAdd(type, t =>
         {
-            // keyProperty.propertyInfo
-        }
-        //
-        // // 3. Kiểm tra xem có tìm thấy thuộc tính khóa không.
-        // if (keyProperties.Count() != 0)
-        // {
-        //     // Nếu tìm thấy, bạn đã có được PropertyInfo của thuộc tính 'Id'.
-        //     // Tên của thuộc tính khóa là:
-        //     string keyPropertyName = keyProperty.Name;
-        //
-        //     Console.WriteLine($"Tìm thấy thuộc tính khóa [Key] trong lớp '{type.Name}': '{keyPropertyName}'");
-        //     Console.WriteLine($"Kiểu dữ liệu của khóa: {keyProperty.PropertyType.Name}");
-        //
-        //     // Từ đây bạn có thể làm nhiều việc khác với keyProperty, ví dụ:
-        //     // - Lấy giá trị của nó từ một đối tượng cụ thể: keyProperty.GetValue(myObject)
-        // }
-        // else
-        // {
-        //     // Điều này gần như không thể xảy ra vì T đã được ràng buộc kế thừa từ BaseCtrl
-        //     Console.WriteLine($"Không tìm thấy thuộc tính nào được đánh dấu [Key] trong lớp '{type.Name}'.");
-        // }
+            // PkAttribute (generic + non-generic)
+            var pkInfos = t.GetPropertiesWithAttribute<PkAttribute>()
+                .Select(p => new KeyInfo(p.propertyInfo, p.attribute))
+                .ToList();
+            pkInfos.AddRange(t.GetPropertiesWithGenericAttribute(typeof(PkAttribute<>))
+                .Select(p => new KeyInfo(p.propertyInfo, p.attribute))
+                .ToList());
+            // FkAttribute (generic)
+            var fkInfos = t.GetPropertiesWithGenericAttribute(typeof(FkAttribute<>))
+                .Select(p => new KeyInfo(p.propertyInfo, p.attribute))
+                .ToList();
+            return new KeyMetadataInfo(pkInfos, fkInfos); // cache
+        });
     }
+
+    #endregion Cache
+
+
+    #region Public Methods
+
+    public static BaseCtrl? AnalyzeAndDisplayKeys(this BaseCtrl? ctrl)
+    {
+        if (ctrl == null)
+            return null;
+        var metadata = GetOrScanTypeMetadata(ctrl.GetType()); // First call may be slow
+        if (metadata.PrimaryKeys.Count == 0)
+            return null;
+        return ctrl;
+    }
+
+    public static KeyMetadataInfo? KeyMetadata(this BaseCtrl? ctrl)
+    {
+        if (ctrl == null)
+            return null;
+        var metadata = GetOrScanTypeMetadata(ctrl.GetType());
+        return metadata;
+    }
+
+    public static IEnumerable<KeyInfo>? PrimaryKeys(this BaseCtrl? ctrl)
+    {
+        if (ctrl == null)
+            return null;
+        var pks = GetOrScanTypeMetadata(ctrl.GetType()).PrimaryKeys;
+        return pks;
+    }
+
+    public static IEnumerable<KeyInfo>? ForeignKeys(this BaseCtrl? ctrl)
+    {
+        if (ctrl == null)
+            return null;
+        var fks = GetOrScanTypeMetadata(ctrl.GetType()).ForeignKeys;
+        return fks;
+    }
+
+    #endregion Public Methods
 }

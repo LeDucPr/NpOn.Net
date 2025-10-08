@@ -76,39 +76,50 @@ public static class AttributeMode
     }
 
     #endregion
-
-    public static IEnumerable<(PropertyInfo propertyInfo, Type propertyType, object? value)> GetPropertiesWithAttribute<TAttribute>(this object? source, bool inherit = true)
+    
+    public static IEnumerable<(PropertyInfo propertyInfo, Attribute attribute, Type propertyType)>
+        GetPropertiesWithAttribute<TAttribute>(this object? source, bool inherit = true)
         where TAttribute : Attribute
     {
         if (source == null)
-        {
-            return []; 
-        }
-        return source.GetType()
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(prop => prop.IsDefined(typeof(TAttribute), inherit))
-            .Select(prop => (
-                propertyInfo: prop,
-                propertyType: prop.PropertyType,
-                value: prop.GetValue(source) 
+            return [];
+
+        var type = source is Type t ? t : source.GetType();
+
+        return type
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+            .Select(prop => new
+            {
+                PropertyInfo = prop,
+                Attribute = prop.GetCustomAttribute<TAttribute>(inherit)
+            })
+            .Where(item => item.Attribute != null)
+            .Select(item => (
+                propertyInfo: item.PropertyInfo,
+                attribute: (Attribute)item.Attribute!,
+                propertyType: item.PropertyInfo.PropertyType
             ));
     }
-    
-    public static IEnumerable<(PropertyInfo propertyInfo, Attribute attribute)> GetPropertiesWithGenericAttribute(this object? source, Type openGenericAttributeType, bool inherit = true)
+
+
+    public static IEnumerable<(PropertyInfo propertyInfo, Attribute attribute, Type propertyType)>
+        GetPropertiesWithGenericAttribute(this object? source, Type openGenericAttributeType, bool inherit = true)
     {
         if (source == null)
-        {
-            yield break; 
-        }
+            yield break;
 
         if (!openGenericAttributeType.IsGenericTypeDefinition)
         {
-            throw new ArgumentException("The provided type must be an open generic type definition, e.g., typeof(RelationshipAttribute<>).", nameof(openGenericAttributeType));
+            throw new ArgumentException(
+                "The provided type must be an open generic type definition, e.g., typeof(FkAttribute<>).",
+                nameof(openGenericAttributeType));
         }
 
-        var properties = source.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var type = source is Type t ? t : source.GetType();
 
-        foreach (var prop in properties)
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+
+        foreach (var prop in props)
         {
             var attributes = prop.GetCustomAttributes(inherit);
             foreach (var attr in attributes)
@@ -116,9 +127,10 @@ public static class AttributeMode
                 var attrType = attr.GetType();
                 if (attrType.IsGenericType && attrType.GetGenericTypeDefinition() == openGenericAttributeType)
                 {
-                    yield return (prop, (Attribute)attr);
+                    yield return (prop, (Attribute)attr, prop.PropertyType);
                 }
             }
         }
     }
+
 }

@@ -1,6 +1,6 @@
 ﻿namespace HandlerFlow.AlgObjs.CtrlObjs;
 
-public record EntityRelationCtrl : BaseCtrl
+public class EntityRelationCtrl : BaseCtrl
 {
     public required string TargetEntityId { get; set; }
     public required string SourceEntityId { get; set; }
