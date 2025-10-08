@@ -131,11 +131,11 @@ public static partial class RaisingIndexer
 
         Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
             .ToArray();
-        Type?[] fkIsTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType)))
+        Type?[] fkIdsTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType)))
             .ToArray();
 
-        fkTypes = fkTypes.Where(x => fkIsTypes.Contains(x)).ToArray();
-        fkIsTypes = fkIsTypes.Where(x => fkTypes.Contains(x)).ToArray();
+        fkTypes = fkTypes.Where(x => fkIdsTypes.Contains(x)).ToArray();
+        fkIdsTypes = fkIdsTypes.Where(x => fkTypes.Contains(x)).ToArray();
 
         if (fkIds.Length == 0 || fkIds.Length != fks.Length)
             return;
@@ -145,6 +145,9 @@ public static partial class RaisingIndexer
         {
             if (fkType == null)
                 continue;
+            // Todo
+            // truy vấn bảng với khóa từ fkIds với các ngoại
+            // cần thêm mod để ngắt truy vấn liên tục bằng đệ quy
             if (GetOrScanTypeMetadata(fkType).ForeignKeys.Count == 0)
             {
                 return;
