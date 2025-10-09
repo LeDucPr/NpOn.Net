@@ -5,14 +5,9 @@ namespace HandlerFlow.AlgObjs.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Constructor,
     AllowMultiple = true, Inherited = true)]
-public sealed class TableLoaderAttribute : Attribute
+public sealed class TableLoaderAttribute(string tableName) : Attribute
 {
-    public string? TableName { get; }
-
-    public TableLoaderAttribute(string tableName)
-    {
-        TableName = tableName;
-    }
+    public string TableName { get; } = tableName;
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Constructor,

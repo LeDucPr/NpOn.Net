@@ -2,6 +2,7 @@
 using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
+using HandlerFlow.WrapperProcessors;
 
 namespace HandlerFlow.AlgObjs.RaisingRouters;
 
@@ -102,8 +103,13 @@ public static partial class RaisingIndexer
 
 public static partial class RaisingIndexer
 {
-    public static void JoinList(this BaseCtrl? ctrl)
+    public static async Task JoinList(
+        this BaseCtrl? ctrl,
+        Func<Type, Task<string>>? createStringQueryMethod,
+        Func<string, Task<BaseCtrl>>? getDataMethod)
     {
+        if (createStringQueryMethod == null || getDataMethod == null)
+            return;
         if (!IsTableLoaderAttached(ctrl))
             return;
 
@@ -152,6 +158,17 @@ public static partial class RaisingIndexer
             {
                 return;
             }
+
+            Type baseType = typeof(BaseCtrl);
+            if (fkType == baseType || !fkType.IsSubclassOf(baseType))
+            {
+                continue;
+            }
+
+            string? query = await WrapperProcessers.Processer<Type, string>(createStringQueryMethod!, fkType); // checked
+            if (string.IsNullOrWhiteSpace(query))
+                continue;
+            var childCtrl = await WrapperProcessers.Processer<string, BaseCtrl>(getDataMethod!, query); // checked
         }
 
         // KeyInfo? pk = ctrl.PrimaryKeys()?.FirstOrDefault(x => x.Property.Name.ToLower().Contains(nameof(BaseCtrl.Id)));

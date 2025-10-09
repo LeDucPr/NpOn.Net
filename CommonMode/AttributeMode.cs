@@ -146,6 +146,9 @@ public static class AttributeMode
     public static bool HasClassAttribute<T>(Type? type) where T : Attribute
         => type?.GetCustomAttribute<T>(inherit: true) != null;
 
+    public static T? GetClassAttribute<T>(this Type? type) where T : Attribute
+        => type?.GetCustomAttribute<T>(inherit: true) ?? null;
+    
     public static Type? GetPropertyTypeFromAttribute(this Attribute attr, string propertyName)
     {
         Type attrType = attr.GetType();

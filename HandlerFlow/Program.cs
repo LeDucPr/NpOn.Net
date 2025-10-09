@@ -22,7 +22,7 @@ class Program
         var c = ctrlInfo.ForeignKeyIds()?.ToArray();
         ctrlInfo = ctrlInfo.IsTableLoaderAttached() ? ctrlInfo : null;
 
-        ctrl.JoinList();
+        ctrl.JoinList(null, null);
         
         var s = 1;
     }
