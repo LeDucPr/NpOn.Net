@@ -1,6 +1,7 @@
 ﻿using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
 using HandlerFlow.AlgObjs.Attributes;
+using HandlerFlow.AlgObjs.RaisingRouters;
 
 namespace HandlerFlow.AlgObjs.SqlQueries;
 
@@ -14,16 +15,36 @@ public class BaseQueryCreatorWithKey
     private readonly string _apostrophe = "'";
     private readonly string _apostropheEmpty = "''";
 
+    // self value
+    private object? _idValue = null;
+    private Type? _idValueType = null;
+    private string? _idName = null;
+    
+    /// <summary>
+    /// bao gồm cả việc lấy giá trị khóa chính (single) 
+    /// </summary>
+    /// <param name="ctrl"></param>
     public BaseQueryCreatorWithKey(BaseCtrl ctrl)
     {
+        Type baseType = typeof(BaseCtrl);
+        if (ctrl.GetType() == baseType || !ctrl.GetType().IsSubclassOf(baseType))
+            return;
         TableLoaderAttribute? tableLoaderAttr = ctrl.GetType().GetClassAttribute<TableLoaderAttribute>();
         if (tableLoaderAttr == null)
             return;
         _table = tableLoaderAttr.TableName.ToLower();
         _baseQuery += _table; // query get all
+        
+        var pkInfo = ctrl.PrimaryKeys()?.FirstOrDefault();
+        if (pkInfo == null)
+            return;
+
+        _idName = pkInfo.Property.Name;
+        _idValue = pkInfo.Property.GetValue(ctrl);
+        _idValueType = pkInfo.Property.PropertyType;
     }
 
-    protected string CreateOperation(List<(string Id, object? Value, Type ValueType)> keyValues,
+    protected virtual string CreateOperation(List<(string Id, object? Value, Type ValueType)> keyValues,
         string? baseInput = null)
     {
         string output = baseInput ?? _baseQuery;
@@ -31,8 +52,8 @@ public class BaseQueryCreatorWithKey
         foreach (var keyValue in keyValues)
         {
             string value = keyValue.Value?.ToString() ?? _apostropheEmpty;
-            if (keyValue.ValueType != typeof(int) || keyValue.ValueType != typeof(decimal) ||
-                keyValue.ValueType != typeof(float) || keyValue.ValueType != typeof(double))
+            if (keyValue.ValueType != typeof(int) && keyValue.ValueType != typeof(decimal) &&
+                keyValue.ValueType != typeof(float) && keyValue.ValueType != typeof(double))
                 value = _apostrophe + value + _apostrophe;
             output += keyValue.Id + _equalClause + value;
         }
@@ -40,8 +61,10 @@ public class BaseQueryCreatorWithKey
         return output;
     }
 
-    public virtual string QueryWithId(string id, object? value, Type valueType)
+    public virtual string CreateQueryWithId()
     {
-        return CreateOperation([(id, value, valueType)]);
+        if (_idName == null || _idValue == null || _idValueType == null)
+            return string.Empty;
+        return CreateOperation([(_idName, _idValue, _idValueType)]);
     }
 }

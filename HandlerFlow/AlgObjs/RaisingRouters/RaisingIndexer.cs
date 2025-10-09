@@ -124,17 +124,14 @@ public static partial class RaisingIndexer
         Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
         Type fkAttrType = fkAttrs.First().GetType();
         if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
-        {
             return;
-        }
-
+        
         Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
         Type fkIdAttrType = fkIdAttrs.First().GetType();
         if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
-        {
             return;
-        }
-
+        
+        // need add both the FkId<T> and Fk<T> when create their relationship, or break 
         Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
             .ToArray();
         Type?[] fkIdsTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType)))
@@ -146,31 +143,48 @@ public static partial class RaisingIndexer
         if (fkIds.Length == 0 || fkIds.Length != fks.Length)
             return;
 
-        // fks.GetOrScanTypeMetadata()
-        foreach (Type? fkType in fkTypes)
+        foreach (Type? fkType in fkTypes) // foreign keys
         {
             if (fkType == null)
                 continue;
-            // Todo
-            // truy vấn bảng với khóa từ fkIds với các ngoại
-            // cần thêm mod để ngắt truy vấn liên tục bằng đệ quy
             if (GetOrScanTypeMetadata(fkType).ForeignKeys.Count == 0)
             {
-                return;
+                continue;
             }
+
+            // value info
+            var fkIdInfo = fkIds.FirstOrDefault(ki =>
+            {
+                var attr = ki.Attribute;
+                var relatedType = attr.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType));
+                return relatedType == fkType;
+            });
+            if (fkIdInfo == null)
+                continue;
+
+            var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
+
+            if (fkIdValue == null)
+                continue;
 
             Type baseType = typeof(BaseCtrl);
             if (fkType == baseType || !fkType.IsSubclassOf(baseType))
-            {
                 continue;
-            }
 
-            string? query = await WrapperProcessers.Processer<Type, string>(createStringQueryMethod!, fkType); // checked
+            // SqlQuery (get key)
+            string? query = await WrapperProcessers.Processer<Type, string>(createStringQueryMethod!, fkType); //checked
             if (string.IsNullOrWhiteSpace(query))
                 continue;
-            var childCtrl = await WrapperProcessers.Processer<string, BaseCtrl>(getDataMethod!, query); // checked
-            // Todo 
-            // SqlQuery (get key)
+            var ctrlFromKey = await WrapperProcessers.Processer<string, BaseCtrl>(getDataMethod!, query); //checked
+            if (ctrlFromKey != null)
+            {
+                // relationship field (with key)
+                var navigationKeyInfo = fks.FirstOrDefault(fk =>
+                    fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
+                if (navigationKeyInfo != null)
+                    navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKey);
+            }
+            await JoinList(ctrlFromKey, createStringQueryMethod, getDataMethod); // recursions 
         }
 
         // KeyInfo? pk = ctrl.PrimaryKeys()?.FirstOrDefault(x => x.Property.Name.ToLower().Contains(nameof(BaseCtrl.Id)));
