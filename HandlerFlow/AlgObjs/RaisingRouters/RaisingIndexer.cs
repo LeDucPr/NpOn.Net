@@ -169,6 +169,8 @@ public static partial class RaisingIndexer
             if (string.IsNullOrWhiteSpace(query))
                 continue;
             var childCtrl = await WrapperProcessers.Processer<string, BaseCtrl>(getDataMethod!, query); // checked
+            // Todo 
+            // SqlQuery (get key)
         }
 
         // KeyInfo? pk = ctrl.PrimaryKeys()?.FirstOrDefault(x => x.Property.Name.ToLower().Contains(nameof(BaseCtrl.Id)));
