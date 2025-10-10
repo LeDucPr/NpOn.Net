@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Reflection;
 using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
@@ -113,6 +114,13 @@ public static partial class RaisingIndexer
         if (!IsTableLoaderAttached(ctrl))
             return;
 
+        // validate primary keys (value)
+        var primaryKeys = ctrl.PrimaryKeys()?.ToList();
+        if (primaryKeys is not { Count: > 0 } || 
+            primaryKeys.Any(key => key.Property.GetValue(ctrl) == null))
+            return;
+        
+        // validate foreign keys (relationship)
         KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
         if (fks is not { Length: > 0 })
             return;
@@ -120,17 +128,17 @@ public static partial class RaisingIndexer
         if (fkIds is not { Length: > 0 })
             return;
 
-        // validate foreign keys and foreign key ids
+        // validate attribute foreign keys and foreign key ids
         Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
         Type fkAttrType = fkAttrs.First().GetType();
         if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
             return;
-        
+
         Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
         Type fkIdAttrType = fkIdAttrs.First().GetType();
         if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
             return;
-        
+
         // need add both the FkId<T> and Fk<T> when create their relationship, or break 
         Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
             .ToArray();
@@ -147,10 +155,6 @@ public static partial class RaisingIndexer
         {
             if (fkType == null)
                 continue;
-            if (GetOrScanTypeMetadata(fkType).ForeignKeys.Count == 0)
-            {
-                continue;
-            }
 
             // value info
             var fkIdInfo = fkIds.FirstOrDefault(ki =>
@@ -184,6 +188,7 @@ public static partial class RaisingIndexer
                 if (navigationKeyInfo != null)
                     navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKey);
             }
+
             await JoinList(ctrlFromKey, createStringQueryMethod, getDataMethod); // recursions 
         }
 
