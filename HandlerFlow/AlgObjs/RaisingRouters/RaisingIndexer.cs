@@ -13,6 +13,10 @@ public static partial class RaisingIndexer
     private static readonly ConcurrentDictionary<Type, KeyMetadataInfo> MetadataCache = new();
     private static readonly ConcurrentDictionary<Type, bool> EnableObjectCache = new();
 
+    // cache data (call methods) JoinList (contains session id call) 
+    private static readonly ConcurrentDictionary<string /*sessionId*/, JoinListLookup> MetadataBaseCtrlCache = new();
+
+
     #region Cache
 
     private static KeyMetadataInfo GetOrScanTypeMetadata(Type type)
@@ -100,6 +104,28 @@ public static partial class RaisingIndexer
         => GetOrScanTypeEnableObjectCache(ctrl?.GetType());
 
     #endregion Public Methods
+
+
+    #region Calling Method Id
+
+    public static string CreateCallingMethodSessionIdc()
+    {
+        var st = new System.Diagnostics.StackTrace();
+        var sf = st.GetFrame(1);
+        var method = sf?.GetMethod();
+        return $"{method?.DeclaringType?.FullName}.{method?.Name}_{System.Guid.NewGuid()}";
+    }
+
+    public static void AddToLookupData(this string sessionId, DataLookup dataLookup)
+    {
+        // MetadataBaseCtrlCache.AddOrUpdate(sessionId, dataLookup, (_, existingLookup) =>
+        // {
+        //     existingLookup.Merge(dataLookup);
+        //     return existingLookup;
+        // });
+    }
+
+    #endregion Calling Method Id
 }
 
 public static partial class RaisingIndexer
@@ -116,10 +142,10 @@ public static partial class RaisingIndexer
 
         // validate primary keys (value)
         var primaryKeys = ctrl.PrimaryKeys()?.ToList();
-        if (primaryKeys is not { Count: > 0 } || 
+        if (primaryKeys is not { Count: > 0 } ||
             primaryKeys.Any(key => key.Property.GetValue(ctrl) == null))
             return;
-        
+
         // validate foreign keys (relationship)
         KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
         if (fks is not { Length: > 0 })
@@ -191,7 +217,5 @@ public static partial class RaisingIndexer
 
             await JoinList(ctrlFromKey, createStringQueryMethod, getDataMethod); // recursions 
         }
-
-        // KeyInfo? pk = ctrl.PrimaryKeys()?.FirstOrDefault(x => x.Property.Name.ToLower().Contains(nameof(BaseCtrl.Id)));
     }
 }
