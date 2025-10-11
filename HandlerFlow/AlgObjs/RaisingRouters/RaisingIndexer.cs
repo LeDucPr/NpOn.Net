@@ -115,14 +115,22 @@ public static partial class RaisingIndexer
         var method = sf?.GetMethod();
         return $"{method?.DeclaringType?.FullName}.{method?.Name}_{System.Guid.NewGuid()}";
     }
-
+    
     public static void AddToLookupData(this string sessionId, DataLookup dataLookup)
     {
-        // MetadataBaseCtrlCache.AddOrUpdate(sessionId, dataLookup, (_, existingLookup) =>
-        // {
-        //     existingLookup.Merge(dataLookup);
-        //     return existingLookup;
-        // });
+        MetadataBaseCtrlCache.AddOrUpdate(
+            sessionId,
+            _ => // if not exist key => create new JoinListLookup
+            {
+                var lookup = new JoinListLookup(sessionId);
+                lookup.Merge(dataLookup);
+                return lookup;
+            },
+            (_, existingLookup) => // else => merge into JoinListLookup
+            {
+                existingLookup.Merge(dataLookup);
+                return existingLookup;
+            });
     }
 
     #endregion Calling Method Id
@@ -133,7 +141,9 @@ public static partial class RaisingIndexer
     public static async Task JoinList(
         this BaseCtrl? ctrl,
         Func<Type, Task<string>>? createStringQueryMethod,
-        Func<string, Task<BaseCtrl>>? getDataMethod)
+        Func<string, Task<BaseCtrl>>? getDataMethod,
+        int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
+        int currentRecursionLoop = 1)
     {
         if (createStringQueryMethod == null || getDataMethod == null)
             return;
@@ -177,6 +187,9 @@ public static partial class RaisingIndexer
         if (fkIds.Length == 0 || fkIds.Length != fks.Length)
             return;
 
+        if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
+            return;
+
         foreach (Type? fkType in fkTypes) // foreign keys
         {
             if (fkType == null)
@@ -215,7 +228,8 @@ public static partial class RaisingIndexer
                     navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKey);
             }
 
-            await JoinList(ctrlFromKey, createStringQueryMethod, getDataMethod); // recursions 
+            await JoinList(ctrlFromKey, createStringQueryMethod, getDataMethod,
+                recursionStopLoss, ++currentRecursionLoop); // recursions 
         }
     }
 }

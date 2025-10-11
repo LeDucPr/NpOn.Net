@@ -42,7 +42,7 @@ class Program
         };
 
         // Act
-        await ctrl.JoinList(createStringQueryMethod, getDataMethod);
+        await ctrl.JoinList(createStringQueryMethod, getDataMethod, 1);
 
     }
 }
