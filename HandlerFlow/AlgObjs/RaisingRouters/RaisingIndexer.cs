@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Reflection;
 using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
@@ -106,16 +105,8 @@ public static partial class RaisingIndexer
     #endregion Public Methods
 
 
-    #region Calling Method Id
+    #region Lookup Data
 
-    public static string CreateCallingMethodSessionIdc()
-    {
-        var st = new System.Diagnostics.StackTrace();
-        var sf = st.GetFrame(1);
-        var method = sf?.GetMethod();
-        return $"{method?.DeclaringType?.FullName}.{method?.Name}_{System.Guid.NewGuid()}";
-    }
-    
     public static void AddToLookupData(this string sessionId, DataLookup dataLookup)
     {
         MetadataBaseCtrlCache.AddOrUpdate(
@@ -132,24 +123,37 @@ public static partial class RaisingIndexer
                 return existingLookup;
             });
     }
+    
+    // viết hàm lẫy dữ liệu từ lookup data
+    public static JoinListLookup? GetLookupData(this string sessionId)
+    {
+        MetadataBaseCtrlCache.TryGetValue(sessionId, out var lookup);
+        return lookup;
+    }
 
-    #endregion Calling Method Id
+
+    #endregion Lookup Data
 }
 
 public static partial class RaisingIndexer
 {
-    public static async Task JoinList(
+    public static async Task JoiningData(
         this BaseCtrl? ctrl,
         Func<Type, Task<string>>? createStringQueryMethod,
         Func<string, Task<BaseCtrl>>? getDataMethod,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
-        int currentRecursionLoop = 1)
+        int currentRecursionLoop = 1, string? sessionId = null)
     {
-        if (createStringQueryMethod == null || getDataMethod == null)
-            return;
         if (!IsTableLoaderAttached(ctrl))
             return;
 
+        // sessionId for joining list of data
+        sessionId = !string.IsNullOrWhiteSpace(sessionId) ? sessionId : IndexerMode.CreateGuidWithStackTrace();
+        AddToLookupData(sessionId, new DataLookup(ctrl!, null)); //GetOrScanTypeEnableObjectCache validate null
+
+        // validate will pass with not null method
+        if (createStringQueryMethod == null || getDataMethod == null)
+            return;
         // validate primary keys (value)
         var primaryKeys = ctrl.PrimaryKeys()?.ToList();
         if (primaryKeys is not { Count: > 0 } ||
@@ -228,8 +232,8 @@ public static partial class RaisingIndexer
                     navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKey);
             }
 
-            await JoinList(ctrlFromKey, createStringQueryMethod, getDataMethod,
-                recursionStopLoss, ++currentRecursionLoop); // recursions 
+            await JoiningData(ctrlFromKey, createStringQueryMethod, getDataMethod,
+                recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
         }
     }
 }
