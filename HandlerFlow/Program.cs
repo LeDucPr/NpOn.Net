@@ -15,15 +15,16 @@ class Program
 
     private static async Task Test()
     {
-        ServerCtrl server = new ServerCtrl() { Id = "1", };
-        ConnectionInfoCtrl? ctrlInfo  = new ConnectionInfoCtrl()
+        ServerCtrl server = new ServerCtrl() { Id = 1, };
+        ConnectionInfoCtrl? ctrlInfo = new ConnectionInfoCtrl
         {
-            Id = "2",
+            Id = 2,
+            ServerId = 2,
         };
         ConnectionCtrl? ctrl = new ConnectionCtrl()
         {
-            Id = "1",
-            ConnectionInfoId = "2"
+            Id = 1,
+            ConnectionInfoId = 2
         };
         var a = ctrlInfo.ForeignKeys()?.ToArray();
         var b = ctrlInfo.PrimaryKeys()?.ToArray();
@@ -38,13 +39,10 @@ class Program
 
         Func<string, Task<BaseCtrl>> getDataMethod = async (query) =>
         {
-            return new ConnectionInfoCtrl { Id = "1", ServerId = "3"};
+            return new ConnectionInfoCtrl { Id = 1, ServerId = 3 };
         };
 
         // Act
-        await ctrl.JoiningData(createStringQueryMethod, getDataMethod, -1);
-        
-        
-
+        string? sessionId = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, -1);
     }
 }

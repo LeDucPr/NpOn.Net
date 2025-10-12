@@ -8,7 +8,7 @@ namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 public class ConnectionCtrl : BaseCtrl
 {
     [FkId<ConnectionInfoCtrl>(nameof(ConnectionInfoId))]
-    public string? ConnectionInfoId { get; set; }
+    public required int ConnectionInfoId { get; set; }
 
     [Fk<ConnectionInfoCtrl>(
         $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]
@@ -17,4 +17,12 @@ public class ConnectionCtrl : BaseCtrl
     public EDbLanguage? QueryLanguageUse { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; }
+
+    protected override void FieldMapper()
+    {
+        FieldMap.Add(nameof(ConnectionInfoId), "connection_infoI_i");
+        FieldMap.Add(nameof(QueryLanguageUse), "query_language_use");
+        FieldMap.Add(nameof(Description), "description");
+        FieldMap.Add(nameof(IsActive), "is_active");
+    }
 }

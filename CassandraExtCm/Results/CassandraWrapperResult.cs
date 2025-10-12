@@ -1,4 +1,5 @@
 ﻿using Cassandra;
+using CommonDb;
 using CommonDb.DbResults;
 using Enums;
 using PostgresExtCm.Results;
@@ -10,9 +11,9 @@ namespace CassandraExtCm.Results;
 /// </summary>
 public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<string, INpOnCell>>
 {
-    private readonly IReadOnlyDictionary<string, ColumnSchemaInfo> _schemaMap;
+    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
-    public CassandraRowWrapper(Row parent, IReadOnlyDictionary<string, ColumnSchemaInfo> schemaMap) : base(parent)
+    public CassandraRowWrapper(Row parent, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) : base(parent)
     {
         _schemaMap = schemaMap;
     }
@@ -49,10 +50,10 @@ public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<st
 public class CassandraColumnWrapper : NpOnWrapperResult<IReadOnlyList<Row>, IReadOnlyDictionary<int, INpOnCell>>
 {
     private readonly string _columnName;
-    private readonly IReadOnlyDictionary<string, ColumnSchemaInfo> _schemaMap;
+    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
     public CassandraColumnWrapper(IReadOnlyList<Row> parent, string columnName,
-        IReadOnlyDictionary<string, ColumnSchemaInfo> schemaMap) : base(parent)
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) : base(parent)
     {
         _columnName = columnName;
         _schemaMap = schemaMap;
@@ -91,7 +92,7 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
     public CassandraColumnCollection(IReadOnlyList<Row> allRows,
-        IReadOnlyDictionary<string, ColumnSchemaInfo> schemaMap)
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap)
     {
         var nameToIndexMap = new Dictionary<string, int>();
         _columnWrappers = new List<CassandraColumnWrapper>(schemaMap.Count);
@@ -169,10 +170,10 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
 /// <summary>
 /// Data result of Query 
 /// </summary>
-public class CassandraResultSetWrapper : NpOnWrapperResult 
+public class CassandraResultSetWrapper : NpOnWrapperResult
 {
     private readonly IReadOnlyList<Row> _allRows;
-    private readonly IReadOnlyDictionary<string, ColumnSchemaInfo> _schemaMap;
+    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
     public IReadOnlyDictionary<int, CassandraRowWrapper> Rows { get; }
     public CassandraColumnCollection Columns { get; }
@@ -182,7 +183,7 @@ public class CassandraResultSetWrapper : NpOnWrapperResult
         if (rowSet == null)
         {
             _allRows = [];
-            _schemaMap = new Dictionary<string, ColumnSchemaInfo>();
+            _schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
             Rows = new Dictionary<int, CassandraRowWrapper>();
             Columns = new CassandraColumnCollection(_allRows, _schemaMap);
             SetFail(EDbError.CassandraRowSetNull);
@@ -190,10 +191,10 @@ public class CassandraResultSetWrapper : NpOnWrapperResult
         }
 
         //  schema from Cql.Column
-        var schemaMap = new Dictionary<string, ColumnSchemaInfo>();
+        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
         foreach (var cqlColumn in rowSet.Columns)
         {
-            var schemaInfo = new ColumnSchemaInfo(
+            var schemaInfo = new NpOnColumnSchemaInfo(
                 cqlColumn.Name,
                 cqlColumn.Type, // System.Type
                 CassandraUtils.GetCqlTypeName(cqlColumn.Type)
@@ -204,7 +205,7 @@ public class CassandraResultSetWrapper : NpOnWrapperResult
         _schemaMap = schemaMap;
         // schema from Cql.Row
         _allRows = rowSet.ToList(); // Row -> access
-        
+
         // View (Rows và Columns) <schemaMap> input
         Rows = _allRows
             .Select((row, index) => new { row, index })

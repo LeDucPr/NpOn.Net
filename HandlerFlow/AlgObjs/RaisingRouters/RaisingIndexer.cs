@@ -123,7 +123,7 @@ public static partial class RaisingIndexer
                 return existingLookup;
             });
     }
-    
+
     // viết hàm lẫy dữ liệu từ lookup data
     public static JoinListLookup? GetLookupData(this string sessionId)
     {
@@ -131,13 +131,12 @@ public static partial class RaisingIndexer
         return lookup;
     }
 
-
     #endregion Lookup Data
 }
 
 public static partial class RaisingIndexer
 {
-    public static async Task JoiningData(
+    public static async Task<string?> JoiningData(
         this BaseCtrl? ctrl,
         Func<Type, Task<string>>? createStringQueryMethod,
         Func<string, Task<BaseCtrl>>? getDataMethod,
@@ -145,7 +144,7 @@ public static partial class RaisingIndexer
         int currentRecursionLoop = 1, string? sessionId = null)
     {
         if (!IsTableLoaderAttached(ctrl))
-            return;
+            return null;
 
         // sessionId for joining list of data
         sessionId = !string.IsNullOrWhiteSpace(sessionId) ? sessionId : IndexerMode.CreateGuidWithStackTrace();
@@ -153,31 +152,31 @@ public static partial class RaisingIndexer
 
         // validate will pass with not null method
         if (createStringQueryMethod == null || getDataMethod == null)
-            return;
+            return sessionId;
         // validate primary keys (value)
         var primaryKeys = ctrl.PrimaryKeys()?.ToList();
         if (primaryKeys is not { Count: > 0 } ||
             primaryKeys.Any(key => key.Property.GetValue(ctrl) == null))
-            return;
+            return sessionId;
 
         // validate foreign keys (relationship)
         KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
         if (fks is not { Length: > 0 })
-            return;
+            return sessionId;
         KeyInfo[]? fkIds = ctrl.ForeignKeyIds()?.ToArray();
         if (fkIds is not { Length: > 0 })
-            return;
+            return sessionId;
 
         // validate attribute foreign keys and foreign key ids
         Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
         Type fkAttrType = fkAttrs.First().GetType();
         if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
-            return;
+            return sessionId;
 
         Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
         Type fkIdAttrType = fkIdAttrs.First().GetType();
         if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
-            return;
+            return sessionId;
 
         // need add both the FkId<T> and Fk<T> when create their relationship, or break 
         Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
@@ -189,10 +188,10 @@ public static partial class RaisingIndexer
         fkIdsTypes = fkIdsTypes.Where(x => fkTypes.Contains(x)).ToArray();
 
         if (fkIds.Length == 0 || fkIds.Length != fks.Length)
-            return;
+            return sessionId;
 
         if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
-            return;
+            return sessionId;
 
         foreach (Type? fkType in fkTypes) // foreign keys
         {
@@ -214,15 +213,15 @@ public static partial class RaisingIndexer
             if (fkIdValue == null)
                 continue;
 
-            Type baseType = typeof(BaseCtrl);
-            if (fkType == baseType || !fkType.IsSubclassOf(baseType))
+            if (!fkType.IsChildOfBaseCtrl())
                 continue;
 
             // SqlQuery (get key)
-            string? query = await WrapperProcessers.Processer<Type, string>(createStringQueryMethod!, fkType); //checked
+            string? query =
+                await WrapperProcessers.Processer /*<Type, string>*/(createStringQueryMethod!, fkType); //checked
             if (string.IsNullOrWhiteSpace(query))
                 continue;
-            var ctrlFromKey = await WrapperProcessers.Processer<string, BaseCtrl>(getDataMethod!, query); //checked
+            var ctrlFromKey = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, query); //checked
             if (ctrlFromKey != null)
             {
                 // relationship field (with key)
@@ -235,5 +234,7 @@ public static partial class RaisingIndexer
             await JoiningData(ctrlFromKey, createStringQueryMethod, getDataMethod,
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
         }
+
+        return sessionId;
     }
 }

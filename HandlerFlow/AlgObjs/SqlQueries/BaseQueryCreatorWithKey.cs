@@ -26,8 +26,7 @@ public class BaseQueryCreatorWithKey
     /// <param name="ctrl"></param>
     public BaseQueryCreatorWithKey(BaseCtrl ctrl)
     {
-        Type baseType = typeof(BaseCtrl);
-        if (ctrl.GetType() == baseType || !ctrl.GetType().IsSubclassOf(baseType))
+        if (!ctrl.GetType().IsChildOfBaseCtrl())
             return;
         TableLoaderAttribute? tableLoaderAttr = ctrl.GetType().GetClassAttribute<TableLoaderAttribute>();
         if (tableLoaderAttr == null)

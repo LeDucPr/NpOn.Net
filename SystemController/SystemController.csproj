@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
+      <ProjectReference Include="..\HandlerFlow\HandlerFlow.csproj" />
     </ItemGroup>
     
 </Project>

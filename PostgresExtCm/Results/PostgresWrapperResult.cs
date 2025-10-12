@@ -1,32 +1,20 @@
 ﻿using System.Data;
+using CommonDb;
 using CommonDb.DbResults;
 using Enums;
 using Npgsql;
 
 namespace PostgresExtCm.Results;
 
-public class ColumnSchemaInfo
-{
-    public string ColumnName { get; }
-    public Type DataType { get; }
-    public string ProviderDataTypeName { get; } // Ví dụ: "text", "int4"
-
-    public ColumnSchemaInfo(string columnName, Type dataType, string providerDataTypeName)
-    {
-        ColumnName = columnName;
-        DataType = dataType;
-        ProviderDataTypeName = providerDataTypeName;
-    }
-}
-
 /// <summary>
 /// ColumnWrapper
 /// </summary>
 public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary<string, INpOnCell>>
 {
-    private readonly IReadOnlyDictionary<string, ColumnSchemaInfo> _schemaMap;
+    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
-    public PostgresRowWrapper(DataRow parent, IReadOnlyDictionary<string, ColumnSchemaInfo> schemaMap) : base(parent)
+    public PostgresRowWrapper(DataRow parent, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) :
+        base(parent)
     {
         _schemaMap = schemaMap;
     }
@@ -64,10 +52,10 @@ public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary
 public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDictionary<int, INpOnCell>>
 {
     private readonly string _columnName;
-    private readonly IReadOnlyDictionary<string, ColumnSchemaInfo> _schemaMap;
+    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
     public PostgresColumnWrapper(DataTable parent, string columnName,
-        IReadOnlyDictionary<string, ColumnSchemaInfo> schemaMap) : base(parent)
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) : base(parent)
     {
         _columnName = columnName;
         _schemaMap = schemaMap;
@@ -105,7 +93,7 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     private readonly List<PostgresColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
 
-    public PostgresColumnCollection(DataTable dataTable, IReadOnlyDictionary<string, ColumnSchemaInfo> schemaMap)
+    public PostgresColumnCollection(DataTable dataTable, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap)
     {
         var nameToIndexMap = new Dictionary<string, int>();
         _columnWrappers = new List<PostgresColumnWrapper>(dataTable.Columns.Count);
@@ -180,7 +168,7 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
 public class PostgresResultSetWrapper : NpOnWrapperResult
 {
     private readonly DataTable _dataTable;
-    private readonly IReadOnlyDictionary<string, ColumnSchemaInfo> _schemaMap;
+    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
     public IReadOnlyDictionary<int, PostgresRowWrapper> Rows { get; }
     public PostgresColumnCollection Columns { get; }
@@ -194,11 +182,11 @@ public class PostgresResultSetWrapper : NpOnWrapperResult
             return;
         }
 
-        var schemaMap = new Dictionary<string, ColumnSchemaInfo>();
+        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
         for (int i = 0; i < reader.FieldCount; i++)
         {
             var columnName = reader.GetName(i);
-            var schemaInfo = new ColumnSchemaInfo(
+            var schemaInfo = new NpOnColumnSchemaInfo(
                 columnName,
                 reader.GetFieldType(i), // LSystem.Type
                 reader.GetDataTypeName(i) // POSTGRES 

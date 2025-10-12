@@ -3,6 +3,7 @@ using HandlerFlow.AlgObjs.CtrlObjs;
 
 namespace HandlerFlow.AlgObjs.Attributes;
 
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
 public sealed class FkIdAttribute<T> : ForeignKeyAttribute where T : BaseCtrl
 {
     public Type RelatedType => typeof(T);
