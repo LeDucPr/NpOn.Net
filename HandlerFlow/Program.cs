@@ -1,5 +1,4 @@
-﻿using Enums;
-using HandlerFlow.AlgObjs.CtrlObjs;
+﻿using HandlerFlow.AlgObjs.CtrlObjs;
 using HandlerFlow.AlgObjs.CtrlObjs.Connections;
 using HandlerFlow.AlgObjs.RaisingRouters;
 using HandlerFlow.AlgObjs.SqlQueries;
@@ -42,7 +41,8 @@ class Program
             return new ConnectionInfoCtrl { Id = 1, ServerId = 3 };
         };
 
-        // Act
-        string? sessionId = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, -1);
+        // Act (test) set 1 avoid to crash when using test mode
+        string? sessionId = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, true, 1);
+        string? sessionId2 = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, true, -1);
     }
 }

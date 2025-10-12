@@ -4,7 +4,7 @@ using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 
-[TableLoader("connection_info")]
+[TableLoader("connection_info_ctrl")]
 public class ConnectionInfoCtrl : BaseCtrl
 {
     [FkId<ServerCtrl>(nameof(ServerId))] public required int ServerId { get; set; }

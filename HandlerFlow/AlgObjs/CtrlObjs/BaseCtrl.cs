@@ -11,10 +11,21 @@ namespace HandlerFlow.AlgObjs.CtrlObjs
         public DateTime? UpdatedAt { get; set; }
 
         // field mapper (initializer)
-        public Dictionary<string, string> FieldMap { get; protected set; } = new();
+        public Dictionary<string, string>? FieldMap { get; protected set; }
+
+        /// <summary>
+        /// call in first requisition 
+        /// </summary>
+        public void CreateDefaultFieldMapper()
+        {
+            if (FieldMap is {Count: > 0})
+                throw new ArgumentNullException(nameof(FieldMap) + "is created"); 
+            BaseFieldMapper();
+        }
 
         private void BaseFieldMapper()
         {
+            FieldMap ??= new();
             FieldMap.Add(nameof(Id), "id");
             FieldMap.Add(nameof(CreatedAt), "created_at");
             FieldMap.Add(nameof(UpdatedAt), "updated_at");
@@ -83,5 +94,19 @@ namespace HandlerFlow.AlgObjs.CtrlObjs
             Type baseType = typeof(BaseCtrl);
             return ctrlType != baseType && ctrlType.IsSubclassOf(baseType);
         }
+
+        /// <summary>
+        /// used in caching when retrieving the first object,
+        /// the parameter from FieldMap will be loaded into the cache and reused for objects of the same Type
+        /// </summary>
+        /// <param name="ctrlType"></param>
+        /// <returns></returns>
+        public static BaseCtrl? CreateDefaultFieldMapperWithEmptyObject(this Type ctrlType)
+        {
+            var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+            emptyCtrl?.CreateDefaultFieldMapper();
+            return emptyCtrl;
+        }
     }
+    
 }

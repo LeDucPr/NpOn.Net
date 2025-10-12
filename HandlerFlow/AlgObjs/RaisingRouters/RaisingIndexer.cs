@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Reflection;
 using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
@@ -15,8 +16,11 @@ public static partial class RaisingIndexer
     // cache data (call methods) JoinList (contains session id call) 
     private static readonly ConcurrentDictionary<string /*sessionId*/, JoinListLookup> MetadataBaseCtrlCache = new();
 
+    // Cache of field metadata – loaded from other methods into BaseCtrl
+    private static readonly ConcurrentDictionary<AdvancedTypeKey, FieldInfo> ProfiledFieldMapCache = new();
 
-    #region Cache
+
+    #region Cache KeyInfo
 
     private static KeyMetadataInfo GetOrScanTypeMetadata(Type type)
     {
@@ -47,10 +51,10 @@ public static partial class RaisingIndexer
         return EnableObjectCache.GetOrAdd(type, _ => AttributeMode.HasClassAttribute<TableLoaderAttribute>(type));
     }
 
-    #endregion Cache
+    #endregion Cache KeyInfo
 
 
-    #region Public Methods
+    #region Public Methods KeyInfo (Get Data from cache)
 
     /// <summary>
     /// For stater
@@ -102,10 +106,10 @@ public static partial class RaisingIndexer
     public static bool IsTableLoaderAttached(this BaseCtrl? ctrl)
         => GetOrScanTypeEnableObjectCache(ctrl?.GetType());
 
-    #endregion Public Methods
+    #endregion Public Methods (Get Data from cache)
 
 
-    #region Lookup Data
+    #region Cache Lookup Data
 
     public static void AddToLookupData(this string sessionId, DataLookup dataLookup)
     {
@@ -131,7 +135,44 @@ public static partial class RaisingIndexer
         return lookup;
     }
 
-    #endregion Lookup Data
+    #endregion Cache Lookup Data
+
+
+    #region Cache FieldMap
+
+    private static FieldInfo GetOrScanFieldMap(Type ctrlType)
+    {
+        var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+        var fieldMap = emptyCtrl?.FieldMap ?? ctrlType.CreateDefaultFieldMapperWithEmptyObject()?.FieldMap;
+        if (fieldMap == null || fieldMap.Count == 0)
+            return new FieldInfo(new Dictionary<string, PropertyInfo>());
+        // AdvancedTypeKey (unique with fieldMap + ctrlType)
+        var advKey = new AdvancedTypeKey(fieldMap, ctrlType);
+        // Caching
+        return ProfiledFieldMapCache.GetOrAdd(advKey, _ =>
+        {
+            var keyProps = new Dictionary<string, PropertyInfo>();
+            foreach (var kv in fieldMap)
+            {
+                var prop = ctrlType.GetProperty(kv.Key, BindingFlags.Public | BindingFlags.Instance);
+                if (prop != null)
+                    keyProps[kv.Value] = prop;
+            }
+
+            // Wrap the mapping in a FieldInfo record
+            return new FieldInfo(keyProps);
+        });
+    }
+
+    public static FieldInfo? MapperFieldInfo(this BaseCtrl? ctrl)
+    {
+        if (ctrl == null)
+            return null;
+        var fieldMappers = GetOrScanFieldMap(ctrl.GetType());
+        return fieldMappers;
+    }
+
+    #endregion Cache FieldMap
 }
 
 public static partial class RaisingIndexer
@@ -140,8 +181,11 @@ public static partial class RaisingIndexer
         this BaseCtrl? ctrl,
         Func<Type, Task<string>>? createStringQueryMethod,
         Func<string, Task<BaseCtrl>>? getDataMethod,
+        bool isLoadMapper = true,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
-        int currentRecursionLoop = 1, string? sessionId = null)
+        int currentRecursionLoop = 1,
+        string? sessionId = null
+    )
     {
         if (!IsTableLoaderAttached(ctrl))
             return null;
@@ -231,7 +275,11 @@ public static partial class RaisingIndexer
                     navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKey);
             }
 
-            await JoiningData(ctrlFromKey, createStringQueryMethod, getDataMethod,
+            // caching Representative Child of BaseCtrl structure
+            if (isLoadMapper)
+                MapperFieldInfo(ctrlFromKey);
+
+            await JoiningData(ctrlFromKey, createStringQueryMethod, getDataMethod, isLoadMapper,
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
         }
 
