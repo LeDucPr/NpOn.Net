@@ -39,7 +39,15 @@ public static class ResultConverter
                 if (cell is { ValueType: not null })
                 {
                     object convertedValue = Convert.ChangeType(cell.ValueAsObject, cell.ValueType)!;
-                    kvProp.Value.SetValue(newCtrl, convertedValue, null);
+                    Type curType = kvProp.Value.PropertyType;
+                    var actualType = Nullable.GetUnderlyingType(curType) ?? curType;
+                    if (actualType.IsEnum)
+                    {
+                        var enumValue = Enum.ToObject(actualType, convertedValue);
+                        kvProp.Value.SetValue(newCtrl, enumValue);
+                    }
+                    else 
+                        kvProp.Value.SetValue(newCtrl, convertedValue, null);
                 }
             }
             ctrlList.Add(newCtrl);

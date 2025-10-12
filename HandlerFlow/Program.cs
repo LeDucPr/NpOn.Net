@@ -30,7 +30,7 @@ class Program
         var c = ctrlInfo.ForeignKeyIds()?.ToArray();
         ctrlInfo = ctrlInfo.IsTableLoaderAttached() ? ctrlInfo : null;
 
-        Func<Type, Task<string>> createStringQueryMethod = async (type) =>
+        Func<BaseCtrl, Task<string>> createStringQueryMethod = async (type) =>
         {
             BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
             return queryCreator.CreateQueryWithId();

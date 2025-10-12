@@ -33,9 +33,9 @@ class Program
         };
 
 
-        Func<Type, Task<string>> createStringQueryMethod = async (type) =>
+        Func<BaseCtrl, Task<string>> createStringQueryMethod = async (ctrl) =>
         {
-            BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(connectionCtrl);
+            BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
             return queryCreator.CreateQueryWithId();
         };
 

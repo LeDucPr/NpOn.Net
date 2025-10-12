@@ -2,7 +2,7 @@
 
 namespace Enums;
 
-public enum EDbLanguage
+public enum EDbLanguage //: Int32
 {
     [Display(Name = "Unknown")] Unknown = 1 << 0,
     [Display(Name = "Sql")] Sql = 1 << 1,

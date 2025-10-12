@@ -8,7 +8,7 @@ namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 public class ConnectionCtrl : BaseCtrl
 {
     [FkId<ConnectionInfoCtrl>(nameof(ConnectionInfoId))]
-    public required int ConnectionInfoId { get; set; }
+    public required long ConnectionInfoId { get; set; }
 
     [Fk<ConnectionInfoCtrl>(
         $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]

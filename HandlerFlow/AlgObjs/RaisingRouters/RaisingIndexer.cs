@@ -171,7 +171,7 @@ public static partial class RaisingIndexer
         var fieldMappers = GetOrScanFieldMap(ctrl.GetType());
         return fieldMappers;
     }
-    
+
     #endregion Cache FieldMap
 }
 
@@ -179,7 +179,7 @@ public static partial class RaisingIndexer
 {
     public static async Task<string?> JoiningData(
         this BaseCtrl? ctrl,
-        Func<Type, Task<string>>? createStringQueryMethod,
+        Func<BaseCtrl, Task<string>>? createStringQueryMethod,
         Func<string, Type, Task<BaseCtrl?>>? getDataMethod,
         bool isLoadMapper = true,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
@@ -202,6 +202,17 @@ public static partial class RaisingIndexer
         if (primaryKeys is not { Count: > 0 } ||
             primaryKeys.Any(key => key.Property.GetValue(ctrl) == null))
             return sessionId;
+
+        // SqlQuery (get key)
+        Type? ctrlType = ctrl?.GetType();
+        string? pkQuery =
+            await WrapperProcessers.Processer /*<Type, string>*/(createStringQueryMethod!, ctrl); //checked
+        if (string.IsNullOrWhiteSpace(pkQuery))
+            return sessionId;
+        //// chim mồi được fill dữ liệu ------------
+        ctrl = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, pkQuery, ctrlType); //checked
+        if (isLoadMapper)
+            MapperFieldInfo(ctrl); // caching Representative Child of BaseCtrl structure
 
         // validate foreign keys (relationship)
         KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
@@ -260,26 +271,22 @@ public static partial class RaisingIndexer
             if (!fkType.IsChildOfBaseCtrl())
                 continue;
 
-            // SqlQuery (get key)
-            string? query =
-                await WrapperProcessers.Processer /*<Type, string>*/(createStringQueryMethod!, fkType); //checked
-            if (string.IsNullOrWhiteSpace(query))
-                continue;
-            var ctrlFromKey = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, query, fkType); //checked
-            if (ctrlFromKey != null)
+            var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
+            if (ctrlFromKeyEmpty != null)
             {
-                // relationship field (with key)
                 var navigationKeyInfo = fks.FirstOrDefault(fk =>
                     fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
-                if (navigationKeyInfo != null)
-                    navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKey);
+                // Get PropertyInfo 'ID' from new object
+                var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
+                if (navigationKeyInfo != null && idPropOfNewObject != null)
+                {
+                    object convertedIdValue = Convert.ChangeType(fkIdValue, idPropOfNewObject.PropertyType);
+                    idPropOfNewObject.SetValue(ctrlFromKeyEmpty, convertedIdValue);
+                    navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKeyEmpty);
+                }
             }
 
-            // caching Representative Child of BaseCtrl structure
-            if (isLoadMapper)
-                MapperFieldInfo(ctrlFromKey);
-
-            await JoiningData(ctrlFromKey, createStringQueryMethod, getDataMethod, isLoadMapper,
+            await JoiningData(ctrlFromKeyEmpty, createStringQueryMethod, getDataMethod, isLoadMapper,
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
         }
 

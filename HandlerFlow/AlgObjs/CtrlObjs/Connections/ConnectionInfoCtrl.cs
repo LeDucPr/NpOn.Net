@@ -6,7 +6,7 @@ namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
 [TableLoader("connection_info_ctrl")]
 public class ConnectionInfoCtrl : BaseCtrl
 {
-    [FkId<ServerCtrl>(nameof(ServerId))] public required int ServerId { get; set; }
+    [FkId<ServerCtrl>(nameof(ServerId))] public required long ServerId { get; set; }
 
     [Fk<ServerCtrl>($"{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl)}.{nameof(ServerCtrl.Id)}")]
     public ServerCtrl? Server { get; set; }
