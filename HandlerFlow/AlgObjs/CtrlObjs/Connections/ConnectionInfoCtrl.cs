@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Enums;
+﻿using Enums;
 using HandlerFlow.AlgObjs.Attributes;
 
 namespace HandlerFlow.AlgObjs.CtrlObjs.Connections;
@@ -25,10 +24,12 @@ public class ConnectionInfoCtrl : BaseCtrl
 
     protected override void FieldMapper()
     {
+        FieldMap ??= [];
         FieldMap.Add(nameof(ServerId), "server_id");
         FieldMap.Add(nameof(DatabaseName), "database_name");
+        FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(Name), "name");
-        FieldMap.Add(nameof(Username), "user_name");
+        FieldMap.Add(nameof(Username), "username");
         FieldMap.Add(nameof(Password), "password");
         FieldMap.Add(nameof(AuthMethod), "auth_method");
         FieldMap.Add(nameof(ConnectString), "connect_string");

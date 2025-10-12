@@ -3,6 +3,7 @@ using DbFactory;
 using Enums;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using HandlerFlow.AlgObjs.CtrlObjs.Connections;
+using HandlerFlow.AlgObjs.RaisingRouters;
 using HandlerFlow.AlgObjs.SqlQueries;
 using SystemController.ResultConverters;
 
@@ -16,38 +17,44 @@ class Program
         DbFactoryIntegrationTest().GetAwaiter();
     }
 
-    private static async Task<INpOnWrapperResult?> DbFactoryIntegrationTest()
+    private static async Task<IEnumerable<DataLookup>?> DbFactoryIntegrationTest()
     {
-        IDbFactoryWrapper wrapper =
+        IDbFactoryWrapper factoryWrapper =
             new DbFactoryWrapper(
                 "Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password",
                 EDb.Postgres
             );
-        
-        
-        ConnectionCtrl connection = new ConnectionCtrl()
+
+
+        ConnectionCtrl connectionCtrl = new ConnectionCtrl() // starter (chim mồi)
         {
             Id = 1,
-            ConnectionInfoId = 2,
+            ConnectionInfoId = 1,
         };
-        
-        
-        // Func<Type, Task<string>> createStringQueryMethod = async (type) =>
-        // {
-        //     BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
-        //     return queryCreator.CreateQueryWithId();
-        // };
-        //
-        // Func<string, Task<BaseCtrl>> getDataMethod = async (query) =>
-        // {
-        //     return new ConnectionInfoCtrl { Id = 1, ServerId = 3 };
-        // };
-        
-        
-        
-        
-        var resultTryGet = await wrapper.QueryAsync(StaticCommands.ConnectionCtrlGetAll);
-        var ctrl = resultTryGet?.Converter(typeof(ConnectionCtrl));
-        return resultTryGet;
+
+
+        Func<Type, Task<string>> createStringQueryMethod = async (type) =>
+        {
+            BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(connectionCtrl);
+            return queryCreator.CreateQueryWithId();
+        };
+
+        Func<string, Type, Task<BaseCtrl?>> getDataMethod = async (query, type) =>
+        {
+            INpOnWrapperResult? result = await factoryWrapper.QueryAsync(query);
+            var ctrl = result?.Converter(type);
+            return ctrl?.FirstOrDefault();
+        };
+        // var resultTryGet = await wrapper.QueryAsync(StaticCommands.ConnectionCtrlGetAll);
+        // var ctrl = resultTryGet?.Converter(typeof(ConnectionCtrl));
+        // return resultTryGet;
+        string? sessionId = await connectionCtrl.JoiningData(createStringQueryMethod, getDataMethod, true, -1);
+        if (sessionId == null)
+        {
+            return null;
+        }
+
+        var lookupData = sessionId?.GetLookupData();
+        return lookupData?.Data;
     }
 }

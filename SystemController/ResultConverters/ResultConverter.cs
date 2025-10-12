@@ -1,12 +1,13 @@
 ﻿using CommonDb.DbResults;
 using HandlerFlow.AlgObjs.CtrlObjs;
+using HandlerFlow.AlgObjs.RaisingRouters;
 using PostgresExtCm.Results;
 
 namespace SystemController.ResultConverters;
 
 public static class ResultConverter
 {
-    public static BaseCtrl? Converter(this INpOnWrapperResult result, Type ctrlType)
+    public static IEnumerable<BaseCtrl>? Converter(this INpOnWrapperResult result, Type ctrlType)
     {
         if (!ctrlType.IsChildOfBaseCtrl())
             return null;
@@ -19,103 +20,31 @@ public static class ResultConverter
             return null;
 
         var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
-        
-        var fieldMapProp = typeof(BaseCtrl).GetProperty(
-            nameof(BaseCtrl.FieldMap),
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var fieldMap = fieldMapProp?.GetValue(emptyCtrl) as Dictionary<string, string>;
-        if (fieldMap is null || fieldMap.Count == 0)
-            return emptyCtrl;
-        
-        foreach (var prop in ctrlType.GetProperties(System.Reflection.BindingFlags.Public |
-                                                    System.Reflection.BindingFlags.Instance))
+        FieldInfo? mapField = emptyCtrl.MapperFieldInfo();
+        if (mapField == null)
+            return null;
+
+        if (mapField.KeyProperties is not { Count: > 0 }) // is not has any mapper field/property
+            return null;
+
+        List<BaseCtrl> ctrlList = new();
+        foreach (var row in pgResult.Rows)
         {
-            if (!prop.CanWrite)
+            var newCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+            if (newCtrl == null)
                 continue;
-            if (!fieldMap.TryGetValue(prop.Name, out var columnName) || string.IsNullOrWhiteSpace(columnName))
-                continue;
-
-            if (!pgResult.Columns.ContainsKey(columnName))
-                continue;
-
-            var value = pgResult.Rows[0].Result[columnName];
-
-            
+            foreach (var kvProp in mapField.KeyProperties)
+            {
+                row.Value.Result.TryGetValue(kvProp.Key, out var cell);
+                if (cell is { ValueType: not null })
+                {
+                    object convertedValue = Convert.ChangeType(cell.ValueAsObject, cell.ValueType)!;
+                    kvProp.Value.SetValue(newCtrl, convertedValue, null);
+                }
+            }
+            ctrlList.Add(newCtrl);
         }
 
-        
-        
-        
-        
-
-        // var ctrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
-        // if (ctrl == null)
-        //     return null;
-        //
-        // // Ensure FieldMap is populated by invoking FieldMapper via nameof
-        // var fieldMapper = ctrlType.GetMethod(
-        //     nameof(BaseCtrl.FieldMap),
-        //     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        // fieldMapper?.Invoke(ctrl, null);
-        //
-        // // Access FieldMap via nameof to avoid magic strings
-        // var fieldMapProp = typeof(BaseCtrl).GetProperty(
-        //     nameof(BaseCtrl.FieldMap),
-        //     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        // var fieldMap = fieldMapProp?.GetValue(ctrl) as Dictionary<string, string>;
-        // if (fieldMap is null || fieldMap.Count == 0)
-        //     return ctrl;
-
-        // Columns snapshot
-
-        
-        
-        //
-        // foreach (var prop in ctrlType.GetProperties(System.Reflection.BindingFlags.Public |
-        //                                             System.Reflection.BindingFlags.Instance))
-        // {
-        //     if (!prop.CanWrite)
-        //         continue;
-        //
-        //     if (!fieldMap.TryGetValue(prop.Name, out var columnName) || string.IsNullOrWhiteSpace(columnName))
-        //         continue;
-        //
-        //     if (!pgResult.Columns.ContainsKey(columnName))
-        //         continue;
-        //
-        //     var value = pgResult.Rows[0].Result[columnName];
-        //
-        //     try
-        //     {
-        //         // var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-        //         //
-        //         // // Handle enums explicitly
-        //         // object? convertedValue;
-        //         // if (targetType.IsEnum)
-        //         // {
-        //         //     convertedValue = value is string s
-        //         //         ? Enum.Parse(targetType, s, ignoreCase: true)
-        //         //         : Enum.ToObject(targetType, Convert.ChangeType(value, Enum.GetUnderlyingType(targetType)));
-        //         // }
-        //         // else
-        //         // {
-        //         //     convertedValue = Convert.ChangeType(value, targetType);
-        //         // }
-        //         //
-        //         // prop.SetValue(ctrl, convertedValue);
-        //     }
-        //     catch
-        //     {
-        //         // Ignore conversion errors; optionally log here
-        //     }
-        // }
-
-        return emptyCtrl;
+        return ctrlList;
     }
-
-
-    // public void ToRow(PostgresResultSetWrapper)
-    // {
-    //     PostgresResultSetWrapper 
-    // }
 }

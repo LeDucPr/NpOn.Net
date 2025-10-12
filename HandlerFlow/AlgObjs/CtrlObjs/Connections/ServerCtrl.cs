@@ -13,6 +13,7 @@ public class ServerCtrl : BaseCtrl
     
     protected override void FieldMapper()
     {
+        FieldMap ??= [];
         FieldMap.Add(nameof(ServerName), "server_name");
         FieldMap.Add(nameof(ServerType), "server_type");
         FieldMap.Add(nameof(Host), "host");

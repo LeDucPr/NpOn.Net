@@ -171,7 +171,7 @@ public static partial class RaisingIndexer
         var fieldMappers = GetOrScanFieldMap(ctrl.GetType());
         return fieldMappers;
     }
-
+    
     #endregion Cache FieldMap
 }
 
@@ -180,7 +180,7 @@ public static partial class RaisingIndexer
     public static async Task<string?> JoiningData(
         this BaseCtrl? ctrl,
         Func<Type, Task<string>>? createStringQueryMethod,
-        Func<string, Task<BaseCtrl>>? getDataMethod,
+        Func<string, Type, Task<BaseCtrl?>>? getDataMethod,
         bool isLoadMapper = true,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
         int currentRecursionLoop = 1,
@@ -265,7 +265,7 @@ public static partial class RaisingIndexer
                 await WrapperProcessers.Processer /*<Type, string>*/(createStringQueryMethod!, fkType); //checked
             if (string.IsNullOrWhiteSpace(query))
                 continue;
-            var ctrlFromKey = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, query); //checked
+            var ctrlFromKey = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, query, fkType); //checked
             if (ctrlFromKey != null)
             {
                 // relationship field (with key)

@@ -20,7 +20,8 @@ public class ConnectionCtrl : BaseCtrl
 
     protected override void FieldMapper()
     {
-        FieldMap.Add(nameof(ConnectionInfoId), "connection_infoI_i");
+        FieldMap ??= [];
+        FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
         FieldMap.Add(nameof(QueryLanguageUse), "query_language_use");
         FieldMap.Add(nameof(Description), "description");
         FieldMap.Add(nameof(IsActive), "is_active");

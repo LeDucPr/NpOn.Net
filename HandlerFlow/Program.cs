@@ -36,7 +36,7 @@ class Program
             return queryCreator.CreateQueryWithId();
         };
 
-        Func<string, Task<BaseCtrl>> getDataMethod = async (query) =>
+        Func<string, Type, Task<BaseCtrl>> getDataMethod = async (query, type) =>
         {
             return new ConnectionInfoCtrl { Id = 1, ServerId = 3 };
         };
