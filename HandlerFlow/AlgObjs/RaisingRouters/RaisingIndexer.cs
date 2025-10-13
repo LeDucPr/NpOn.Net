@@ -1,23 +1,22 @@
-﻿using System.Collections.Concurrent;
-using System.Reflection;
+﻿using System.Reflection;
 using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
-using HandlerFlow.WrapperProcessors;
+using CommonObject;
 
 namespace HandlerFlow.AlgObjs.RaisingRouters;
 
 public static partial class RaisingIndexer
 {
     // Caching struct
-    private static readonly ConcurrentDictionary<Type, KeyMetadataInfo> MetadataCache = new();
-    private static readonly ConcurrentDictionary<Type, bool> EnableObjectCache = new();
+    private static readonly WrapperCacheStore<Type, KeyMetadataInfo> MetadataCache = new();
+    private static readonly WrapperCacheStore<Type, bool> EnableObjectCache = new();
 
     // cache data (call methods) JoinList (contains session id call) 
-    private static readonly ConcurrentDictionary<string /*sessionId*/, JoinListLookup> MetadataBaseCtrlCache = new();
+    private static readonly WrapperCacheStore<string /*sessionId*/, JoinListLookup> MetadataBaseCtrlCache = new();
 
     // Cache of field metadata – loaded from other methods into BaseCtrl
-    private static readonly ConcurrentDictionary<AdvancedTypeKey, FieldInfo> ProfiledFieldMapCache = new();
+    private static readonly WrapperCacheStore<AdvancedTypeKey, FieldInfo> ProfiledFieldMapCache = new();
 
 
     #region Cache KeyInfo
@@ -111,7 +110,7 @@ public static partial class RaisingIndexer
 
     #region Cache Lookup Data
 
-    public static void AddToLookupData(this string sessionId, DataLookup dataLookup)
+    private static void AddToLookupData(this string sessionId, DataLookup dataLookup)
     {
         MetadataBaseCtrlCache.AddOrUpdate(
             sessionId,
@@ -192,7 +191,6 @@ public static partial class RaisingIndexer
 
         // sessionId for joining list of data
         sessionId = !string.IsNullOrWhiteSpace(sessionId) ? sessionId : IndexerMode.CreateGuidWithStackTrace();
-        AddToLookupData(sessionId, new DataLookup(ctrl!, null)); //GetOrScanTypeEnableObjectCache validate null
 
         // validate will pass with not null method
         if (createStringQueryMethod == null || getDataMethod == null)
@@ -213,6 +211,7 @@ public static partial class RaisingIndexer
         ctrl = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, pkQuery, ctrlType); //checked
         if (isLoadMapper)
             MapperFieldInfo(ctrl); // caching Representative Child of BaseCtrl structure
+        AddToLookupData(sessionId, new DataLookup(ctrl!, null)); //GetOrScanTypeEnableObjectCache validate null
 
         // validate foreign keys (relationship)
         KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();

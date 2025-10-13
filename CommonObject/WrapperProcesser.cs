@@ -1,4 +1,4 @@
-﻿namespace HandlerFlow.WrapperProcessors;
+﻿namespace CommonObject;
 
 public static class WrapperProcessers
 {

@@ -54,7 +54,10 @@ class Program
             return null;
         }
 
-        var lookupData = sessionId?.GetLookupData();
+        JoinListLookup? lookupData = sessionId?.GetLookupData();
+        
+        var bbbbbbbbbbbbbbbbbbb = lookupData?.Data;
+        
         return lookupData?.Data;
     }
 }

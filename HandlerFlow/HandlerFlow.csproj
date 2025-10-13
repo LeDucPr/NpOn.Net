@@ -10,6 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
         <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
     </ItemGroup>
