@@ -5,7 +5,7 @@ namespace PostgresExtCm.Connections;
 
 public class PostgresConnectOptions : DbNpOnConnectOptions<PostgresDriver>
 {
-    public override bool IsValidWithConnect()
+    public override bool IsConnectValid()
     {
         try
         {

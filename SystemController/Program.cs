@@ -10,6 +10,7 @@ class Program
 {
     static void Main(string[] args)
     {
+        // kết nối đầu tiên được tạo bởi Pg (when deploy on server)
         IDbFactoryWrapper factoryWrapper =
             new DbFactoryWrapper(
                 "Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password",

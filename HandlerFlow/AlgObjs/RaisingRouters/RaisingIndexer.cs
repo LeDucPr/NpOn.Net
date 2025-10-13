@@ -284,8 +284,7 @@ public static partial class RaisingIndexer
                 }
             }
 
-            BaseCtrl? fkCtrl = null;
-            (sessionId, fkCtrl) = await JoiningData(ctrlFromKeyEmpty, createStringQueryMethod, getDataMethod, isLoadMapper,
+            (sessionId, BaseCtrl? fkCtrl) = await JoiningData(ctrlFromKeyEmpty, createStringQueryMethod, getDataMethod, isLoadMapper,
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
             navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl);
         }

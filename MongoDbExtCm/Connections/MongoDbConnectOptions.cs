@@ -5,7 +5,7 @@ namespace MongoDbExtCm.Connections;
 
 public class MongoDbConnectOptions : DbNpOnConnectOptions<MongoDbDriver>
 {
-    public override bool IsValidWithConnect()
+    public override bool IsConnectValid()
     {
         try
         {

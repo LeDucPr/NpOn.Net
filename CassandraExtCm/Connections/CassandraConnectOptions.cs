@@ -5,7 +5,7 @@ namespace CassandraExtCm.Connections;
 
 public class CassandraConnectOptions : DbNpOnConnectOptions<CassandraDriver>
 {
-    public override bool IsValidWithConnect()
+    public override bool IsConnectValid()
     {
         try
         {

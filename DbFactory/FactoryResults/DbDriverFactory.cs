@@ -70,7 +70,7 @@ public class DbDriverFactory : IDbDriverFactory
 
     public DbDriverFactory(EDb eDb, INpOnConnectOptions option, int connectionNumber = 1)
     {
-        if (!option.IsValidWithConnect())
+        if (!option.IsConnectValid())
             throw new ArgumentException("Config Option for Database is Invalid.", nameof(option));
         _eDb = eDb;
         _option = option;

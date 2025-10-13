@@ -7,7 +7,7 @@ namespace CommonDb.Connections;
 
 public interface INpOnConnectOptions
 {
-    bool IsValidWithConnect(); // validate when initialize 
+    bool IsConnectValid(); // validate when initialize 
     bool IsValid([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
     bool IsValidRequireFromBase([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
     
@@ -52,7 +52,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #region Validate
 
-    public abstract bool IsValidWithConnect();
+    public abstract bool IsConnectValid();
 
     public virtual bool IsValid(string? propertyName = null)
     {
