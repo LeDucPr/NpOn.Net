@@ -176,7 +176,7 @@ public static partial class RaisingIndexer
 
 public static partial class RaisingIndexer
 {
-    public static async Task<string?> JoiningData(
+    public static async Task<(string? sessionId, BaseCtrl? outCtrl)> JoiningData(
         this BaseCtrl? ctrl,
         Func<BaseCtrl, Task<string>>? createStringQueryMethod,
         Func<string, Type, Task<BaseCtrl?>>? getDataMethod,
@@ -187,26 +187,26 @@ public static partial class RaisingIndexer
     )
     {
         if (!IsTableLoaderAttached(ctrl))
-            return null;
+            return (null, ctrl);
 
         // sessionId for joining list of data
         sessionId = !string.IsNullOrWhiteSpace(sessionId) ? sessionId : IndexerMode.CreateGuidWithStackTrace();
 
         // validate will pass with not null method
         if (createStringQueryMethod == null || getDataMethod == null)
-            return sessionId;
+            return (sessionId, ctrl);
         // validate primary keys (value)
         var primaryKeys = ctrl.PrimaryKeys()?.ToList();
         if (primaryKeys is not { Count: > 0 } ||
             primaryKeys.Any(key => key.Property.GetValue(ctrl) == null))
-            return sessionId;
+            return (sessionId, ctrl);
 
         // SqlQuery (get key)
         Type? ctrlType = ctrl?.GetType();
         string? pkQuery =
             await WrapperProcessers.Processer /*<Type, string>*/(createStringQueryMethod!, ctrl); //checked
         if (string.IsNullOrWhiteSpace(pkQuery))
-            return sessionId;
+            return (sessionId, ctrl);
         //// chim mồi được fill dữ liệu ------------
         ctrl = await WrapperProcessers.Processer /*<string, BaseCtrl>*/(getDataMethod!, pkQuery, ctrlType); //checked
         if (isLoadMapper)
@@ -216,21 +216,21 @@ public static partial class RaisingIndexer
         // validate foreign keys (relationship)
         KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
         if (fks is not { Length: > 0 })
-            return sessionId;
+            return (sessionId, ctrl);
         KeyInfo[]? fkIds = ctrl.ForeignKeyIds()?.ToArray();
         if (fkIds is not { Length: > 0 })
-            return sessionId;
+            return (sessionId, ctrl);
 
         // validate attribute foreign keys and foreign key ids
         Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
         Type fkAttrType = fkAttrs.First().GetType();
         if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
-            return sessionId;
+            return (sessionId, ctrl);
 
         Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
         Type fkIdAttrType = fkIdAttrs.First().GetType();
         if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
-            return sessionId;
+            return (sessionId, ctrl);
 
         // need add both the FkId<T> and Fk<T> when create their relationship, or break 
         Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
@@ -242,10 +242,10 @@ public static partial class RaisingIndexer
         fkIdsTypes = fkIdsTypes.Where(x => fkTypes.Contains(x)).ToArray();
 
         if (fkIds.Length == 0 || fkIds.Length != fks.Length)
-            return sessionId;
+            return (sessionId, ctrl);
 
         if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
-            return sessionId;
+            return (sessionId, ctrl);
 
         foreach (Type? fkType in fkTypes) // foreign keys
         {
@@ -271,24 +271,25 @@ public static partial class RaisingIndexer
                 continue;
 
             var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
+            KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
+                fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
             if (ctrlFromKeyEmpty != null)
             {
-                var navigationKeyInfo = fks.FirstOrDefault(fk =>
-                    fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
                 // Get PropertyInfo 'ID' from new object
                 var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
                 if (navigationKeyInfo != null && idPropOfNewObject != null)
                 {
                     object convertedIdValue = Convert.ChangeType(fkIdValue, idPropOfNewObject.PropertyType);
                     idPropOfNewObject.SetValue(ctrlFromKeyEmpty, convertedIdValue);
-                    navigationKeyInfo.Property.SetValue(ctrl, ctrlFromKeyEmpty);
                 }
             }
 
-            await JoiningData(ctrlFromKeyEmpty, createStringQueryMethod, getDataMethod, isLoadMapper,
+            BaseCtrl? fkCtrl = null;
+            (sessionId, fkCtrl) = await JoiningData(ctrlFromKeyEmpty, createStringQueryMethod, getDataMethod, isLoadMapper,
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
+            navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl);
         }
 
-        return sessionId;
+        return (sessionId, ctrl);
     }
 }

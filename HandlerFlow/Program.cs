@@ -42,7 +42,7 @@ class Program
         };
 
         // Act (test) set 1 avoid to crash when using test mode
-        string? sessionId = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, true, 1);
-        string? sessionId2 = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, true, -1);
+        (string? sessionId, BaseCtrl? connCtrl) = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, true, 1);
+        (string? sessionId2, BaseCtrl? connCtrl2) = await ctrl.JoiningData(createStringQueryMethod, getDataMethod, true, -1);
     }
 }
