@@ -197,6 +197,7 @@ public class DbDriverFactory : IDbDriverFactory
                 NpOnDbConnection? newConnection = _eDb switch
                 {
                     EDb.Cassandra => CreateCassandraConnection(_option),
+                    EDb.ScyllaDb => CreateCassandraConnection(_option),
                     EDb.Postgres => CreatePostgresConnection(_option),
                     EDb.MongoDb => CreateMongoDbConnection(_option),
                     _ => throw new NotSupportedException($"The database type '{_eDb}' is not supported.")

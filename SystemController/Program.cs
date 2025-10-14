@@ -1,9 +1,10 @@
-﻿using CommonDb.Connections;
+﻿using CassandraExtCm.Connections;
+using CommonDb.Connections;
+using CommonDb.DbResults;
 using DbFactory;
 using Enums;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using HandlerFlow.AlgObjs.CtrlObjs.Connections;
-using HandlerFlow.AlgObjs.RaisingRouters;
 using PostgresExtCm.Connections;
 
 namespace SystemController;
@@ -18,8 +19,8 @@ class Program
         IDbFactoryWrapper factoryWrapper = new DbFactoryWrapper(initializationConnectString, EDb.Postgres);
         ConnectionCtrl connectionCtrlDecoy = new ConnectionCtrl() // starter (chim mồi)
         {
-            Id = 1,
-            ConnectionInfoId = 1,
+            Id = 2,
+            ConnectionInfoId = 0,
         };
 
         HashSet<string?> connectionStrings = new HashSet<string?>();
@@ -36,12 +37,43 @@ class Program
         if (string.IsNullOrWhiteSpace(connectionInfoCtrl?.ConnectString))
             return;
         connectionStrings.Add(connectionInfoCtrl.ConnectString);
-        if (connectionStrings.Count == countConnection) 
+        if (connectionStrings.Count == countConnection)
             return;
-        
+
         INpOnConnectOptions postgresOptions = new PostgresConnectOptions()
             .SetConnectionString(connectionInfoCtrl.ConnectString);
-        IDbDriverFactory dbFactory = new DbDriverFactory(EDb.Postgres, postgresOptions);
-        
+        if (connectionInfoCtrl.DatabaseType == null)
+            return;
+        EDb dbType = (EDb)connectionInfoCtrl.DatabaseType!;
+
+        INpOnConnectOptions? connectOption = null;
+        if (dbType == EDb.Cassandra || dbType == EDb.ScyllaDb)
+        {
+            if (connectionInfoCtrl.Server != null && !string.IsNullOrWhiteSpace(connectionInfoCtrl.Server.Host)
+                                                  && !string.IsNullOrWhiteSpace(connectionInfoCtrl.DatabaseName))
+            {
+                connectOption = new CassandraConnectOptions()
+                    .SetContactAddresses<CassandraDriver>([connectionInfoCtrl.Server.Host])?
+                    .SetConnectionString(connectionInfoCtrl.ConnectString)
+                    .SetKeyspace<CassandraDriver>(connectionInfoCtrl.DatabaseName.ToLower());
+            }
+        }
+
+        IDbFactoryWrapper? dbFactoryWrapper = null;
+        if (connectOption != null)
+        {
+            dbFactoryWrapper = new DbFactoryWrapper(connectOption, dbType);
+            INpOnWrapperResult? resultOfQuery =
+                dbFactoryWrapper.QueryAsync("select * from SEMAST limit 10").GetAwaiter().GetResult();
+            Console.WriteLine($"Thời gian thực thi: {resultOfQuery?.QueryTimeMilliseconds} ms");
+            //
+            INpOnWrapperResult? resultOfQuery3 =
+                dbFactoryWrapper.QueryAsync("select * from SEMAST limit 100").GetAwaiter().GetResult();
+            Console.WriteLine($"Thời gian thực thi: {resultOfQuery3?.QueryTimeMilliseconds} ms");
+            // 
+            INpOnWrapperResult? resultOfQuery2 =
+                dbFactoryWrapper.QueryAsync("select * from SEMAST ").GetAwaiter().GetResult();
+            Console.WriteLine($"Thời gian thực thi: {resultOfQuery2?.QueryTimeMilliseconds} ms");
+        }
     }
 }

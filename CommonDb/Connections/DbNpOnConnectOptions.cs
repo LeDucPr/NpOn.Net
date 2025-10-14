@@ -160,7 +160,15 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
         {
             if (!IsValid())
                 throw new ExecutionEngineException($"Keyspace is not valid for {typeof(INpOnDbDriver)}");
-            _contactAddresses = contactAddresses;
+            if (contactAddresses is not { Length: > 0 })
+            {
+                _contactAddresses = contactAddresses;
+                return this;
+            }
+            HashSet<string> contactAddressesHashSet = new HashSet<string>(_contactAddresses ?? []);
+            foreach (string contactAddress in contactAddresses)
+                contactAddressesHashSet.Add(contactAddress);
+            _contactAddresses = contactAddressesHashSet.ToArray();
         }
         catch (ExecutionEngineException)
         {
