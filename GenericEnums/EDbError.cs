@@ -54,6 +54,9 @@ public enum EDbError
     [Display(Name = "Postgres DataTable (Result is null)")]
     PostgresDataTableNull,
 
+    [Display(Name = "Mssql DataTable (Result is null)")]
+    MssqlDataTableNull,
+    
     [Display(Name = "MongoDb BsonDocument (Result is null)")] 
     MongoDbBsonDocumentNull,
 

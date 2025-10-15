@@ -4,12 +4,14 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\CassandraExtCm\CassandraExtCm.csproj" />
       <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
       <ProjectReference Include="..\MongoDbExtCm\MongoDbExtCm.csproj" />
+      <ProjectReference Include="..\MssqlExtCm\MssqlExtCm.csproj" />
     </ItemGroup>
 
 </Project>

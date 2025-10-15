@@ -1,5 +1,6 @@
 ﻿using CassandraExtCm.Connections;
 using CassandraExtCm.Results;
+using CommonDb;
 using CommonDb.Connections;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
@@ -8,6 +9,8 @@ using Enums;
 using MongoDbExtCm.Bsons;
 using MongoDbExtCm.Connections;
 using MongoDbExtCm.Results;
+using MssqlExtCm.Connections;
+using MssqlExtCm.Results;
 using PostgresExtCm.Connections;
 using PostgresExtCm.Results;
 
@@ -21,15 +24,119 @@ class Program
         // await RunCassandraExample();
         // await RunMongoDbExample();
         // await RunPostgresExample();
-        var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
-        var rs = await a.GetAllCtrls();
-        if (rs != null)
-            PrintGenericTable(rs);
-        var rs2 = await a.GetAllCtrls();
-        if (rs2 != null)
-            PrintGenericTable(rs2);
+        await RunMssqlExample();
+        // var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
+        // var rs = await a.GetAllCtrls();
+        // if (rs != null)
+        //     PrintPostgresTable(rs);
+        // var rs2 = await a.GetAllCtrls();
+        // if (rs2 != null)
+        //     PrintPostgresTable(rs2);
     }
 
+    #region Mssql
+
+    public static async Task RunMssqlExample()
+    {
+        Console.WriteLine("\n--- RUNNING MSSQL EXAMPLE ---");
+        try
+        {
+            // Thay thế bằng connection string của bạn
+            var mssqlOptions = new MssqlConnectOptions()
+                .SetConnectionString("Server=192.168.7.15;Database=Staging_Account;uid=sa;pwd=6L*4endZxS5#76NK$SsyEAzxXWy#F77R;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True");
+
+            IDbDriverFactory factory = new DbDriverFactory(EDb.Mssql, mssqlOptions);
+            await factory.OpenConnections();
+            var firstConnection = factory.FirstValidConnection;
+
+            if (firstConnection == null)
+            {
+                throw new Exception("Không thể thiết lập kết nối hợp lệ tới MSSQL.");
+            }
+
+            INpOnDbDriver driver = firstConnection.Driver;
+            Console.WriteLine($"Successfully connected to {driver.Name}");
+
+            // Thay thế bằng câu lệnh query của bạn
+            // INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT name, database_id, create_date FROM sys.databases;");
+            INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT * FROM dealer");
+            Console.WriteLine($"Executing query: {command.CommandText}\n");
+            var result = await driver.Query(command);
+
+            PrintMssqlTable(result);
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("\n--- AN ERROR OCCURRED ---");
+            Console.WriteLine($"Error Type: {ex.GetType().Name}");
+            Console.WriteLine($"Message: {ex.Message}");
+            Console.ResetColor();
+        }
+    }
+    
+    
+    private static void PrintMssqlTable(INpOnWrapperResult result, string indent = "")
+    {
+        if (result is not MssqlResultSetWrapper mssqlResult)
+            return;
+        
+        if (mssqlResult.Rows.Count == 0)
+        {
+            Console.WriteLine($"{indent}Query executed successfully but returned 0 rows.");
+            return;
+        }
+
+        // In Header
+        var columnNames = mssqlResult.Columns.Keys.ToList();
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"{indent}{string.Join(" | ", columnNames.Select(h => h.PadRight(20)))}");
+        Console.ResetColor();
+        Console.WriteLine($"{indent}{new string('-', columnNames.Count * 23)}");
+
+        // Lặp qua các hàng để in dữ liệu
+        foreach (var rowWrapper in mssqlResult.Rows.Values)
+        {
+            var rowData = new List<string>();
+            try
+            {
+                // Truy cập Result một lần để kích hoạt Lazy<T> và bắt lỗi nếu có
+                var resultDictionary = rowWrapper.Result;
+
+                foreach (var columnName in columnNames)
+                {
+                    // Sử dụng TryGetValue để tránh KeyNotFoundException
+                    string cellDisplayValue;
+                    if (resultDictionary.TryGetValue(columnName, out var cell))
+                    {
+                        cellDisplayValue = cell.ValueAsObject?.ToString() ?? "NULL";
+                    }
+                    else
+                    {
+                        cellDisplayValue = "[MISSING]";
+                    }
+
+                    rowData.Add(cellDisplayValue.PadRight(20));
+                }
+
+                // Chỉ in ra nếu không có lỗi
+                Console.WriteLine($"{indent}{string.Join(" | ", rowData)}");
+            }
+            catch (Exception ex)
+            {
+                // Bắt lỗi từ việc khởi tạo Lazy<T> của rowWrapper.Result
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                // In ra thông báo lỗi ngay tại hàng bị hỏng
+                Console.WriteLine($"{indent}Error processing row: {ex.Message.PadRight(columnNames.Count * 23)}");
+                Console.ResetColor();
+                // Quan trọng: Tiếp tục với hàng tiếp theo
+                continue;
+            }
+        }
+    }
+
+    #endregion Mssql Test
+    
 
     #region Postgres Test
 
@@ -57,7 +164,7 @@ class Program
             Console.WriteLine($"Executing query: {command.CommandText}\n");
             var result = await driver.Query(command);
 
-            PrintGenericTable(result);
+            PrintPostgresTable(result);
         }
         catch (Exception ex)
         {
@@ -70,7 +177,7 @@ class Program
         }
     }
 
-    private static void PrintGenericTable(INpOnWrapperResult result, string indent = "")
+    private static void PrintPostgresTable(INpOnWrapperResult result, string indent = "")
     {
         if (result is not PostgresResultSetWrapper pgResult)
         {

@@ -6,6 +6,7 @@ using Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MongoDbExtCm.Connections;
+using MssqlExtCm.Connections;
 using PostgresExtCm.Connections;
 
 namespace DbFactory;
@@ -200,6 +201,7 @@ public class DbDriverFactory : IDbDriverFactory
                     EDb.ScyllaDb => CreateCassandraConnection(_option),
                     EDb.Postgres => CreatePostgresConnection(_option),
                     EDb.MongoDb => CreateMongoDbConnection(_option),
+                    EDb.Mssql => CreateMssqlDbConnection(_option),
                     _ => throw new NotSupportedException($"The database type '{_eDb}' is not supported.")
                 };
                 if (newConnection == null)
@@ -313,4 +315,32 @@ public class DbDriverFactory : IDbDriverFactory
     }
 
     #endregion MongoDb
+
+
+    #region Mssql
+
+    private NpOnDbConnection CreateMssqlDbConnection(INpOnConnectOptions options)
+    {
+        if (options is not MssqlConnectOptions mssqlOptions)
+        {
+            throw new ArgumentException("Invalid options for Mssql. Expected MssqlConnectOptions.",
+                nameof(options));
+        }
+
+        INpOnDbDriver driver = CreateMssqlDriver(mssqlOptions);
+        return new NpOnDbConnection<MssqlDriver>(driver);
+    }
+
+    private INpOnDbDriver CreateMssqlDriver(INpOnConnectOptions options)
+    {
+        if (options is not MssqlConnectOptions mssqlOptions)
+        {
+            throw new ArgumentException("Invalid options provided for Mssql. Expected MssqlConnectOptions.",
+                nameof(options));
+        }
+
+        return new MssqlDriver(mssqlOptions);
+    }
+
+    #endregion Mssql
 }

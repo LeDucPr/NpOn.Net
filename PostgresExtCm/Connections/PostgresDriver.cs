@@ -7,7 +7,6 @@ using System.Data;
 using CommonDb.DbResults;
 using Enums;
 using PostgresExtCm.Results;
-using PostgresExtCm.Sql;
 
 namespace PostgresExtCm.Connections;
 
