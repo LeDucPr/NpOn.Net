@@ -24,14 +24,14 @@ class Program
         // await RunCassandraExample();
         // await RunMongoDbExample();
         // await RunPostgresExample();
-        await RunMssqlExample();
-        // var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
-        // var rs = await a.GetAllCtrls();
-        // if (rs != null)
-        //     PrintPostgresTable(rs);
-        // var rs2 = await a.GetAllCtrls();
-        // if (rs2 != null)
-        //     PrintPostgresTable(rs2);
+        // await RunMssqlExample();
+        var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
+        var rs = await a.GetAllCtrls();
+        if (rs != null)
+            PrintPostgresTable(rs);
+        var rs2 = await a.GetAllCtrls();
+        if (rs2 != null)
+            PrintPostgresTable(rs2);
     }
 
     #region Mssql
