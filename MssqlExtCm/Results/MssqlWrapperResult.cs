@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections;
+using System.Data;
 using CommonDb;
 using CommonDb.DbResults;
 using Enums;
@@ -9,29 +10,29 @@ namespace MssqlExtCm.Results;
 /// <summary>
 /// ColumnWrapper
 /// </summary>
-public class MssqlRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary<string, INpOnCell>>
+public class MssqlRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
+    private readonly Dictionary<string, INpOnCell> _dictionary;
 
     public MssqlRowWrapper(DataRow parent, IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) :
         base(parent)
     {
         _schemaMap = schemaMap;
+        _dictionary = new Dictionary<string, INpOnCell>();
     }
 
     protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<string, INpOnCell>();
-
+        if (_dictionary is { Count : > 0 })
+            return _dictionary;
         foreach (var schemaInfo in _schemaMap.Values)
         {
             object? cellValue = Parent[schemaInfo.ColumnName];
             Type columnType = schemaInfo.DataType;
             Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
-
             if (cellValue == DBNull.Value)
                 cellValue = null;
-
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 cellValue,
@@ -39,35 +40,39 @@ public class MssqlRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary<st
                 schemaInfo.ProviderDataTypeName // THÔNG TIN CHÍNH XÁC SCHEMA
             )!;
 
-            dictionary.Add(schemaInfo.ColumnName, cell);
+            _dictionary.Add(schemaInfo.ColumnName, cell);
         }
 
-        return dictionary;
+        return _dictionary;
     }
+
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => CreateResult();
 }
 
 /// <summary>
 /// ColumnWrapper (truy cập được từ Key-integer hoặc Key-string)
 /// </summary>
-public class MssqlColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDictionary<int, INpOnCell>>
+public class MssqlColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDictionary<int, INpOnCell>>, INpOnColumnWrapper
 {
     private readonly string _columnName;
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
+    private readonly Dictionary<int, INpOnCell> _dictionary;
 
     public MssqlColumnWrapper(DataTable parent, string columnName,
         IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap) : base(parent)
     {
         _columnName = columnName;
         _schemaMap = schemaMap;
+        _dictionary = new Dictionary<int, INpOnCell>();
     }
 
     protected override IReadOnlyDictionary<int, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<int, INpOnCell>();
+        if (_dictionary is { Count : > 0 })
+            return _dictionary;
         var schemaInfo = _schemaMap[_columnName];
         Type columnType = schemaInfo.DataType;
         Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
-
         for (int i = 0; i < Parent.Rows.Count; i++)
         {
             DataRow row = Parent.Rows[i];
@@ -77,18 +82,20 @@ public class MssqlColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDictiona
                 columnType.ToDbType(),
                 schemaInfo.ProviderDataTypeName // SỬ DỤNG THÔNG TIN CHÍNH XÁC TỪ SCHEMA
             )!;
-            dictionary.Add(i, cell);
+            _dictionary.Add(i, cell);
         }
 
-        return dictionary;
+        return _dictionary;
     }
+
+    public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => CreateResult();
 }
 
 /// <summary>
 /// Collection bọc Column -> truy cập theo cột/hàng 
 /// </summary>
 public class MssqlColumnCollection : IReadOnlyDictionary<string, MssqlColumnWrapper>,
-    IReadOnlyDictionary<int, MssqlColumnWrapper>
+    IReadOnlyDictionary<int, MssqlColumnWrapper>, INpOnCollectionWrapper
 {
     private readonly List<MssqlColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
@@ -162,10 +169,31 @@ public class MssqlColumnCollection : IReadOnlyDictionary<string, MssqlColumnWrap
         }
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes)
+    {
+        indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
+        // trả vè dict với các index trên 
+        Dictionary<int, INpOnColumnWrapper?> result = new();
+        foreach (var index in indexes)
+        {
+            result.Add(index, _columnWrappers[index]);
+        }
+        
+        return result;
+    }
+
+    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string columnName)
+    {
+        if (TryGetValue(columnName, out var value))
+        {
+            return value;
+        }
+        throw new NotImplementedException();
+    }
 }
 
-public class MssqlResultSetWrapper : NpOnWrapperResult
+public class MssqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     private readonly DataTable _dataTable;
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
@@ -208,5 +236,15 @@ public class MssqlResultSetWrapper : NpOnWrapperResult
 
         Columns = new MssqlColumnCollection(_dataTable, _schemaMap); // schema -> Column
         SetSuccess();
+    }
+
+    public IReadOnlyDictionary<string, INpOnCell> GetTableWrapper()
+    {
+        throw new NotImplementedException();
+    }
+
+    public IReadOnlyDictionary<int, INpOnCell> GetCollectionWrapper()
+    {
+        throw new NotImplementedException();
     }
 }

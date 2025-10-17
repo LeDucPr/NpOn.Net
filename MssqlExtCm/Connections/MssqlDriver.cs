@@ -34,11 +34,11 @@ public class MssqlDriver : NpOnDbDriver
         await DisconnectAsync();
         _connection = new SqlConnection(Option.ConnectionString);
         await _connection.OpenAsync(cancellationToken);
-        Version = _connection.ServerVersion;
+        Version = _connection.ServerVersion ?? Version;
         if (!string.IsNullOrEmpty(_connection.DataSource))
             Name = _connection.DataSource;
         else
-            Name = $"MSSQL Server {_connection.ServerVersion.Split('.')[0]}";
+            Name = $"MSSQL Server {Version.Split('.')[0]}";
     }
 
     public override async Task DisconnectAsync()
