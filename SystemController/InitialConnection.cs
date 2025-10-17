@@ -40,7 +40,8 @@ public class InitialConnection
                 (async (query, type) =>
                 {
                     INpOnWrapperResult? result = await _factory.QueryAsync(query);
-                    var ctrl = result?.Converter(type);
+                    // var ctrl = result?.PostgresConverter(type);
+                    var ctrl = result?.GenericConverter(type);
                     return ctrl?.FirstOrDefault();
                 }),
                 true, -1));

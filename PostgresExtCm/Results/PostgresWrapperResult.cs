@@ -174,7 +174,7 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes)
+    public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndexes(int[] indexes)
     {
         indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
         Dictionary<int, INpOnColumnWrapper?> result = new();
@@ -183,8 +183,9 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
         return result;
     }
 
-    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string[] columnNames)
+    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnNames(string[]? columnNames = null)
     {
+        columnNames ??= Keys.ToArray(); // get all
         Dictionary<string, INpOnColumnWrapper?> result = new();
         foreach (var colName in columnNames)
             if (TryGetValue(colName, out var value))

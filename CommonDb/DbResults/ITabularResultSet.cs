@@ -12,8 +12,9 @@ public interface INpOnColumnWrapper
 
 public interface INpOnCollectionWrapper
 {
-    IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes);
-    IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string[] columnNames);
+    IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndexes(int[] indexes);
+    IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnNames(string[]? columnNames = null);
+    IEnumerable<string> Keys { get; }
 }
 
 public interface INpOnTableWrapper
