@@ -44,7 +44,6 @@ class Program
             dbFactoryWrapper?.QueryAsync("select * from SEMAST limit 1000").GetAwaiter().GetResult();
         if (resultOfQuery is INpOnTableWrapper tableWrapper && tableWrapper.RowWrappers.Count > 0)
         {
-            // Console.WriteLine($"Rows: {tableWrapper.RowWrappers[1].GetRowWrapper()}");
             foreach (var rowCell in tableWrapper.RowWrappers[0]!.GetRowWrapper())
             {
                 Console.WriteLine(

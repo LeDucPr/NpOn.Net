@@ -43,7 +43,7 @@ class Program
         Func<string, Type, Task<BaseCtrl?>> getDataMethod = async (query, type) =>
         {
             INpOnWrapperResult? result = await factoryWrapper.QueryAsync(query);
-            var ctrl = result?.Converter(type);
+            var ctrl = result?.PostgresConverter(type);
             return ctrl?.FirstOrDefault();
         };
         (string? sessionId, BaseCtrl? connCtrl) = await connectionCtrl.JoiningData(createStringQueryMethod, getDataMethod, true, -1);
