@@ -10,6 +10,7 @@
     <ItemGroup>
       <ProjectReference Include="..\CassandraExtCm\CassandraExtCm.csproj" />
       <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
+      <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
       <ProjectReference Include="..\MongoDbExtCm\MongoDbExtCm.csproj" />
       <ProjectReference Include="..\MssqlExtCm\MssqlExtCm.csproj" />
     </ItemGroup>

@@ -1,5 +1,6 @@
 ﻿using CommonMode;
 using Enums;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -10,7 +11,8 @@ public interface INpOnConnectOption
     bool IsConnectValid(); // validate when initialize 
     bool IsValid([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
     bool IsValidRequireFromBase([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
-    
+    string Code { get; }
+
     INpOnConnectOption SetConnectionString(string connectionString);
     string? ConnectionString { get; }
 
@@ -79,6 +81,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
             return false;
         return validPropertyNames.Contains(propertyName);
     }
+
     #endregion Validate
 
 
@@ -165,6 +168,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
                 _contactAddresses = contactAddresses;
                 return this;
             }
+
             HashSet<string> contactAddressesHashSet = new HashSet<string>(_contactAddresses ?? []);
             foreach (string contactAddress in contactAddresses)
                 contactAddressesHashSet.Add(contactAddress);
@@ -256,4 +260,46 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     public long ConnectionTimeoutSessions => _secondsTimeout;
 
     #endregion UseMultiSessions
+
+
+    #region KeyCode
+
+    private string? _code; 
+
+    public string Code
+    {
+        get
+        {
+            if (_code != null) 
+                return _code;
+
+            var sb = new StringBuilder();
+
+            if (!string.IsNullOrEmpty(ConnectionString))
+                sb.Append($"CS={ConnectionString};");
+
+            if (!string.IsNullOrEmpty(Keyspace))
+                sb.Append($"KS={Keyspace};");
+
+            if (!string.IsNullOrEmpty(DatabaseName))
+                sb.Append($"DB={DatabaseName};");
+
+            if (!string.IsNullOrEmpty(CollectionName))
+                sb.Append($"COLL={CollectionName};");
+
+            if (ContactAddresses is { Length: > 0 })
+                sb.Append($"CA={string.Join(",", ContactAddresses)};");
+
+            if (IsShutdownImmediate) // Default is false
+                sb.Append($"SI={IsShutdownImmediate};");
+
+            if (!IsWaitNextTransaction) // Default is true
+                sb.Append($"WNT={IsWaitNextTransaction};");
+
+            _code = sb.ToString(); // lưu lại để lần sau dùng luôn
+            return _code;
+        }
+    }
+
+    #endregion KeyCode
 }

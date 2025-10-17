@@ -1,6 +1,6 @@
-﻿using CassandraExtCm.Connections;
+﻿using System.Runtime.InteropServices;
+using CassandraExtCm.Connections;
 using CommonDb.Connections;
-using CommonDb.DbCommands;
 using CommonMode;
 using Enums;
 using Microsoft.Extensions.Logging;
@@ -9,7 +9,7 @@ using MongoDbExtCm.Connections;
 using MssqlExtCm.Connections;
 using PostgresExtCm.Connections;
 
-namespace DbFactory;
+namespace DbFactory.FactoryResults;
 
 public interface IDbDriverFactory
 {
@@ -18,10 +18,12 @@ public interface IDbDriverFactory
     /// <summary>
     /// Connection khả dụng
     /// </summary>
-    public int GetAliveConnectionNumbers { get; } 
-    public int GetConnectionNumbers { get; } 
+    public int GetAliveConnectionNumbers { get; }
+
+    public int GetConnectionNumbers { get; }
     public List<NpOnDbConnection>? ValidConnections { get; }
     public NpOnDbConnection? FirstValidConnection { get; }
+    public string DriverOptionKey { get; }
 
     #endregion properties
 
@@ -56,6 +58,7 @@ public class DbDriverFactory : IDbDriverFactory
     private List<NpOnDbConnection>? _connections;
     public int GetAliveConnectionNumbers => _connections?.Count(c => c.Driver.IsValidSession) ?? 0;
     public int GetConnectionNumbers => _connections?.Count() ?? 0;
+
     public List<NpOnDbConnection>? ValidConnections =>
         _connections?.Where(c => c.Driver.IsValidSession).ToList();
 
@@ -63,6 +66,7 @@ public class DbDriverFactory : IDbDriverFactory
         _connections?.Where(c => !c.Driver.IsValidSession).ToList();
 
     public NpOnDbConnection? FirstValidConnection => _connections?.FirstOrDefault(c => c.Driver.IsValidSession);
+    public string DriverOptionKey => _option?.Code ?? throw new Exception(EDbError.Connection.GetDisplayName());
 
     #endregion implement properties
 
@@ -165,20 +169,22 @@ public class DbDriverFactory : IDbDriverFactory
                 throw new InvalidOperationException(
                     "Database type has not been set. Call WithDatabaseType() before creating connections.");
             }
-            
+
             if (_option == null)
             {
                 throw new InvalidOperationException(
                     "Connection options have not been set or are invalid. Call WithOptions() with valid options before creating connections.");
             }
 
-            bool validateOption = eValidateString == null ? !_option.IsValid() : !_option.IsValidRequireFromBase(eValidateString);
+            bool validateOption = eValidateString == null
+                ? !_option.IsValid()
+                : !_option.IsValidRequireFromBase(eValidateString);
             if (validateOption)
             {
                 throw new InvalidOperationException(
                     "Connection options have not been set or are invalid. Call WithOptions() with valid options before creating connections.");
             }
-            
+
             if (_connectionNumber == null)
             {
                 throw new InvalidOperationException(

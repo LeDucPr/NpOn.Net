@@ -36,7 +36,9 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         _dbType = dbType;
         _factory = new DbDriverFactory(dbType, connectOption, connectionNumber);
     }
-    
+
+    public string? FactoryOptionCode => _factory?.DriverOptionKey;
+
     public async Task<INpOnWrapperResult?> QueryAsync(string queryString)
     {
         if (_factory == null) return null;

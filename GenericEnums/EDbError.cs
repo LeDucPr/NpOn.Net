@@ -5,6 +5,7 @@ namespace Enums;
 public enum EDbError
 {
     [Display(Name = "Unknown Error")] Unknown,
+    [Display(Name = "Connect option not found")] ConnectOption,
 
 
     #region Connection
@@ -15,10 +16,12 @@ public enum EDbError
     Infrastructure,
 
     [Display(Name = "Session Error")] Session,
-    
-    [Display(Name = "Not Has Any Alive Connection")] AliveConnection,
-    
-    [Display(Name = "Can Not Create Connection")] CreateConnection,
+
+    [Display(Name = "Not Has Any Alive Connection")]
+    AliveConnection,
+
+    [Display(Name = "Can Not Create Connection")]
+    CreateConnection,
 
     #endregion Connection
 
@@ -56,8 +59,8 @@ public enum EDbError
 
     [Display(Name = "Mssql DataTable (Result is null)")]
     MssqlDataTableNull,
-    
-    [Display(Name = "MongoDb BsonDocument (Result is null)")] 
+
+    [Display(Name = "MongoDb BsonDocument (Result is null)")]
     MongoDbBsonDocumentNull,
 
     #endregion Result

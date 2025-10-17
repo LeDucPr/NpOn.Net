@@ -6,6 +6,11 @@ public class WrapperCacheStore<TKey, TValue> where TKey : notnull
 {
     private readonly ConcurrentDictionary<TKey, WrapperCache<TValue>> _dict = new();
 
+    public Dictionary<TKey, TValue> GetAll()
+    {
+        return _dict.Where(x => !x.Value.IsExpired).ToDictionary(x => x.Key, x => x.Value.Value);
+    }
+
     public TValue GetOrAdd(TKey key, Func<TKey, TValue> factory, TimeSpan? expiresIn = null)
     {
         if (_dict.TryGetValue(key, out var existing))
