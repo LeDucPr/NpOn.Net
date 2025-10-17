@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MongoDbExtCm.Connections;
 
-public class MongoDbConnectOptions : DbNpOnConnectOptions<MongoDbDriver>
+public class MongoDbConnectOption : DbNpOnConnectOption<MongoDbDriver>
 {
     public override bool IsConnectValid()
     {

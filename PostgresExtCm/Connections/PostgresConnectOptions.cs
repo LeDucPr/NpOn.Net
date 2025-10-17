@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace PostgresExtCm.Connections;
 
-public class PostgresConnectOptions : DbNpOnConnectOptions<PostgresDriver>
+public class PostgresConnectOption : DbNpOnConnectOption<PostgresDriver>
 {
     public override bool IsConnectValid()
     {

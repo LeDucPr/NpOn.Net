@@ -40,19 +40,19 @@ class Program
         if (connectionStrings.Count == countConnection)
             return;
 
-        INpOnConnectOptions postgresOptions = new PostgresConnectOptions()
+        INpOnConnectOption postgresOption = new PostgresConnectOption()
             .SetConnectionString(connectionInfoCtrl.ConnectString);
         if (connectionInfoCtrl.DatabaseType == null)
             return;
         EDb dbType = (EDb)connectionInfoCtrl.DatabaseType!;
 
-        INpOnConnectOptions? connectOption = null;
+        INpOnConnectOption? connectOption = null;
         if (dbType == EDb.Cassandra || dbType == EDb.ScyllaDb)
         {
             if (connectionInfoCtrl.Server != null && !string.IsNullOrWhiteSpace(connectionInfoCtrl.Server.Host)
                                                   && !string.IsNullOrWhiteSpace(connectionInfoCtrl.DatabaseName))
             {
-                connectOption = new CassandraConnectOptions()
+                connectOption = new CassandraConnectOption()
                     .SetContactAddresses<CassandraDriver>([connectionInfoCtrl.Server.Host])?
                     .SetConnectionString(connectionInfoCtrl.ConnectString)
                     .SetKeyspace<CassandraDriver>(connectionInfoCtrl.DatabaseName.ToLower());

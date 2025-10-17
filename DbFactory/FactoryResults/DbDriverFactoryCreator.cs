@@ -17,7 +17,7 @@ public class DbDriverFactoryCreator
     public List<string>? DbErrorStrings => DbErrors?.Select(e => e.GetDisplayName()).ToList();
 
     // private 
-    private INpOnConnectOptions? _connectOptions;
+    private INpOnConnectOption? _connectOptions;
     private IDbDriverFactory? _dbDriverFactory;
     public IDbDriverFactory? GetDbDriverFactory => _dbDriverFactory;
     private readonly int _connectionNumber = 1;
@@ -41,19 +41,19 @@ public class DbDriverFactoryCreator
         switch (dbType)
         {
             case EDb.Postgres:
-                _connectOptions = new PostgresConnectOptions().SetConnectionString(connectString);
+                _connectOptions = new PostgresConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
                 break;
             case EDb.MongoDb:
-                _connectOptions = new MongoDbConnectOptions().SetConnectionString(connectString);
+                _connectOptions = new MongoDbConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
                 break;
             case EDb.Cassandra:
-                _connectOptions = new CassandraConnectOptions().SetConnectionString(connectString);
+                _connectOptions = new CassandraConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
                 break;
             case EDb.ScyllaDb:
-                _connectOptions = new CassandraConnectOptions().SetConnectionString(connectString);
+                _connectOptions = new CassandraConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
                 break;
         }

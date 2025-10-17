@@ -18,7 +18,7 @@ public class PostgresDriver : NpOnDbDriver
 
     public override bool IsValidSession => _connection is { State: ConnectionState.Open };
 
-    public PostgresDriver(INpOnConnectOptions options) : base(options)
+    public PostgresDriver(INpOnConnectOption option) : base(option)
     {
     }
 
@@ -30,7 +30,7 @@ public class PostgresDriver : NpOnDbDriver
         }
 
         await DisconnectAsync();
-        _connection = new NpgsqlConnection(Options.ConnectionString);
+        _connection = new NpgsqlConnection(Option.ConnectionString);
         await _connection.OpenAsync(cancellationToken);
         Version = _connection.PostgreSqlVersion.ToString();
         if (_connection.Host != null)

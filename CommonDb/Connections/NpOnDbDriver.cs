@@ -12,7 +12,7 @@ public interface INpOnDbDriver
     string Name { get; }
     string Version { get; }
     public bool IsValidSession { get; }
-    public INpOnConnectOptions Options { get; }
+    public INpOnConnectOption Option { get; }
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnWrapperResult> Query(INpOnDbCommand? command);
@@ -25,7 +25,7 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public abstract string Name { get; set; }
     public abstract string Version { get; set; }
     public abstract bool IsValidSession { get; }
-    public virtual INpOnConnectOptions Options { get; }
+    public virtual INpOnConnectOption Option { get; }
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
     public abstract Task DisconnectAsync();
 
@@ -34,11 +34,11 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
         throw new NotImplementedException("Need to override this method");
     }
 
-    protected NpOnDbDriver(INpOnConnectOptions options)
+    protected NpOnDbDriver(INpOnConnectOption option)
     {
-        if (!options.IsValid() && !options.IsValidRequireFromBase(EConnectLink.SelfValidateConnection.GetDisplayName()))
+        if (!option.IsValid() && !option.IsValidRequireFromBase(EConnectLink.SelfValidateConnection.GetDisplayName()))
             return;
-        Options = options;
+        Option = option;
     }
 
     public async ValueTask DisposeAsync()

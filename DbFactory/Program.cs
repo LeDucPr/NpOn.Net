@@ -42,7 +42,7 @@ class Program
         try
         {
             // Thay thế bằng connection string của bạn
-            var mssqlOptions = new MssqlConnectOptions()
+            var mssqlOptions = new MssqlConnectOption()
                 .SetConnectionString("Server=192.168.7.15;Database=Staging_Account;uid=sa;pwd=6L*4endZxS5#76NK$SsyEAzxXWy#F77R;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True");
 
             IDbDriverFactory factory = new DbDriverFactory(EDb.Mssql, mssqlOptions);
@@ -59,11 +59,12 @@ class Program
 
             // Thay thế bằng câu lệnh query của bạn
             // INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT name, database_id, create_date FROM sys.databases;");
-            INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT * FROM dealer");
+            INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT * FROM dealer where id = '04010'");
             Console.WriteLine($"Executing query: {command.CommandText}\n");
             var result = await driver.Query(command);
 
             PrintMssqlTable(result);
+            Console.WriteLine($"Time query(ms): {result.QueryTimeMilliseconds}");
         }
         catch (Exception ex)
         {
@@ -145,7 +146,7 @@ class Program
     {
         try
         {
-            var postgresOptions = new PostgresConnectOptions()
+            var postgresOptions = new PostgresConnectOption()
                 .SetConnectionString("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
             IDbDriverFactory factory = new DbDriverFactory(EDb.Postgres, postgresOptions);
             var aliveConnections = factory.GetAliveConnectionNumbers;
@@ -257,7 +258,7 @@ class Program
     public static async Task RunMongoDbExample()
     {
         var mongoOptions =
-                new MongoDbConnectOptions().SetConnectionString(
+                new MongoDbConnectOption().SetConnectionString(
                         "mongodb://root:password@localhost:27017/?authSource=admin")
                     .SetDatabaseName("config")?
                     .SetCollectionName<MongoDbDriver>($"config{DateTime.Now:DDMMYYYY}")
@@ -359,7 +360,7 @@ class Program
     [Obsolete("Obsolete")]
     public static async Task RunCassandraExample()
     {
-        var cassandraOptions = new CassandraConnectOptions()
+        var cassandraOptions = new CassandraConnectOption()
             .SetContactAddresses<CassandraDriver>(["127.0.0.1"])?
             .SetConnectionString("127.0.0.1:9042")
             .SetKeyspace<CassandraDriver>("ScarLight".ToLower());

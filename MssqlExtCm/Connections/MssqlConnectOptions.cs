@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace MssqlExtCm.Connections;
 
-public class MssqlConnectOptions : DbNpOnConnectOptions<MssqlDriver>
+public class MssqlConnectOption : DbNpOnConnectOption<MssqlDriver>
 {
     public override bool IsConnectValid()
     {

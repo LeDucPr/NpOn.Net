@@ -56,9 +56,9 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
     public sealed override ConnectionState State => _state;
     public override INpOnDbDriver Driver => _dbDriver;
 
-    public NpOnDbConnection(INpOnConnectOptions options)
+    public NpOnDbConnection(INpOnConnectOption option)
     {
-        _dbDriver = (T)Activator.CreateInstance(typeof(T), options)!;
+        _dbDriver = (T)Activator.CreateInstance(typeof(T), option)!;
     }
 
     public NpOnDbConnection(INpOnDbDriver driver)

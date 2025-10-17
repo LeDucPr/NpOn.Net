@@ -21,9 +21,9 @@ public class CassandraDriver : NpOnDbDriver
     public override bool IsValidSession => _session is { IsDisposed: false };
 
     private ISession? NewSession =>
-        _cluster?.ConnectAsync(Options.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();
+        _cluster?.ConnectAsync(Option.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();
 
-    public CassandraDriver(CassandraConnectOptions options) : base(options)
+    public CassandraDriver(CassandraConnectOption option) : base(option)
     {
     }
 
@@ -31,7 +31,7 @@ public class CassandraDriver : NpOnDbDriver
     {
         if (_session is { IsDisposed: false })
         {
-            if (Options.IsWaitNextTransaction)
+            if (Option.IsWaitNextTransaction)
             {
                 return; // Đã có session hợp lệ và option yêu cầu chờ.
             }
@@ -40,13 +40,13 @@ public class CassandraDriver : NpOnDbDriver
         }
 
         var cassandraBuilder = Cluster.Builder();
-        if (Options.ContactAddresses is { Length: > 0 })
+        if (Option.ContactAddresses is { Length: > 0 })
         {
-            cassandraBuilder.AddContactPoints(Options.ContactAddresses);
+            cassandraBuilder.AddContactPoints(Option.ContactAddresses);
         }
 
         _cluster = cassandraBuilder.Build();
-        _session = await _cluster.ConnectAsync(Options.Keyspace).ConfigureAwait(false);
+        _session = await _cluster.ConnectAsync(Option.Keyspace).ConfigureAwait(false);
         _mapper = new Mapper(_session);
         Name = cassandraBuilder.ApplicationName;
         Version = cassandraBuilder.ApplicationVersion;
@@ -54,7 +54,7 @@ public class CassandraDriver : NpOnDbDriver
     
     public override async Task DisconnectAsync()
     {
-        if (!Options.IsShutdownImmediate)
+        if (!Option.IsShutdownImmediate)
         {
             if (_session != null)
                 await _session.ShutdownAsync().ConfigureAwait(false); // chờ transaction hoàn tất

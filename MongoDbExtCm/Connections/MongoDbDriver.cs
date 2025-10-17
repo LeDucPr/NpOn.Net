@@ -21,7 +21,7 @@ public class MongoDbDriver : NpOnDbDriver
 
     public override bool IsValidSession => _client != null; //&& _collection != null;
 
-    public MongoDbDriver(MongoDbConnectOptions options) : base(options)
+    public MongoDbDriver(MongoDbConnectOption option) : base(option)
     {
     }
 
@@ -39,14 +39,14 @@ public class MongoDbDriver : NpOnDbDriver
 
         try
         {
-            var settings = MongoClientSettings.FromConnectionString(Options.ConnectionString);
+            var settings = MongoClientSettings.FromConnectionString(Option.ConnectionString);
             settings.ServerApi = new ServerApi(ServerApiVersion.V1);
             _client = new MongoClient(settings);
-            var database = _client.GetDatabase(Options.DatabaseName); // database
+            var database = _client.GetDatabase(Option.DatabaseName); // database
             await database.RunCommandAsync((Command<BsonDocument>)"{ping: 1}", cancellationToken: cancellationToken);
 
-            if (!string.IsNullOrWhiteSpace(Options.CollectionName))  
-                _collection = database.GetCollection<BsonDocument>(Options.CollectionName);
+            if (!string.IsNullOrWhiteSpace(Option.CollectionName))  
+                _collection = database.GetCollection<BsonDocument>(Option.CollectionName);
 
             // Get server version for display
             var buildInfoCommand = new BsonDocument("buildInfo", 1);

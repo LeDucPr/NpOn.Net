@@ -29,7 +29,7 @@ public interface IDbDriverFactory
     #region Create Connections
 
     IDbDriverFactory WithDatabaseType(EDb eDb);
-    IDbDriverFactory WithOption(INpOnConnectOptions option);
+    IDbDriverFactory WithOption(INpOnConnectOption option);
     IDbDriverFactory CreateConnections(int connectionNumber = 1);
     Task<IDbDriverFactory> Reset(bool isResetParameters = false);
 
@@ -44,7 +44,7 @@ public class DbDriverFactory : IDbDriverFactory
     #region private parameters
 
     private EDb? _eDb;
-    private INpOnConnectOptions? _option;
+    private INpOnConnectOption? _option;
     private int? _connectionNumber;
 
     #endregion private parameters
@@ -69,7 +69,7 @@ public class DbDriverFactory : IDbDriverFactory
 
     #region Create Connections
 
-    public DbDriverFactory(EDb eDb, INpOnConnectOptions option, int connectionNumber = 1)
+    public DbDriverFactory(EDb eDb, INpOnConnectOption option, int connectionNumber = 1)
     {
         if (!option.IsConnectValid())
             throw new ArgumentException("Config Option for Database is Invalid.", nameof(option));
@@ -86,7 +86,7 @@ public class DbDriverFactory : IDbDriverFactory
         return this;
     }
 
-    public IDbDriverFactory WithOption(INpOnConnectOptions option)
+    public IDbDriverFactory WithOption(INpOnConnectOption option)
     {
         _option = option;
         SelfCreateConnections(EConnectLink.SelfValidateConnection.GetDisplayName());
@@ -185,9 +185,9 @@ public class DbDriverFactory : IDbDriverFactory
                     "Connection number have not been set or are invalid. Call CreateConnections() before creating connections.");
             }
 
-            if (typeof(INpOnConnectOptions) == _option.GetType())
+            if (typeof(INpOnConnectOption) == _option.GetType())
             {
-                throw new TypeInitializationException(typeof(INpOnConnectOptions).ToString(),
+                throw new TypeInitializationException(typeof(INpOnConnectOption).ToString(),
                     new Exception("Need to configure driver correctly"));
             }
 
@@ -235,24 +235,24 @@ public class DbDriverFactory : IDbDriverFactory
 
     #region Cassandra
 
-    private NpOnDbConnection CreateCassandraConnection(INpOnConnectOptions options)
+    private NpOnDbConnection CreateCassandraConnection(INpOnConnectOption option)
     {
-        if (options is not CassandraConnectOptions cassandraOptions)
+        if (option is not CassandraConnectOption cassandraOptions)
         {
             throw new ArgumentException("Invalid options for Cassandra. Expected CassandraConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         INpOnDbDriver driver = CreateCassandraDriver(cassandraOptions);
         return new NpOnDbConnection<CassandraDriver>(driver);
     }
 
-    private INpOnDbDriver CreateCassandraDriver(INpOnConnectOptions options)
+    private INpOnDbDriver CreateCassandraDriver(INpOnConnectOption option)
     {
-        if (options is not CassandraConnectOptions cassandraOptions)
+        if (option is not CassandraConnectOption cassandraOptions)
         {
             throw new ArgumentException("Invalid options provided for CassandraCM. Expected CassandraConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         return new CassandraDriver(cassandraOptions);
@@ -263,24 +263,24 @@ public class DbDriverFactory : IDbDriverFactory
 
     #region Postgres
 
-    private NpOnDbConnection CreatePostgresConnection(INpOnConnectOptions options)
+    private NpOnDbConnection CreatePostgresConnection(INpOnConnectOption option)
     {
-        if (options is not PostgresConnectOptions postgresOptions)
+        if (option is not PostgresConnectOption postgresOptions)
         {
             throw new ArgumentException("Invalid options for Postgres. Expected PostgresConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         INpOnDbDriver driver = CreatePostgresDriver(postgresOptions);
         return new NpOnDbConnection<PostgresDriver>(driver);
     }
 
-    private INpOnDbDriver CreatePostgresDriver(INpOnConnectOptions options)
+    private INpOnDbDriver CreatePostgresDriver(INpOnConnectOption option)
     {
-        if (options is not PostgresConnectOptions postgresOptions)
+        if (option is not PostgresConnectOption postgresOptions)
         {
             throw new ArgumentException("Invalid options provided for PostgresSQL. Expected PostgresConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         return new PostgresDriver(postgresOptions);
@@ -291,24 +291,24 @@ public class DbDriverFactory : IDbDriverFactory
 
     #region MongoDb
 
-    private NpOnDbConnection CreateMongoDbConnection(INpOnConnectOptions options)
+    private NpOnDbConnection CreateMongoDbConnection(INpOnConnectOption option)
     {
-        if (options is not MongoDbConnectOptions mongoOptions)
+        if (option is not MongoDbConnectOption mongoOptions)
         {
             throw new ArgumentException("Invalid options for MongoDB. Expected MongoDbConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         INpOnDbDriver driver = CreateMongoDbDriver(mongoOptions);
         return new NpOnDbConnection<MongoDbDriver>(driver);
     }
 
-    private INpOnDbDriver CreateMongoDbDriver(INpOnConnectOptions options)
+    private INpOnDbDriver CreateMongoDbDriver(INpOnConnectOption option)
     {
-        if (options is not MongoDbConnectOptions mongoOptions)
+        if (option is not MongoDbConnectOption mongoOptions)
         {
             throw new ArgumentException("Invalid options provided for MongoDB. Expected MongoDbConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         return new MongoDbDriver(mongoOptions);
@@ -319,24 +319,24 @@ public class DbDriverFactory : IDbDriverFactory
 
     #region Mssql
 
-    private NpOnDbConnection CreateMssqlDbConnection(INpOnConnectOptions options)
+    private NpOnDbConnection CreateMssqlDbConnection(INpOnConnectOption option)
     {
-        if (options is not MssqlConnectOptions mssqlOptions)
+        if (option is not MssqlConnectOption mssqlOptions)
         {
             throw new ArgumentException("Invalid options for Mssql. Expected MssqlConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         INpOnDbDriver driver = CreateMssqlDriver(mssqlOptions);
         return new NpOnDbConnection<MssqlDriver>(driver);
     }
 
-    private INpOnDbDriver CreateMssqlDriver(INpOnConnectOptions options)
+    private INpOnDbDriver CreateMssqlDriver(INpOnConnectOption option)
     {
-        if (options is not MssqlConnectOptions mssqlOptions)
+        if (option is not MssqlConnectOption mssqlOptions)
         {
             throw new ArgumentException("Invalid options provided for Mssql. Expected MssqlConnectOptions.",
-                nameof(options));
+                nameof(option));
         }
 
         return new MssqlDriver(mssqlOptions);

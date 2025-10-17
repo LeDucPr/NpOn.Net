@@ -28,13 +28,13 @@ public class DbFactoryWrapper : IDbFactoryWrapper
     /// <summary>
     /// Generic initial
     /// </summary>
-    /// <param name="connectOptions"></param>
+    /// <param name="connectOption"></param>
     /// <param name="dbType"></param>
     /// <param name="connectionNumber"></param>
-    public DbFactoryWrapper(INpOnConnectOptions connectOptions, EDb dbType, int connectionNumber = 1)
+    public DbFactoryWrapper(INpOnConnectOption connectOption, EDb dbType, int connectionNumber = 1)
     {
         _dbType = dbType;
-        _factory = new DbDriverFactory(dbType, connectOptions, connectionNumber);
+        _factory = new DbDriverFactory(dbType, connectOption, connectionNumber);
     }
     
     public async Task<INpOnWrapperResult?> QueryAsync(string queryString)

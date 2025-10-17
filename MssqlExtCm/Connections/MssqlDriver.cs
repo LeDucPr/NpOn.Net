@@ -18,7 +18,7 @@ public class MssqlDriver : NpOnDbDriver
 
     public override bool IsValidSession => _connection is { State: ConnectionState.Open };
 
-    public MssqlDriver(INpOnConnectOptions options) : base(options)
+    public MssqlDriver(INpOnConnectOption option) : base(option)
     {
         Name = "Mssql";
         Version = "0.0";
@@ -32,7 +32,7 @@ public class MssqlDriver : NpOnDbDriver
         }
 
         await DisconnectAsync();
-        _connection = new SqlConnection(Options.ConnectionString);
+        _connection = new SqlConnection(Option.ConnectionString);
         await _connection.OpenAsync(cancellationToken);
         Version = _connection.ServerVersion;
         if (!string.IsNullOrEmpty(_connection.DataSource))

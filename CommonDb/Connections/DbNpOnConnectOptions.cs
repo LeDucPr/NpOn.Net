@@ -5,39 +5,39 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CommonDb.Connections;
 
-public interface INpOnConnectOptions
+public interface INpOnConnectOption
 {
     bool IsConnectValid(); // validate when initialize 
     bool IsValid([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
     bool IsValidRequireFromBase([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null);
     
-    INpOnConnectOptions SetConnectionString(string connectionString);
+    INpOnConnectOption SetConnectionString(string connectionString);
     string? ConnectionString { get; }
 
-    INpOnConnectOptions? SetKeyspace<T>(string keyspace) where T : INpOnDbDriver;
+    INpOnConnectOption? SetKeyspace<T>(string keyspace) where T : INpOnDbDriver;
     string? Keyspace { get; }
 
-    INpOnConnectOptions? SetDatabaseName(string databaseName);
+    INpOnConnectOption? SetDatabaseName(string databaseName);
     string? DatabaseName { get; }
 
-    INpOnConnectOptions? SetCollectionName<T>(string keyspace) where T : INpOnDbDriver;
+    INpOnConnectOption? SetCollectionName<T>(string keyspace) where T : INpOnDbDriver;
     string? CollectionName { get; }
 
-    INpOnConnectOptions? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver;
+    INpOnConnectOption? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver;
     string[]? ContactAddresses { get; }
 
-    INpOnConnectOptions SetShutdownImmediate(bool isShutdownImmediate);
+    INpOnConnectOption SetShutdownImmediate(bool isShutdownImmediate);
     bool IsShutdownImmediate { get; }
 
-    INpOnConnectOptions SetWaitNextTransaction(bool isWaitNextTransaction);
+    INpOnConnectOption SetWaitNextTransaction(bool isWaitNextTransaction);
     bool IsWaitNextTransaction { get; }
 
-    INpOnConnectOptions SetSessionTimeout(long secondsTimeout);
+    INpOnConnectOption SetSessionTimeout(long secondsTimeout);
     void ResetSessionTimeout();
     long ConnectionTimeoutSessions { get; }
 }
 
-public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
+public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 {
     // private bool _isUseMultiSessions = false;
     private bool _isShutdownImmediate = false;
@@ -47,8 +47,8 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
     private DateTime _expiredConnectionTime;
     private string? _connectionString;
 
-    protected readonly ILogger<DbNpOnConnectOptions<T>> _logger =
-        new Logger<DbNpOnConnectOptions<T>>(new NullLoggerFactory());
+    protected readonly ILogger<DbNpOnConnectOption<T>> _logger =
+        new Logger<DbNpOnConnectOption<T>>(new NullLoggerFactory());
 
     #region Validate
 
@@ -58,7 +58,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
     {
         try
         {
-            if (GetType() == typeof(INpOnConnectOptions))
+            if (GetType() == typeof(INpOnConnectOption))
                 throw new NotImplementedException("request Validator configuration from inherited class.");
             return true;
         }
@@ -84,7 +84,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #region ConnectionString
 
-    public INpOnConnectOptions SetConnectionString(string connectionString)
+    public INpOnConnectOption SetConnectionString(string connectionString)
     {
         _connectionString = connectionString;
         return this;
@@ -102,7 +102,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
     private string? _keyspace = string.Empty; // cassandra, scyllaDb
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOptions SetKeyspace<T>(string keyspace) where T : INpOnDbDriver
+    public virtual INpOnConnectOption SetKeyspace<T>(string keyspace) where T : INpOnDbDriver
     {
         try
         {
@@ -128,7 +128,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
     private string? _collection = string.Empty; // mongoDb
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOptions SetCollectionName<T>(string collection) where T : INpOnDbDriver
+    public virtual INpOnConnectOption SetCollectionName<T>(string collection) where T : INpOnDbDriver
     {
         try
         {
@@ -154,7 +154,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
     private string[]? _contactAddresses;
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOptions? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver
+    public virtual INpOnConnectOption? SetContactAddresses<T>(string[]? contactAddresses) where T : INpOnDbDriver
     {
         try
         {
@@ -188,7 +188,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
     private string? _databaseName = string.Empty; // postgres
 
     [Obsolete("Obsolete")]
-    public virtual INpOnConnectOptions? SetDatabaseName(string databaseName)
+    public virtual INpOnConnectOption? SetDatabaseName(string databaseName)
     {
         try
         {
@@ -213,7 +213,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #region SetShutdownImmediate
 
-    public INpOnConnectOptions SetShutdownImmediate(bool isShutdownImmediate = false)
+    public INpOnConnectOption SetShutdownImmediate(bool isShutdownImmediate = false)
     {
         _isShutdownImmediate = isShutdownImmediate;
         return this;
@@ -226,7 +226,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #region WaitNextTransaction
 
-    public INpOnConnectOptions SetWaitNextTransaction(bool isWaitNextTransaction = true)
+    public INpOnConnectOption SetWaitNextTransaction(bool isWaitNextTransaction = true)
     {
         _isWaitNextTransaction = isWaitNextTransaction;
         return this;
@@ -239,7 +239,7 @@ public abstract class DbNpOnConnectOptions<T> : INpOnConnectOptions
 
     #region UseMultiSessions
 
-    public INpOnConnectOptions SetSessionTimeout(long secondsTimeout = 30)
+    public INpOnConnectOption SetSessionTimeout(long secondsTimeout = 30)
     {
         _secondsTimeout = secondsTimeout;
         _currentConnectionTime = DateTime.Now;
