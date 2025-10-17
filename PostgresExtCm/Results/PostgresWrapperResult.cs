@@ -9,7 +9,7 @@ namespace PostgresExtCm.Results;
 /// <summary>
 /// ColumnWrapper
 /// </summary>
-public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary<string, INpOnCell>>
+public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
@@ -44,12 +44,15 @@ public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary
 
         return dictionary;
     }
+
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
 }
 
 /// <summary>
 /// ColumnWrapper (truy cập được từ Key-integer hoặc Key-string)
 /// </summary>
-public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDictionary<int, INpOnCell>>
+public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDictionary<int, INpOnCell>>,
+    INpOnColumnWrapper
 {
     private readonly string _columnName;
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
@@ -87,13 +90,15 @@ public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDicti
 
         return dictionary;
     }
+
+    public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
 }
 
 /// <summary>
 /// Collection bọc Column -> truy cập theo cột/hàng 
 /// </summary>
 public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColumnWrapper>,
-    IReadOnlyDictionary<int, PostgresColumnWrapper>
+    IReadOnlyDictionary<int, PostgresColumnWrapper>, INpOnCollectionWrapper
 {
     private readonly List<PostgresColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
@@ -168,9 +173,27 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes)
+    {
+        indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
+        Dictionary<int, INpOnColumnWrapper?> result = new();
+        foreach (var index in indexes)
+            result.Add(index, _columnWrappers[index]);
+        return result;
+    }
+
+    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string[] columnNames)
+    {
+        Dictionary<string, INpOnColumnWrapper?> result = new();
+        foreach (var colName in columnNames)
+            if (TryGetValue(colName, out var value))
+                result.Add(colName, value);
+        return result;
+    }
 }
 
-public class PostgresResultSetWrapper : NpOnWrapperResult
+public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     private readonly DataTable _dataTable;
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
@@ -214,4 +237,17 @@ public class PostgresResultSetWrapper : NpOnWrapperResult
         Columns = new PostgresColumnCollection(_dataTable, _schemaMap); // schema -> Column
         SetSuccess();
     }
+
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
+    {
+        get
+        {
+            Dictionary<int, INpOnRowWrapper?> result = new();
+            foreach (var row in Rows)
+                result.Add(row.Key, row.Value);
+            return result;
+        }
+    }
+
+    public INpOnCollectionWrapper CollectionWrappers => Columns;
 }

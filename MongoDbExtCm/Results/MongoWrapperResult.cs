@@ -26,7 +26,7 @@ public class MongoColumnInfo
 /// <summary>
 /// Wrapper (Row/BsonDocument) of MongoDB
 /// </summary>
-public class MongoRowWrapper : NpOnWrapperResult<BsonDocument, IReadOnlyDictionary<string, INpOnCell>>
+public class MongoRowWrapper : NpOnWrapperResult<BsonDocument, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
     private readonly IReadOnlyDictionary<string, MongoColumnInfo> _schemaMap;
 
@@ -78,12 +78,15 @@ public class MongoRowWrapper : NpOnWrapperResult<BsonDocument, IReadOnlyDictiona
 
         return dictionary;
     }
+
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
 }
 
 /// <summary>
 /// Wrapper (Column/Field) of MongoDB.
 /// </summary>
-public class MongoColumnWrapper : NpOnWrapperResult<IReadOnlyList<BsonDocument>, IReadOnlyDictionary<int, INpOnCell>>
+public class MongoColumnWrapper : NpOnWrapperResult<IReadOnlyList<BsonDocument>, IReadOnlyDictionary<int, INpOnCell>>,
+    INpOnColumnWrapper
 {
     private readonly string _columnName;
     private readonly IReadOnlyDictionary<string, MongoColumnInfo> _schemaMap;
@@ -109,13 +112,15 @@ public class MongoColumnWrapper : NpOnWrapperResult<IReadOnlyList<BsonDocument>,
 
         return dictionary;
     }
+
+    public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
 }
 
 /// <summary>
 /// Custom MongoDB.
 /// </summary>
 public class MongoColumnCollection : IReadOnlyDictionary<string, MongoColumnWrapper>,
-    IReadOnlyDictionary<int, MongoColumnWrapper>
+    IReadOnlyDictionary<int, MongoColumnWrapper>, INpOnCollectionWrapper
 {
     private readonly List<MongoColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
@@ -192,12 +197,30 @@ public class MongoColumnCollection : IReadOnlyDictionary<string, MongoColumnWrap
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes)
+    {
+        indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
+        Dictionary<int, INpOnColumnWrapper?> result = new();
+        foreach (var index in indexes)
+            result.Add(index, _columnWrappers[index]);
+        return result;
+    }
+
+    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string[] columnNames)
+    {
+        Dictionary<string, INpOnColumnWrapper?> result = new();
+        foreach (var colName in columnNames)
+            if (TryGetValue(colName, out var value))
+                result.Add(colName, value);
+        return result;
+    }
 }
 
 /// <summary>
 /// BsonDocument
 /// </summary>
-public class MongoResultSetWrapper : NpOnWrapperResult
+public class MongoResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     private readonly IReadOnlyList<BsonDocument> _allRows;
     private readonly IReadOnlyDictionary<string, MongoColumnInfo> _schemaMap;
@@ -212,6 +235,7 @@ public class MongoResultSetWrapper : NpOnWrapperResult
             SetFail(EDbError.MongoDbBsonDocumentNull);
             return;
         }
+
         _allRows = new List<BsonDocument>();
 
         var schemaMap = new Dictionary<string, MongoColumnInfo>();
@@ -242,4 +266,17 @@ public class MongoResultSetWrapper : NpOnWrapperResult
 
         Columns = new MongoColumnCollection(_allRows, _schemaMap);
     }
+
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
+    {
+        get
+        {
+            Dictionary<int, INpOnRowWrapper?> result = new();
+            foreach (var row in Rows)
+                result.Add(row.Key, row.Value);
+            return result;
+        }
+    }
+
+    public INpOnCollectionWrapper CollectionWrappers => Columns;
 }

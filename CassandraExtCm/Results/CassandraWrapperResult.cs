@@ -9,7 +9,7 @@ namespace CassandraExtCm.Results;
 /// <summary>
 /// Cassandra Row -> Cell 
 /// </summary>
-public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<string, INpOnCell>>
+public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
 {
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
 
@@ -42,12 +42,15 @@ public class CassandraRowWrapper : NpOnWrapperResult<Row, IReadOnlyDictionary<st
 
         return dictionary;
     }
+
+    public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper() => Result;
 }
 
 /// <summary>
 /// Cassandra Column -> Cell 
 /// </summary>
-public class CassandraColumnWrapper : NpOnWrapperResult<IReadOnlyList<Row>, IReadOnlyDictionary<int, INpOnCell>>
+public class CassandraColumnWrapper : NpOnWrapperResult<IReadOnlyList<Row>, IReadOnlyDictionary<int, INpOnCell>>,
+    INpOnColumnWrapper
 {
     private readonly string _columnName;
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
@@ -80,13 +83,15 @@ public class CassandraColumnWrapper : NpOnWrapperResult<IReadOnlyList<Row>, IRea
 
         return dictionary;
     }
+
+    public IReadOnlyDictionary<int, INpOnCell> GetColumnWrapper() => Result;
 }
 
 /// <summary>
 /// Collection bọc Column -> truy cập theo cột/hàng 
 /// </summary>
 public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraColumnWrapper>,
-    IReadOnlyDictionary<int, CassandraColumnWrapper>
+    IReadOnlyDictionary<int, CassandraColumnWrapper>, INpOnCollectionWrapper
 {
     private readonly List<CassandraColumnWrapper> _columnWrappers;
     private readonly IReadOnlyDictionary<string, int> _nameToIndexMap;
@@ -165,12 +170,30 @@ public class CassandraColumnCollection : IReadOnlyDictionary<string, CassandraCo
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     #endregion
+
+    public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes)
+    {
+        indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
+        Dictionary<int, INpOnColumnWrapper?> result = new();
+        foreach (var index in indexes)
+            result.Add(index, _columnWrappers[index]);
+        return result;
+    }
+
+    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string[] columnNames)
+    {
+        Dictionary<string, INpOnColumnWrapper?> result = new();
+        foreach (var colName in columnNames)
+            if (TryGetValue(colName, out var value))
+                result.Add(colName, value);
+        return result;
+    }
 }
 
 /// <summary>
 /// Data result of Query 
 /// </summary>
-public class CassandraResultSetWrapper : NpOnWrapperResult
+public class CassandraResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
     private readonly IReadOnlyList<Row> _allRows;
     private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
@@ -218,4 +241,17 @@ public class CassandraResultSetWrapper : NpOnWrapperResult
 
         SetSuccess();
     }
+
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
+    {
+        get
+        {
+            Dictionary<int, INpOnRowWrapper?> result = new();
+            foreach (var row in Rows)
+                result.Add(row.Key, row.Value);
+            return result;
+        }
+    }
+
+    public INpOnCollectionWrapper CollectionWrappers => Columns;
 }

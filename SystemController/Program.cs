@@ -31,7 +31,7 @@ class Program
         InitialConnection initialConnection = new InitialConnection(factoryWrapper, connectionCtrlDecoy);
         BaseCtrl ctrl = initialConnection.InitializationObject;
         // var aaaaaaaaaa = initialConnection.FirstInitializationSessionId?.GetLookupData(); // List(output detail with foreach)
-        
+
         if (ctrl is not ConnectionCtrl connectionCtrl)
             return;
         ConnectionInfoCtrl? connectionInfoCtrl = connectionCtrl.ConnectionInfo;
@@ -41,15 +41,17 @@ class Program
 
 
         INpOnWrapperResult? resultOfQuery =
-            dbFactoryWrapper?.QueryAsync("select * from SEMAST limit 10").GetAwaiter().GetResult();
+            dbFactoryWrapper?.QueryAsync("select * from SEMAST limit 1000").GetAwaiter().GetResult();
+        if (resultOfQuery is INpOnTableWrapper tableWrapper && tableWrapper.RowWrappers.Count > 0)
+        {
+            // Console.WriteLine($"Rows: {tableWrapper.RowWrappers[1].GetRowWrapper()}");
+            foreach (var rowCell in tableWrapper.RowWrappers[0]!.GetRowWrapper())
+            {
+                Console.WriteLine(
+                    $"RowsCell --- {rowCell.Key}: Type- {rowCell.Value.DbType};  Value - {rowCell.Value.ValueAsObject}");
+            }
+        }
+
         Console.WriteLine($"Thời gian thực thi: {resultOfQuery?.QueryTimeMilliseconds} ms");
-        //
-        INpOnWrapperResult? resultOfQuery3 =
-            dbFactoryWrapper?.QueryAsync("select * from SEMAST limit 100").GetAwaiter().GetResult();
-        Console.WriteLine($"Thời gian thực thi: {resultOfQuery3?.QueryTimeMilliseconds} ms");
-        // 
-        INpOnWrapperResult? resultOfQuery2 =
-            dbFactoryWrapper?.QueryAsync("select * from SEMAST ").GetAwaiter().GetResult();
-        Console.WriteLine($"Thời gian thực thi: {resultOfQuery2?.QueryTimeMilliseconds} ms");
     }
 }
