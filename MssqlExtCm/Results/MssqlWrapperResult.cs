@@ -170,6 +170,7 @@ public class MssqlColumnCollection : IReadOnlyDictionary<string, MssqlColumnWrap
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
     public IReadOnlyDictionary<int, INpOnColumnWrapper?> GetColumnWrapperByIndex(int[] indexes)
     {
         indexes = indexes.OrderByDescending(x => x).Where(x => x < Count).Distinct().ToArray();
@@ -179,17 +180,20 @@ public class MssqlColumnCollection : IReadOnlyDictionary<string, MssqlColumnWrap
         {
             result.Add(index, _columnWrappers[index]);
         }
-        
+
         return result;
     }
 
-    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string columnName)
+    public IReadOnlyDictionary<string, INpOnColumnWrapper?> GetColumnWrapperByColumnName(string[] columnNames)
     {
-        if (TryGetValue(columnName, out var value))
+        Dictionary<string, INpOnColumnWrapper?> result = new();
+        foreach (var colName in columnNames)
         {
-            return value;
+            if (TryGetValue(colName, out var value))
+                result.Add(colName, value);
         }
-        throw new NotImplementedException();
+
+        return result;
     }
 }
 
@@ -238,13 +242,16 @@ public class MssqlResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         SetSuccess();
     }
 
-    public IReadOnlyDictionary<string, INpOnCell> GetTableWrapper()
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
     {
-        throw new NotImplementedException();
+        get
+        {
+            Dictionary<int, INpOnRowWrapper?> result = new();
+            foreach (var row in Rows)
+                result.Add(row.Key, row.Value);
+            return result;
+        }
     }
 
-    public IReadOnlyDictionary<int, INpOnCell> GetCollectionWrapper()
-    {
-        throw new NotImplementedException();
-    }
+    public INpOnCollectionWrapper CollectionWrappers => Columns;
 }
