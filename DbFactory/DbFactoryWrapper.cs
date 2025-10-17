@@ -2,7 +2,6 @@
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using DbFactory.FactoryResults;
-using DbFactory.HandlerFlows;
 using Enums;
 
 namespace DbFactory;
@@ -18,11 +17,14 @@ public class DbFactoryWrapper : IDbFactoryWrapper
     /// <param name="openConnectString">Tham sô kết nối được mặc định cho khởi động là 1</param>
     /// <param name="dbType"></param>
     /// <param name="connectionNumber"></param>
-    public DbFactoryWrapper(string openConnectString, EDb dbType, int connectionNumber = 1) 
+    /// <param name="isUseCaching"></param>
+    public DbFactoryWrapper(string openConnectString, EDb dbType, int connectionNumber = 1, bool isUseCaching = true) 
     {
         _dbType = dbType;
         DbDriverFactoryCreator factoryCreator = new DbDriverFactoryCreator(_dbType, openConnectString, connectionNumber);
         _factory = factoryCreator.GetDbDriverFactory;
+        if (isUseCaching)
+            this.AddToDbFactoryWrapperCache();
     }
 
     /// <summary>
@@ -31,10 +33,13 @@ public class DbFactoryWrapper : IDbFactoryWrapper
     /// <param name="connectOption"></param>
     /// <param name="dbType"></param>
     /// <param name="connectionNumber"></param>
-    public DbFactoryWrapper(INpOnConnectOption connectOption, EDb dbType, int connectionNumber = 1)
+    /// <param name="isUseCaching"></param>
+    public DbFactoryWrapper(INpOnConnectOption connectOption, EDb dbType, int connectionNumber = 1, bool isUseCaching = true)
     {
         _dbType = dbType;
         _factory = new DbDriverFactory(dbType, connectOption, connectionNumber);
+        if (isUseCaching)
+            this.AddToDbFactoryWrapperCache();
     }
 
     public string? FactoryOptionCode => _factory?.DriverOptionKey;

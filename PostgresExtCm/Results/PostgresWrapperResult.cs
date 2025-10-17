@@ -63,14 +63,19 @@ public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDicti
 
     protected override IReadOnlyDictionary<int, INpOnCell> CreateResult()
     {
-        var dictionary = new Dictionary<int, INpOnCell>();
         var schemaInfo = _schemaMap[_columnName];
         Type columnType = schemaInfo.DataType;
         Type genericCellType = typeof(NpOnCell<>).MakeGenericType(columnType);
+        var dictionary = new Dictionary<int, INpOnCell>(Parent.Rows.Count);
 
         for (int i = 0; i < Parent.Rows.Count; i++)
         {
             DataRow row = Parent.Rows[i];
+            object? cellValue = row[_columnName];
+
+            if (cellValue == DBNull.Value)
+                cellValue = null;
+
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
                 row[_columnName],
