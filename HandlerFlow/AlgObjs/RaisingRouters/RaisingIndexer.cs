@@ -295,85 +295,84 @@ public static partial class RaisingIndexer
     }
 
 
-    // public static async Task<(string? sessionId, List<BaseCtrl>? outCtrls)> JoiningListData(
-    //     this List<BaseCtrl>? ctrlList,
-    //     Func<List<BaseCtrl>, EDb, Task<string>>? createBulkQueryMethod,
-    //     Func<string, Type, Task<List<BaseCtrl>?>>? getBulkDataMethod,
-    //     EDb dbType = EDb.Postgres,
-    //     bool isLoadMapper = true,
-    //     int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
-    //     int currentRecursionLoop = 1,
-    //     string? sessionId = null
-    // )
-    // {
-    //     // ------ Validate Input ------
-    //     if (ctrlList is not { Count: > 0 } || !ctrlList.All(c => c.IsTableLoaderAttached()))
-    //         return (null, ctrlList);
-    //
-    //     if (createBulkQueryMethod == null || getBulkDataMethod == null)
-    //         return (sessionId, ctrlList);
-    //
-    //     // Validate that all objects have their primary key values set.
-    //     if (ctrlList.Any(c => c.PrimaryKeys()?.Any(pk => pk.Property.GetValue(c) == null) ?? true))
-    //         return (sessionId, ctrlList);
-    //     if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
-    //         return (sessionId, ctrlList);
-    //     sessionId = !string.IsNullOrWhiteSpace(sessionId)
-    //         ? sessionId
-    //         : IndexerMode.CreateGuidWithStackTrace(); // sessionId for joining list of data 
-    //
-    //
-    //     var groupedByType = ctrlList
-    //         .GroupBy(t => t.GetType())
-    //         .ToList();
-    //
-    //     foreach (var group in groupedByType)
-    //     {
-    //         // ------ Fetch Bulk Data ------
-    //         Type ctrlType = ctrlList.First().GetType();
-    //         string? bulkQuery = await WrapperProcessers.Processer(createBulkQueryMethod!, ctrlList, dbType);
-    //         if (string.IsNullOrWhiteSpace(bulkQuery))
-    //             return (sessionId, ctrlList);
-    //
-    //         List<BaseCtrl>? populatedCtrls = await WrapperProcessers.Processer(getBulkDataMethod!, bulkQuery, ctrlType);
-    //         if (populatedCtrls is not { Count: > 0 })
-    //             return (sessionId, ctrlList);
-    //
-    //         // --- 3. Cache and Process Foreign Keys Recursively ---
-    //         if (isLoadMapper)
-    //             MapperFieldInfo(populatedCtrls.First()); // Cache the field map for this type.
-    //
-    //         // This part needs the single-object version of JoiningData to handle recursion for each item.
-    //         // We need to create the single-object query and data retrieval methods to pass down.
-    //         // This is a simplification; a real implementation might need more sophisticated delegate creation.
-    //         Func<BaseCtrl, Task<string>>? createSingleQueryMethod = null; // Placeholder
-    //         Func<string, Type, Task<BaseCtrl?>>? getSingleDataMethod = null; // Placeholder
-    //
-    //         // If the downstream methods aren't available, we can't do recursion.
-    //         if (createSingleQueryMethod != null && getSingleDataMethod != null)
-    //         {
-    //             foreach (var ctrl in populatedCtrls)
-    //             {
-    //                 // Add to lookup cache
-    //                 AddToLookupData(sessionId, new DataLookup(ctrl, null));
-    //
-    //                 // Recursively join data for foreign keys for each object in the list.
-    //                 // We call the *single object* overload of JoiningData here.
-    //                 await JoiningListData(
-    //                     ctrl,
-    //                     createSingleQueryMethod,
-    //                     getSingleDataMethod,
-    //                     dbType,
-    //                     isLoadMapper,
-    //                     recursionStopLoss,
-    //                     currentRecursionLoop + 1,
-    //                     sessionId
-    //                 );
-    //             }
-    //         }
-    //     }
-    //
-    //
-    //     return (sessionId, populatedCtrls);
-    // }
+    public static async Task<(string? sessionId, List<BaseCtrl>? outCtrls)> JoiningListData(
+        this List<BaseCtrl>? ctrlList,
+        Func<List<BaseCtrl>, Task<string>>? createBulkQueryMethod,
+        Func<string, Type, Task<List<BaseCtrl>?>>? getBulkDataMethod,
+        bool isLoadMapper = true,
+        int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
+        int currentRecursionLoop = 1,
+        string? sessionId = null
+    )
+    {
+        // ------ Validate Input ------
+        if (ctrlList is not { Count: > 0 } || !ctrlList.All(c => c.IsTableLoaderAttached()))
+            return (null, ctrlList);
+
+        if (createBulkQueryMethod == null || getBulkDataMethod == null)
+            return (sessionId, ctrlList);
+
+        // Validate that all objects have their primary key values set.
+        if (ctrlList.Any(c => c.PrimaryKeys()?.Any(pk => pk.Property.GetValue(c) == null) ?? true))
+            return (sessionId, ctrlList);
+        if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
+            return (sessionId, ctrlList);
+        sessionId = !string.IsNullOrWhiteSpace(sessionId)
+            ? sessionId
+            : IndexerMode.CreateGuidWithStackTrace(); // sessionId for joining list of data 
+
+
+        var groupedByType = ctrlList
+            .GroupBy(t => t.GetType())
+            .ToList();
+
+        foreach (var group in groupedByType)
+        {
+            // ------ Fetch Bulk Data ------
+            Type ctrlType = ctrlList.First().GetType();
+            string? bulkQuery = await WrapperProcessers.Processer(createBulkQueryMethod!, ctrlList);
+            if (string.IsNullOrWhiteSpace(bulkQuery))
+                return (sessionId, ctrlList);
+
+            List<BaseCtrl>? ctrls = await WrapperProcessers.Processer(getBulkDataMethod!, bulkQuery, ctrlType);
+            if (ctrls is not { Count: > 0 })
+                return (sessionId, ctrlList);
+
+            // --- 3. Cache and Process Foreign Keys Recursively ---
+            if (isLoadMapper)
+                MapperFieldInfo(ctrls.First()); // Cache the field map for this type.
+
+            // This part needs the single-object version of JoiningData to handle recursion for each item.
+            // We need to create the single-object query and data retrieval methods to pass down.
+            // This is a simplification; a real implementation might need more sophisticated delegate creation.
+            Func<BaseCtrl, Task<string>>? createSingleQueryMethod = null; // Placeholder
+            Func<string, Type, Task<BaseCtrl?>>? getSingleDataMethod = null; // Placeholder
+
+            // If the downstream methods aren't available, we can't do recursion.
+            if (createSingleQueryMethod != null && getSingleDataMethod != null)
+            {
+                foreach (var ctrl in ctrls)
+                {
+                    // Add to lookup cache
+                    AddToLookupData(sessionId, new DataLookup(ctrl, null));
+
+                    // Recursively join data for foreign keys for each object in the list.
+                    // We call the *single object* overload of JoiningData here.
+                    await JoiningListData(
+                        ctrls,
+                        createBulkQueryMethod,
+                        getBulkDataMethod,
+                        isLoadMapper,
+                        recursionStopLoss,
+                        currentRecursionLoop + 1,
+                        sessionId
+                    );
+                }
+            }
+
+            return (sessionId, ctrls);
+        }
+
+        return (sessionId, ctrlList);
+    }
 }
