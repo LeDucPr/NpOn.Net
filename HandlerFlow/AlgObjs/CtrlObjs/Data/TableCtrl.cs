@@ -17,16 +17,16 @@ public class TableCtrl : BaseCtrl
     public required long ConnectionInfoId { get; set; }
 
     [Fk<ConnectionInfoCtrl>(
-        $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]
+        $"{nameof(TableCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ConnectionInfoCtrl.Id)}")]
     public ConnectionInfoCtrl? ConnectionInfo { get; set; }
 
 
     // data from other process when this need get by a process
-    [FkId<ProcessTableCtrl>(nameof(ProcessId))]
-    public required long ProcessId { get; set; }
+    [FkId<ProcessTableCtrl>(nameof(ProcessTableId))]
+    public long ProcessTableId { get; set; }
 
-    [Fk<ProcessTableCtrl>($"{nameof(ProcessTableCtrl)}.{nameof(ProcessTableCtrl)}.{nameof(ProcessTableCtrl.Id)}")]
-    public ProcessTableCtrl? Process { get; set; }
+    [Fk<ProcessTableCtrl>($"{nameof(TableCtrl)}.{nameof(ProcessTableCtrl)}.{nameof(ProcessTableCtrl.Id)}")]
+    public ProcessTableCtrl? ProcessTable { get; set; }
 
 
     public string? Description { get; set; }
@@ -39,7 +39,7 @@ public class TableCtrl : BaseCtrl
         FieldMap.Add(nameof(TableMode), "table_mode");
         FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
-        FieldMap.Add(nameof(ProcessId), "process_id");
+        FieldMap.Add(nameof(ProcessTableId), "process_table_id");
         FieldMap.Add(nameof(Description), "description");
         FieldMap.Add(nameof(IsActive), "is_active");
     }

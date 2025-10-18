@@ -31,6 +31,7 @@ class Program
         {
             Id = 1,
             ConnectionInfoId = 1,
+            QueryLanguageUse = (EDbLanguage)0,
         };
 
 

@@ -32,7 +32,7 @@ public class TableFieldCtrl : BaseCtrl
         FieldMap.Add(nameof(TableId), "table_id");
         FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(FieldName), "field_name");
-        FieldMap.Add(nameof(FieldType), "field__type");
+        FieldMap.Add(nameof(FieldType), "field_type");
         FieldMap.Add(nameof(FieldSizeType), "field_size_type");
         FieldMap.Add(nameof(Size), "size");
         FieldMap.Add(nameof(Description), "description");

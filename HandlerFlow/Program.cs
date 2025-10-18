@@ -1,4 +1,5 @@
-﻿using HandlerFlow.AlgObjs.CtrlObjs;
+﻿using Enums;
+using HandlerFlow.AlgObjs.CtrlObjs;
 using HandlerFlow.AlgObjs.CtrlObjs.Connections;
 using HandlerFlow.AlgObjs.RaisingRouters;
 using HandlerFlow.AlgObjs.SqlQueries;
@@ -14,16 +15,22 @@ class Program
 
     private static async Task Test()
     {
-        ServerCtrl server = new ServerCtrl() { Id = 1, };
+        ServerCtrl server = new ServerCtrl
+        {
+            Id = 1,
+            ServerType = (EServer)0,
+        };
         ConnectionInfoCtrl? ctrlInfo = new ConnectionInfoCtrl
         {
             Id = 2,
             ServerId = 2,
+            DatabaseType = EDb.Unknown,
         };
-        ConnectionCtrl? ctrl = new ConnectionCtrl()
+        ConnectionCtrl? ctrl = new ConnectionCtrl
         {
             Id = 1,
-            ConnectionInfoId = 2
+            ConnectionInfoId = 2,
+            QueryLanguageUse = (EDbLanguage)0
         };
         var a = ctrlInfo.ForeignKeys()?.ToArray();
         var b = ctrlInfo.PrimaryKeys()?.ToArray();
@@ -38,7 +45,12 @@ class Program
 
         Func<string, Type, Task<BaseCtrl>> getDataMethod = async (query, type) =>
         {
-            return new ConnectionInfoCtrl { Id = 1, ServerId = 3 };
+            return new ConnectionInfoCtrl
+            {
+                Id = 1,
+                ServerId = 3,
+                DatabaseType = EDb.Unknown
+            };
         };
 
         // Act (test) set 1 avoid to crash when using test mode

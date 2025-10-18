@@ -7,10 +7,10 @@ namespace HandlerFlow.AlgObjs.CtrlObjs.Data;
 [TableLoader("process_field_ctrl")]
 public class ProcessFieldCtrl : BaseCtrl
 {
-    [FkId<ProcessTableCtrl>(nameof(ProcessId))] public required long ProcessId { get; set; }
+    [FkId<ProcessTableCtrl>(nameof(ProcessTableId))] public required long ProcessTableId { get; set; }
 
     [Fk<ProcessTableCtrl>(
-        $"{nameof(ProcessFieldCtrl)}.{nameof(ProcessTableCtrl)}.{nameof(ProcessTableCtrl.Id)}")]
+        $"{nameof(ProcessFieldCtrl)}.{nameof(ProcessTable)}.{nameof(ProcessTableCtrl.Id)}")]
     public ProcessTableCtrl? ProcessTable { get; init; }
 
     public required EDb DatabaseType { get; set; }
@@ -26,7 +26,7 @@ public class ProcessFieldCtrl : BaseCtrl
     protected override void FieldMapper()
     {
         FieldMap ??= [];
-        FieldMap.Add(nameof(ProcessId), "process_id");
+        FieldMap.Add(nameof(ProcessTableId), "process_table_id");
         FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(FieldName), "field_name");
         FieldMap.Add(nameof(FieldType), "field_type");

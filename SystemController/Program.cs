@@ -26,6 +26,7 @@ class Program
         {
             Id = 2,
             ConnectionInfoId = 0,
+            QueryLanguageUse = (EDbLanguage)0,
         };
 
         InitialConnection initialConnection = new InitialConnection(factoryWrapper, connectionCtrlDecoy);

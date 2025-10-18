@@ -14,7 +14,7 @@ public class ConnectionCtrl : BaseCtrl
         $"{nameof(ConnectionCtrl)}.{nameof(ConnectionInfoCtrl)}.{nameof(ServerCtrl.Id)}")]
     public ConnectionInfoCtrl? ConnectionInfo { get; set; }
 
-    public EDbLanguage? QueryLanguageUse { get; set; }
+    public required EDbLanguage QueryLanguageUse { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; }
 

@@ -12,7 +12,7 @@ public class ConnectionInfoCtrl : BaseCtrl
     public ServerCtrl? Server { get; set; }
 
     public string? DatabaseName { get; set; } // set = keyspace cassandra/scyllaDb
-    public EDb? DatabaseType { get; set; }
+    public required EDb DatabaseType { get; set; }
     public string? Name { get; set; }
     public string? Username { get; set; }
     public string? Password { get; set; }
