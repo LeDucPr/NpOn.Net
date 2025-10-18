@@ -20,6 +20,8 @@ class Program
 
     private static async Task<IEnumerable<DataLookup>?> DbFactoryIntegrationTest()
     {
+        EDb dbTypeForFirstCreation = EDb.Postgres;
+        
         IDbFactoryWrapper factoryWrapper =
             new DbFactoryWrapper(
                 "Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password",
@@ -38,7 +40,7 @@ class Program
         Func<BaseCtrl, Task<string>> createStringQueryMethod = async (ctrl) =>
         {
             BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
-            return queryCreator.CreateQueryWithId();
+            return queryCreator.CreateQueryWithId(dbTypeForFirstCreation);
         };
 
         Func<string, Type, Task<BaseCtrl?>> getDataMethod = async (query, type) =>

@@ -21,21 +21,24 @@ public class InitialConnection
     public BaseCtrl InitializationObject { get; private set; }
     public string? FirstInitializationSessionId { get; private set; }
 
-    public InitialConnection(IDbFactoryWrapper factory, BaseCtrl decoyObject)
+    public InitialConnection(IDbFactoryWrapper factory, BaseCtrl decoyObject, EDb dbType)
     {
         _factory = factory;
         InitializationObject = decoyObject;
-        GetDataOfFirstConnection().GetAwaiter().GetResult();
+        GetDataOfFirstConnection(dbType).GetAwaiter().GetResult();
     }
 
-    private async Task GetDataOfFirstConnection() // ConnectionCtrl : BasCtrl
+    /// <summary>
+    /// FirstConnect When Start Program
+    /// </summary>
+    private async Task GetDataOfFirstConnection(EDb dbType = EDb.Postgres) // ConnectionCtrl : BasCtrl
     {
         (string? sessionId, BaseCtrl? ctrl) =
             (await InitializationObject.JoiningData(
                 ((ctrl) =>
                 {
                     BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
-                    return Task.FromResult(queryCreator.CreateQueryWithId());
+                    return Task.FromResult(queryCreator.CreateQueryWithId(dbType));
                 }),
                 (async (query, type) =>
                 {
@@ -51,14 +54,19 @@ public class InitialConnection
             InitializationObject = ctrl;
     }
 
+    /// <summary>
+    /// sử dụng tạo kết nối mới tới Database, đã tồn tại sử dụng kết nối cũ
+    /// (available free time connection)
+    /// </summary>
+    /// <param name="connectionInfoCtrl">Inherits from BaseCtrl</param>
+    /// <returns></returns>
     [Obsolete("Obsolete")]
     public Task<IDbFactoryWrapper?> CreateDbFactoryWrapper(ConnectionInfoCtrl connectionInfoCtrl)
     {
-        if (string.IsNullOrWhiteSpace(connectionInfoCtrl?.ConnectString))
+        if (string.IsNullOrWhiteSpace(connectionInfoCtrl.ConnectString))
             return Task.FromResult<IDbFactoryWrapper?>(null);
-        if (connectionInfoCtrl.DatabaseType == null)
-            return Task.FromResult<IDbFactoryWrapper?>(null);
-        EDb dbType = (EDb)connectionInfoCtrl.DatabaseType!;
+
+        EDb dbType = connectionInfoCtrl.DatabaseType;
         INpOnConnectOption? connectOption = null;
 
         switch (dbType)
