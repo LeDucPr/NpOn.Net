@@ -65,10 +65,14 @@ class Program
             return;
         
         
-        (string? sessionIdTableFieldCtrl, List<BaseCtrl>? tableFieldCtrlsOutput) =
+        (string? _, List<BaseCtrl>? tableFieldCtrlsOutput) =
             factoryWrapper.GetDataWithConnection(tableFieldCtrls).GetAwaiter().GetResult();
 
-        string cc = "111111111111111";
+        if (tableFieldCtrlsOutput is not { Count: > 0 } || tableFieldCtrlsOutput.First() is not TableFieldCtrl)
+            return;
+
+        List<TableFieldCtrl> tableFieldCtrlList = tableFieldCtrlsOutput.Cast<TableFieldCtrl>().ToList();
+        // if (tableFieldCtrlList)
 
 
         ///// test ConnectionCtrl.Id = 2 // ScyllaDb 

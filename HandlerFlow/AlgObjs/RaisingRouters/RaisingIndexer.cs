@@ -307,6 +307,7 @@ public static partial class RaisingIndexer
         bool isUseCachingForLookupData = false,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
         int currentRecursionLoop = 1,
+        int trunkSizeOfIdOnQuery = 50,
         string? sessionId = null
     )
     {
@@ -339,11 +340,21 @@ public static partial class RaisingIndexer
         {
             // ------ Fetch Bulk Data ------
             Type ctrlTypeOfGroup = group.Key;
-            List<BaseCtrl>? groupCtrlByType = group.Value;
-            string? pkQuery = await WrapperProcessers.Processer(createBulkQueryMethod!, groupCtrlByType);
-            if (string.IsNullOrWhiteSpace(pkQuery))
-                return (sessionId, group.Value);
-            groupCtrlByType = await WrapperProcessers.Processer(getBulkDataMethod!, pkQuery, ctrlTypeOfGroup);
+            List<BaseCtrl> groupCtrlByType = group.Value;
+            List<BaseCtrl> allResults = new List<BaseCtrl>();
+
+            for (int i = 0; i < groupCtrlByType.Count; i += trunkSizeOfIdOnQuery)
+            {
+                var batch = groupCtrlByType.GetRange(i, Math.Min(trunkSizeOfIdOnQuery, groupCtrlByType.Count - i));
+                string? pkQuery = await WrapperProcessers.Processer(createBulkQueryMethod!, batch);
+                if (string.IsNullOrWhiteSpace(pkQuery))
+                    return (sessionId, group.Value);
+                var batchResult = await WrapperProcessers.Processer(getBulkDataMethod!, pkQuery, ctrlTypeOfGroup);
+                if (batchResult is { Count: > 0 })
+                    allResults.AddRange(batchResult);
+            }
+
+            groupCtrlByType = allResults;
             if (groupCtrlByType is not { Count: > 0 })
                 return (sessionId, group.Value);
             if (isLoadMapper)
@@ -437,7 +448,8 @@ public static partial class RaisingIndexer
                 (sessionId, ctrlFromKeyEmpties) = await JoiningListData(ctrlFromKeyEmpties, // objects
                     createBulkQueryMethod, getBulkDataMethod, // functions 
                     isLoadMapper, isUseCachingForLookupData, // control parameters
-                    recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
+                    recursionStopLoss, ++currentRecursionLoop, // recursions 
+                    trunkSizeOfIdOnQuery, sessionId);
 
                 foreach (var ctrl in groupCtrlByType)
                 {
