@@ -405,7 +405,7 @@ public static partial class RaisingIndexer
                 if (fkIdInfo == null)
                     continue;
 
-                List<BaseCtrl> ctrlFromKeyEmpties = [];
+                List<BaseCtrl>? ctrlFromKeyEmpties = [];
                 HashSet<string?> idList = [];
                 KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
                     fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
@@ -434,7 +434,7 @@ public static partial class RaisingIndexer
                     }
                 }
 
-                (sessionId, List<BaseCtrl>? fkCtrls) = await JoiningListData(ctrlFromKeyEmpties, // objects
+                (sessionId, ctrlFromKeyEmpties) = await JoiningListData(ctrlFromKeyEmpties, // objects
                     createBulkQueryMethod, getBulkDataMethod, // functions 
                     isLoadMapper, isUseCachingForLookupData, // control parameters
                     recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
@@ -444,9 +444,11 @@ public static partial class RaisingIndexer
                     var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
                     if (fkIdValue == null)
                         continue;
+                    var ctrlByFkId = ctrlFromKeyEmpties?.FirstOrDefault(x => x.Id.ToString() == fkIdValue.ToString());
+                    if (ctrlByFkId == null)
+                        continue;
                     var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
-                    var fkCtrl = ctrlFromKeyEmpties.FirstOrDefault(x=> x.Id.ToString() == idPropOfNewObject?.ToString());
-                    navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl); // may be null 
+                    navigationKeyInfo?.Property.SetValue(ctrl, ctrlByFkId); // may be null ??
                 }
             }
 

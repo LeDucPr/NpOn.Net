@@ -124,6 +124,9 @@ public sealed class BaseQueryCreatorWithKey
 
         if (pkValues.Count == 0)
             return string.Empty;
+        
+        if (pkValues.Count == 1)
+            return CreateOperation([(pkName, pkValues.First(), pkType)], dbType);
 
         var formattedValues = pkValues.Select(v => FormatValue(v, pkType));
         string inClause = string.Join(", ", formattedValues);
