@@ -405,14 +405,15 @@ public static partial class RaisingIndexer
                 if (fkIdInfo == null)
                     continue;
 
-                var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
+                List<BaseCtrl> ctrlFromKeyEmpties = [];
+                HashSet<string?> idList = [];
                 KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
                     fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
-
 
                 // Add Value to ForeignKey Field
                 foreach (var ctrl in groupCtrlByType)
                 {
+                    var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
                     var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
                     if (fkIdValue == null)
                         continue;
@@ -424,17 +425,29 @@ public static partial class RaisingIndexer
                         {
                             object convertedIdValue = Convert.ChangeType(fkIdValue, idPropOfNewObject.PropertyType);
                             idPropOfNewObject.SetValue(ctrlFromKeyEmpty, convertedIdValue);
+                            idList.Add(convertedIdValue.ToString());
                         }
+
+                        // When you add above, you also add below.
+                        if (idList.Count != ctrlFromKeyEmpties.Count)
+                            ctrlFromKeyEmpties.Add(ctrlFromKeyEmpty);
                     }
                 }
 
-                (sessionId, List<BaseCtrl>? fkCtrl) = await JoiningListData(groupCtrlByType, // objects
+                (sessionId, List<BaseCtrl>? fkCtrls) = await JoiningListData(ctrlFromKeyEmpties, // objects
                     createBulkQueryMethod, getBulkDataMethod, // functions 
                     isLoadMapper, isUseCachingForLookupData, // control parameters
                     recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
 
                 foreach (var ctrl in groupCtrlByType)
-                    navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl);
+                {
+                    var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
+                    if (fkIdValue == null)
+                        continue;
+                    var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
+                    var fkCtrl = ctrlFromKeyEmpties.FirstOrDefault(x=> x.Id.ToString() == idPropOfNewObject?.ToString());
+                    navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl); // may be null 
+                }
             }
 
             return (sessionId, groupCtrlByType);
