@@ -3,7 +3,6 @@ using HandlerFlow.AlgObjs.Attributes;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using CommonMode;
 using CommonObject;
-using Enums;
 
 namespace HandlerFlow.AlgObjs.RaisingRouters;
 
@@ -178,60 +177,62 @@ public static partial class RaisingIndexer
 public static partial class RaisingIndexer
 {
     public static async Task<(string? sessionId, BaseCtrl? outCtrl)> JoiningData(
-        this BaseCtrl? ctrl,
+        this BaseCtrl? decoyCtrl,
         Func<BaseCtrl, Task<string>>? createStringQueryMethod,
         Func<string, Type, Task<BaseCtrl?>>? getDataMethod,
         bool isLoadMapper = true,
+        bool isUseCachingForLookupData = false,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
         int currentRecursionLoop = 1,
         string? sessionId = null
     )
     {
-        if (!IsTableLoaderAttached(ctrl))
-            return (null, ctrl);
+        if (!IsTableLoaderAttached(decoyCtrl))
+            return (null, decoyCtrl);
 
         // sessionId for joining list of data
         sessionId = !string.IsNullOrWhiteSpace(sessionId) ? sessionId : IndexerMode.CreateGuidWithStackTrace();
 
         // validate will pass with not null method
         if (createStringQueryMethod == null || getDataMethod == null)
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
         // validate primary keys (value)
-        var primaryKeys = ctrl.PrimaryKeys()?.ToList();
+        var primaryKeys = decoyCtrl.PrimaryKeys()?.ToList();
         if (primaryKeys is not { Count: > 0 } ||
-            primaryKeys.Any(key => key.Property.GetValue(ctrl) == null))
-            return (sessionId, ctrl);
+            primaryKeys.Any(key => key.Property.GetValue(decoyCtrl) == null))
+            return (sessionId, decoyCtrl);
 
         // SqlQuery (get key)
-        Type? ctrlType = ctrl?.GetType();
+        Type? ctrlType = decoyCtrl?.GetType();
         // Pass both ctrl and dbType to the query creation method
-        string? pkQuery = await WrapperProcessers.Processer(createStringQueryMethod!, ctrl);
+        string? pkQuery = await WrapperProcessers.Processer(createStringQueryMethod!, decoyCtrl);
         if (string.IsNullOrWhiteSpace(pkQuery))
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
         //// chim mồi được fill dữ liệu ------------
-        ctrl = await WrapperProcessers.Processer(getDataMethod!, pkQuery, ctrlType);
+        decoyCtrl = await WrapperProcessers.Processer(getDataMethod!, pkQuery, ctrlType);
         if (isLoadMapper)
-            MapperFieldInfo(ctrl); // caching Representative Child of BaseCtrl structure
-        AddToLookupData(sessionId, new DataLookup(ctrl!, null)); //GetOrScanTypeEnableObjectCache validate null
+            MapperFieldInfo(decoyCtrl); // caching Representative Child of BaseCtrl structure
+        if (isUseCachingForLookupData)
+            AddToLookupData(sessionId, new DataLookup(decoyCtrl!, null)); //GetOrScanTypeEnableObjectCache validate null
 
         // validate foreign keys (relationship)
-        KeyInfo[]? fks = ctrl.ForeignKeys()?.ToArray();
+        KeyInfo[]? fks = decoyCtrl.ForeignKeys()?.ToArray();
         if (fks is not { Length: > 0 })
-            return (sessionId, ctrl);
-        KeyInfo[]? fkIds = ctrl.ForeignKeyIds()?.ToArray();
+            return (sessionId, decoyCtrl);
+        KeyInfo[]? fkIds = decoyCtrl.ForeignKeyIds()?.ToArray();
         if (fkIds is not { Length: > 0 })
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
 
         // validate attribute foreign keys and foreign key ids
         Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
         Type fkAttrType = fkAttrs.First().GetType();
         if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
 
         Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
         Type fkIdAttrType = fkIdAttrs.First().GetType();
         if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
 
         // need add both the FkId<T> and Fk<T> when create their relationship, or break 
         Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
@@ -243,14 +244,17 @@ public static partial class RaisingIndexer
         fkIdsTypes = fkIdsTypes.Where(x => fkTypes.Contains(x)).ToArray();
 
         if (fkIds.Length == 0 || fkIds.Length != fks.Length)
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
 
         if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
-            return (sessionId, ctrl);
+            return (sessionId, decoyCtrl);
 
         foreach (Type? fkType in fkTypes) // foreign keys
         {
             if (fkType == null)
+                continue;
+
+            if (!fkType.IsChildOfBaseCtrl())
                 continue;
 
             // value info
@@ -260,16 +264,15 @@ public static partial class RaisingIndexer
                 var relatedType = attr.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType));
                 return relatedType == fkType;
             });
+
             if (fkIdInfo == null)
                 continue;
 
-            var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
+            var fkIdValue = fkIdInfo.Property.GetValue(decoyCtrl);
 
             if (fkIdValue == null)
                 continue;
 
-            if (!fkType.IsChildOfBaseCtrl())
-                continue;
 
             var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
             KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
@@ -285,94 +288,158 @@ public static partial class RaisingIndexer
                 }
             }
 
-            (sessionId, BaseCtrl? fkCtrl) = await JoiningData(ctrlFromKeyEmpty, createStringQueryMethod, getDataMethod,
-                isLoadMapper, // control parameters
+            (sessionId, BaseCtrl? fkCtrl) = await JoiningData(ctrlFromKeyEmpty,
+                createStringQueryMethod, getDataMethod, // functions
+                isLoadMapper, isUseCachingForLookupData, // control parameters
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
-            navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl);
+            navigationKeyInfo?.Property.SetValue(decoyCtrl, fkCtrl);
         }
 
-        return (sessionId, ctrl);
+        return (sessionId, decoyCtrl);
     }
 
 
     public static async Task<(string? sessionId, List<BaseCtrl>? outCtrls)> JoiningListData(
-        this List<BaseCtrl>? ctrlList,
+        this List<BaseCtrl>? decoyCtrlList,
         Func<List<BaseCtrl>, Task<string>>? createBulkQueryMethod,
         Func<string, Type, Task<List<BaseCtrl>?>>? getBulkDataMethod,
         bool isLoadMapper = true,
+        bool isUseCachingForLookupData = false,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
         int currentRecursionLoop = 1,
         string? sessionId = null
     )
     {
         // ------ Validate Input ------
-        if (ctrlList is not { Count: > 0 } || !ctrlList.All(c => c.IsTableLoaderAttached()))
-            return (null, ctrlList);
+        if (decoyCtrlList is not { Count: > 0 } || !decoyCtrlList.All(c => c.IsTableLoaderAttached()))
+            return (null, decoyCtrlList);
 
         if (createBulkQueryMethod == null || getBulkDataMethod == null)
-            return (sessionId, ctrlList);
+            return (sessionId, decoyCtrlList);
 
         // Validate that all objects have their primary key values set.
-        if (ctrlList.Any(c => c.PrimaryKeys()?.Any(pk => pk.Property.GetValue(c) == null) ?? true))
-            return (sessionId, ctrlList);
+        if (decoyCtrlList.Any(c => c.PrimaryKeys()?.Any(pk => pk.Property.GetValue(c) == null) ?? true))
+            return (sessionId, decoyCtrlList);
         if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
-            return (sessionId, ctrlList);
+            return (sessionId, decoyCtrlList);
         sessionId = !string.IsNullOrWhiteSpace(sessionId)
             ? sessionId
             : IndexerMode.CreateGuidWithStackTrace(); // sessionId for joining list of data 
 
 
-        var groupedByType = ctrlList
+        var groupedByType = decoyCtrlList
             .GroupBy(t => t.GetType())
+            .Select(g => new KeyValuePair<Type, List<BaseCtrl>>(g.Key, g.ToList()))
             .ToList();
+
+
+        //// -> Group -> type of FK<Ctrl>(:BaseCtrl) -> Get all DataFrom ctrlList
 
         foreach (var group in groupedByType)
         {
             // ------ Fetch Bulk Data ------
-            Type ctrlType = ctrlList.First().GetType();
-            string? bulkQuery = await WrapperProcessers.Processer(createBulkQueryMethod!, ctrlList);
-            if (string.IsNullOrWhiteSpace(bulkQuery))
-                return (sessionId, ctrlList);
-
-            List<BaseCtrl>? ctrls = await WrapperProcessers.Processer(getBulkDataMethod!, bulkQuery, ctrlType);
-            if (ctrls is not { Count: > 0 })
-                return (sessionId, ctrlList);
-
-            // --- 3. Cache and Process Foreign Keys Recursively ---
+            Type ctrlTypeOfGroup = group.Key;
+            List<BaseCtrl>? groupCtrlByType = group.Value;
+            string? pkQuery = await WrapperProcessers.Processer(createBulkQueryMethod!, groupCtrlByType);
+            if (string.IsNullOrWhiteSpace(pkQuery))
+                return (sessionId, group.Value);
+            groupCtrlByType = await WrapperProcessers.Processer(getBulkDataMethod!, pkQuery, ctrlTypeOfGroup);
+            if (groupCtrlByType is not { Count: > 0 })
+                return (sessionId, group.Value);
             if (isLoadMapper)
-                MapperFieldInfo(ctrls.First()); // Cache the field map for this type.
+                MapperFieldInfo(groupCtrlByType.First()); // caching Representative Child of BaseCtrl structure
+            if (isUseCachingForLookupData) // GetOrScanTypeEnableObjectCache (validate null)
+                groupCtrlByType.ForEach(ctrl => AddToLookupData(sessionId, new DataLookup(ctrl, null)));
 
-            // This part needs the single-object version of JoiningData to handle recursion for each item.
-            // We need to create the single-object query and data retrieval methods to pass down.
-            // This is a simplification; a real implementation might need more sophisticated delegate creation.
-            Func<BaseCtrl, Task<string>>? createSingleQueryMethod = null; // Placeholder
-            Func<string, Type, Task<BaseCtrl?>>? getSingleDataMethod = null; // Placeholder
+            // validate foreign keys (relationship)
+            KeyInfo[]? fks = groupCtrlByType.First().ForeignKeys()?.ToArray();
+            if (fks is not { Length: > 0 })
+                return (sessionId, groupCtrlByType);
+            KeyInfo[]? fkIds = groupCtrlByType.First().ForeignKeyIds()?.ToArray();
+            if (fkIds is not { Length: > 0 })
+                return (sessionId, groupCtrlByType);
 
-            // If the downstream methods aren't available, we can't do recursion.
-            if (createSingleQueryMethod != null && getSingleDataMethod != null)
+            // validate attribute foreign keys and foreign key ids
+            Attribute[] fkAttrs = fks.Select(x => x.Attribute).ToArray();
+            Type fkAttrType = fkAttrs.First().GetType();
+            if (!fkAttrType.IsGenericType || fkAttrType.GetGenericTypeDefinition() != typeof(FkAttribute<>))
+                return (sessionId, groupCtrlByType);
+
+            Attribute[] fkIdAttrs = fkIds.Select(x => x.Attribute).ToArray();
+            Type fkIdAttrType = fkIdAttrs.First().GetType();
+            if (fkIdAttrType.GetGenericTypeDefinition() != typeof(FkIdAttribute<>))
+                return (sessionId, groupCtrlByType);
+
+            // need add both the FkId<T> and Fk<T> when create their relationship, or break 
+            Type?[] fkTypes = fkAttrs.Select(x => x.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)))
+                .ToArray();
+            Type?[] fkIdsTypes = fkAttrs
+                .Select(x => x.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType)))
+                .ToArray();
+
+            fkTypes = fkTypes.Where(x => fkIdsTypes.Contains(x)).ToArray();
+            fkIdsTypes = fkIdsTypes.Where(x => fkTypes.Contains(x)).ToArray();
+
+            if (fkIds.Length == 0 || fkIds.Length != fks.Length)
+                return (sessionId, groupCtrlByType);
+
+            if (recursionStopLoss >= 0 && recursionStopLoss < currentRecursionLoop)
+                return (sessionId, groupCtrlByType);
+
+            foreach (Type? fkType in fkTypes) // foreign keys
             {
-                foreach (var ctrl in ctrls)
-                {
-                    // Add to lookup cache
-                    AddToLookupData(sessionId, new DataLookup(ctrl, null));
+                if (fkType == null)
+                    continue;
 
-                    // Recursively join data for foreign keys for each object in the list.
-                    // We call the *single object* overload of JoiningData here.
-                    await JoiningListData(
-                        ctrls,
-                        createBulkQueryMethod,
-                        getBulkDataMethod,
-                        isLoadMapper,
-                        recursionStopLoss,
-                        currentRecursionLoop + 1,
-                        sessionId
-                    );
+                if (!fkType.IsChildOfBaseCtrl())
+                    continue;
+
+                // value info
+                var fkIdInfo = fkIds.FirstOrDefault(ki =>
+                {
+                    var attr = ki.Attribute;
+                    var relatedType = attr.GetPropertyTypeFromAttribute(nameof(FkIdAttribute<>.RelatedType));
+                    return relatedType == fkType;
+                });
+
+                if (fkIdInfo == null)
+                    continue;
+
+                var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
+                KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
+                    fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
+
+
+                // Add Value to ForeignKey Field
+                foreach (var ctrl in groupCtrlByType)
+                {
+                    var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
+                    if (fkIdValue == null)
+                        continue;
+                    if (ctrlFromKeyEmpty != null)
+                    {
+                        // Get PropertyInfo 'ID' from new object
+                        var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
+                        if (navigationKeyInfo != null && idPropOfNewObject != null)
+                        {
+                            object convertedIdValue = Convert.ChangeType(fkIdValue, idPropOfNewObject.PropertyType);
+                            idPropOfNewObject.SetValue(ctrlFromKeyEmpty, convertedIdValue);
+                        }
+                    }
                 }
+
+                (sessionId, List<BaseCtrl>? fkCtrl) = await JoiningListData(groupCtrlByType, // objects
+                    createBulkQueryMethod, getBulkDataMethod, // functions 
+                    isLoadMapper, isUseCachingForLookupData, // control parameters
+                    recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
+
+                foreach (var ctrl in groupCtrlByType)
+                    navigationKeyInfo?.Property.SetValue(ctrl, fkCtrl);
             }
 
-            return (sessionId, ctrls);
+            return (sessionId, groupCtrlByType);
         }
 
-        return (sessionId, ctrlList);
+        return (sessionId, decoyCtrlList);
     }
 }

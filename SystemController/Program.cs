@@ -5,8 +5,11 @@ using DbFactory;
 using Enums;
 using HandlerFlow.AlgObjs.CtrlObjs;
 using HandlerFlow.AlgObjs.CtrlObjs.Connections;
+using HandlerFlow.AlgObjs.CtrlObjs.Data;
+using HandlerFlow.AlgObjs.RaisingRouters;
 using Microsoft.Identity.Client;
 using PostgresExtCm.Connections;
+using SystemController.ResultConverters;
 
 namespace SystemController;
 
@@ -19,7 +22,6 @@ class Program
     [Obsolete("Obsolete")]
     static void Main(string[] args)
     {
-        
         // kết nối đầu tiên được tạo bởi Pg (when deploy on server)
         IDbFactoryWrapper factoryWrapper = new DbFactoryWrapper(
             "Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password", DbTypeForFirstCreation,
@@ -31,28 +33,42 @@ class Program
             QueryLanguageUse = (EDbLanguage)0,
         };
 
-        InitialConnection initialConnection = new InitialConnection(factoryWrapper, connectionCtrlDecoy, DbTypeForFirstCreation);
-        BaseCtrl ctrl = initialConnection.InitializationObject;
-        // var aaaaaaaaaa = initialConnection.FirstInitializationSessionId?.GetLookupData(); // List(output detail with foreach)
+        (string? sessionId, BaseCtrl? ctrl) =
+            factoryWrapper.GetDataWithConnection(connectionCtrlDecoy).GetAwaiter().GetResult();
+        if (sessionId == null || ctrl == null)
+            return;
+        // var aaaaaaaaaa = sessionId.GetLookupData(); // List(output detail with foreach)
 
         if (ctrl is not ConnectionCtrl connectionCtrl)
             return;
         ConnectionInfoCtrl? connectionInfoCtrl = connectionCtrl.ConnectionInfo;
         if (connectionInfoCtrl == null)
             return;
-        IDbFactoryWrapper? dbFactoryWrapper = initialConnection.CreateDbFactoryWrapper(connectionInfoCtrl).Result;
+        IDbFactoryWrapper? dbFactoryWrapper =
+            InitializationCtrlSystem.CreateDbFactoryWrapper(connectionInfoCtrl).Result;
 
-        string pgQuery = "Select * from table_field_ctrl where field_name = 'bankacctno'";
+        string pgQuery = "Select * from table_field_ctrl where table_id = 1";
         INpOnWrapperResult? resultOfQuery = dbFactoryWrapper?.QueryAsync(pgQuery).GetAwaiter().GetResult();
 
         if (resultOfQuery is INpOnTableWrapper tableWrapper && tableWrapper.RowWrappers.Count > 0)
-        {
-            foreach (var rowCell in tableWrapper.RowWrappers[0]!.GetRowWrapper())
+            for (int rowIndex = 0; rowIndex < tableWrapper.RowWrappers.Count; rowIndex++)
             {
-                Console.WriteLine(
-                    $"RowsCell --- {rowCell.Key}: Type- {rowCell.Value.DbType};  Value - {rowCell.Value.ValueAsObject}");
+                foreach (var rowCell in tableWrapper.RowWrappers[rowIndex]!.GetRowWrapper())
+
+                    Console.WriteLine(
+                        $"RowsCell[index] = {rowIndex} --- {rowCell.Key}: Type- {rowCell.Value.DbType};  Value - {rowCell.Value.ValueAsObject}");
+                Console.WriteLine();
             }
-        }
+
+        var tableFieldCtrls = resultOfQuery?.GenericConverter(typeof(TableFieldCtrl))?.ToList();
+        if (tableFieldCtrls is not { Count: > 0 })
+            return;
+        
+        
+        (string? sessionIdTableFieldCtrl, List<BaseCtrl>? tableFieldCtrlsOutput) =
+            factoryWrapper.GetDataWithConnection(tableFieldCtrls).GetAwaiter().GetResult();
+
+        string cc = "111111111111111";
 
 
         ///// test ConnectionCtrl.Id = 2 // ScyllaDb 

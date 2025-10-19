@@ -15,44 +15,69 @@ using SystemController.ResultConverters;
 
 namespace SystemController;
 
-public class InitialConnection
+public static class InitializationCtrlSystem
 {
-    private readonly IDbFactoryWrapper _factory;
-    public BaseCtrl InitializationObject { get; private set; }
-    public string? FirstInitializationSessionId { get; private set; }
-
-    public InitialConnection(IDbFactoryWrapper factory, BaseCtrl decoyObject, EDb dbType)
-    {
-        _factory = factory;
-        InitializationObject = decoyObject;
-        GetDataOfFirstConnection(dbType).GetAwaiter().GetResult();
-    }
-
     /// <summary>
-    /// FirstConnect When Start Program
+    /// GetDataWithConnection() => SessionId.GetLookupData() when RaisingIndex.Joining(List)Data.isUseCachingForLookupData == true 
     /// </summary>
-    private async Task GetDataOfFirstConnection(EDb dbType = EDb.Postgres) // ConnectionCtrl : BasCtrl
+    /// <param name="factory"></param>
+    /// <param name="decoyObject"></param>
+    /// <param name="isUseCache"></param>
+    /// <returns></returns>
+    public static async Task<(string? SessionId, BaseCtrl? Ctrl)> GetDataWithConnection
+        (this IDbFactoryWrapper factory, BaseCtrl decoyObject, bool isUseCache = false)
     {
         (string? sessionId, BaseCtrl? ctrl) =
-            (await InitializationObject.JoiningData(
+            (await decoyObject.JoiningData(
                 ((ctrl) =>
                 {
                     BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
-                    return Task.FromResult(queryCreator.CreateQueryWithId(dbType));
+                    return Task.FromResult(queryCreator.CreateQueryWithId(factory.DbType));
                 }),
                 (async (query, type) =>
                 {
-                    INpOnWrapperResult? result = await _factory.QueryAsync(query);
+                    INpOnWrapperResult? result = await factory.QueryAsync(query);
                     // var ctrl = result?.PostgresConverter(type);
                     var ctrl = result?.GenericConverter(type);
                     return ctrl?.FirstOrDefault();
                 }),
-                true, -1));
-        if (sessionId != null)
-            FirstInitializationSessionId = sessionId;
-        if (ctrl != null)
-            InitializationObject = ctrl;
+                true, isUseCache, -1));
+        if (sessionId != null && ctrl != null)
+            return (sessionId, ctrl);
+        return (null, null);
     }
+
+    /// <summary>
+    /// Retrieve multiple objects (inherit from BaseCtrl), including objects of different types
+    /// GetDataWithConnection() => SessionId.GetLookupData() when RaisingIndex.Joining(List)Data.isUseCachingForLookupData == true 
+    /// </summary>
+    /// <param name="factory"></param>
+    /// <param name="decoyObjects"></param>
+    /// <param name="isUseCache"></param>
+    /// <returns></returns>
+    public static async Task<(string? SessionId, List<BaseCtrl>? Ctrls)> GetDataWithConnection
+        (this IDbFactoryWrapper factory, List<BaseCtrl> decoyObjects, bool isUseCache = false)
+    {
+        (string? sessionId, List<BaseCtrl>? ctrls) =
+            (await decoyObjects.JoiningListData(
+                ((ctrls) =>
+                {
+                    BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrls);
+                    return Task.FromResult(queryCreator.CreateQueryWithIds(factory.DbType));
+                }),
+                (async (query, type) =>
+                {
+                    INpOnWrapperResult? result = await factory.QueryAsync(query);
+                    // var ctrl = result?.PostgresConverter(type);
+                    var ctrls = result?.GenericConverter(type);
+                    return ctrls?.ToList();
+                }),
+                true, false, -1));
+        if (sessionId != null && ctrls != null)
+            return (sessionId, ctrls);
+        return (null, null);
+    }
+
 
     /// <summary>
     /// sử dụng tạo kết nối mới tới Database, đã tồn tại sử dụng kết nối cũ
@@ -61,7 +86,7 @@ public class InitialConnection
     /// <param name="connectionInfoCtrl">Inherits from BaseCtrl</param>
     /// <returns></returns>
     [Obsolete("Obsolete")]
-    public Task<IDbFactoryWrapper?> CreateDbFactoryWrapper(ConnectionInfoCtrl connectionInfoCtrl)
+    public static Task<IDbFactoryWrapper?> CreateDbFactoryWrapper(ConnectionInfoCtrl connectionInfoCtrl)
     {
         if (string.IsNullOrWhiteSpace(connectionInfoCtrl.ConnectString))
             return Task.FromResult<IDbFactoryWrapper?>(null);

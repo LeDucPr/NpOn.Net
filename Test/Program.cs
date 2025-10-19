@@ -11,7 +11,6 @@ namespace Test;
 
 class Program
 {
-    
     static void Main(string[] args)
     {
         Console.WriteLine("Hello, World!");
@@ -21,7 +20,7 @@ class Program
     private static async Task<IEnumerable<DataLookup>?> DbFactoryIntegrationTest()
     {
         EDb dbTypeForFirstCreation = EDb.Postgres;
-        
+
         IDbFactoryWrapper factoryWrapper =
             new DbFactoryWrapper(
                 "Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password",
@@ -49,7 +48,8 @@ class Program
             var ctrl = result?.PostgresConverter(type);
             return ctrl?.FirstOrDefault();
         };
-        (string? sessionId, BaseCtrl? connCtrl) = await connectionCtrl.JoiningData(createStringQueryMethod, getDataMethod, true, -1);
+        (string? sessionId, BaseCtrl? connCtrl) =
+            await connectionCtrl.JoiningData(createStringQueryMethod, getDataMethod, true, true, -1);
         if (sessionId == null)
         {
             return null;

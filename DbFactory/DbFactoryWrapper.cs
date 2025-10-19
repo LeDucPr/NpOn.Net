@@ -10,7 +10,8 @@ public class DbFactoryWrapper : IDbFactoryWrapper
 {
     private readonly IDbDriverFactory? _factory;
     private readonly EDb _dbType;
-
+    public EDb DbType => _dbType;
+    
     /// <summary>
     /// Tạo ra cho kết nối chỉ dùng ConnectionString hoặc lấy tham số khi khởi động
     /// </summary>

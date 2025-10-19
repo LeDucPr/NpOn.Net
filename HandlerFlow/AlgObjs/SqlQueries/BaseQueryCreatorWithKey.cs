@@ -85,7 +85,7 @@ public sealed class BaseQueryCreatorWithKey
         EDb dbType = EDb.Postgres,
         string? baseInput = null)
     {
-        if (Validate(dbType))
+        if (!Validate(dbType))
             return string.Empty;
         string output = baseInput ?? _baseQuery;
         bool hasWhere = output.Contains(_whereClause, StringComparison.OrdinalIgnoreCase);
@@ -113,7 +113,7 @@ public sealed class BaseQueryCreatorWithKey
 
     public string CreateQueryWithIds(EDb dbType)
     {
-        if (Validate(dbType))
+        if (!Validate(dbType))
             return string.Empty;
         if (_bulkPks == null || _bulkPks.Value.Values.Count == 0)
             return string.Empty;
