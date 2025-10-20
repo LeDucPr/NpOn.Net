@@ -6,7 +6,7 @@ public enum EDbError
 {
     [Display(Name = "Unknown Error")] Unknown,
     [Display(Name = "Connect option not found")] ConnectOption,
-
+    [Display(Name = "Field not found")] FieldNotFound,
 
     #region Connection
 
