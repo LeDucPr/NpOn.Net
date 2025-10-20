@@ -1,0 +1,315 @@
+#version: '3.8'
+
+networks:
+  dc1:
+    driver: bridge
+  dc2:
+    driver: bridge
+  cockroach-cluster:
+    driver: bridge
+  postgres-net:
+    driver: bridge
+  mongo-net:
+    driver: bridge
+
+services:
+    # ScyllaDB Cluster
+  scylla1:
+    image: scylladb/scylla
+    container_name: ScyllaDB1
+    networks:
+      - dc1
+    ports:
+      - 9100:9100 # Node Exporter
+      - 9180:9180 # Scylla Metrics
+      - 9042:9042 # Use this port for the Cassandra native protocol
+      - 9160:9160 # Use this port for the thrift protocol
+      - 7199:7199 # Use this port for JMX
+      # - 10000:10000 # Spark Thrift Server (commented out, can be enabled if needed)
+      # - 8080:8080 # Spark Master UI
+    volumes:
+      - ScyllaDB1_data:/var/lib/scylla
+    environment:
+      # - SCYLLA_DOCKER_ARGS=--developer-mode=1 --smp 1
+      - SCYLLA_LISTEN_ADDRESS=0.0.0.0
+      - SCYLLA_RPC_ADDRESS=0.0.0.0
+      - SCYLLA_SEEDS=ScyllaDB1
+      - SCYLLA_DC=dc1
+      - SCYLLA_RACK=rack1
+    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address ScyllaDB1 --broadcast-rpc-address ScyllaDB1 --seeds ScyllaDB1
+
+
+  scylla2:
+    image: scylladb/scylla
+    container_name: ScyllaDB2
+    networks:
+      - dc1
+    ports:
+      - 9101:9100 # Node Exporter
+      - 9181:9180 # Scylla Metrics
+      - 9043:9042 # Use this port for the Cassandra native protocol
+      - 9161:9160 # Use this port for the thrift protocol 
+      - 7200:7199 # Use this port for JMX
+    volumes:
+      - ScyllaDB2_data:/var/lib/scylla
+    depends_on:
+      - scylla1
+    environment:
+      # - SCYLLA_DOCKER_ARGS=--developer-mode=1 --smp 1
+      - SCYLLA_LISTEN_ADDRESS=0.0.0.0
+      - SCYLLA_RPC_ADDRESS=0.0.0.0
+      - SCYLLA_SEEDS=ScyllaDB1
+      - SCYLLA_DC=dc1
+      - SCYLLA_RACK=rack1
+    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address ScyllaDB2 --broadcast-rpc-address ScyllaDB2 --seeds ScyllaDB1
+
+
+  scylla3:
+    image: scylladb/scylla
+    container_name: ScyllaDB3
+    networks:
+      - dc2
+    ports:
+      - 9102:9100 # Node Exporter
+      - 9182:9180 # Scylla Metrics
+      - 9044:9042 # Use this port for the Cassandra native protocol
+      - 9162:9160 # Use this port for the thrift protocol
+      - 7201:7199 # Use this port for JMX
+    volumes:
+      - ScyllaDB3_data:/var/lib/scylla
+    depends_on:
+      - scylla1
+    environment:
+      # - SCYLLA_DOCKER_ARGS=--developer-mode=1 --smp 1
+      - SCYLLA_LISTEN_ADDRESS=0.0.0.0
+      - SCYLLA_RPC_ADDRESS=0.0.0.0
+      - SCYLLA_SEEDS=ScyllaDB1
+      - SCYLLA_DC=dc2
+      - SCYLLA_RACK=rack1
+    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address ScyllaDB3 --broadcast-rpc-address ScyllaDB3 --seeds ScyllaDB1
+    
+
+  # # Spark Master and Workers (commented out for now, can be enabled if needed)
+  # # Sử dụng Bitnami Spark image để dễ dàng cấu hình và tích hợp
+  # spark-master:
+  #   image: bitnami/spark:latest
+  #   container_name: spark-master
+  #   networks:
+  #     - scylla-cluster
+  #   ports:
+  #     - "8081:8080" # Spark Master Web UI (trên host:8081, trong container:8080)
+  #     - "7077:7077" # Spark Master internal communication
+  #   environment:
+  #     - SPARK_MODE=master # Thiết lập vai trò là Master
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #     - SPARK_SSL_ENABLED=no
+  #     - SPARK_MASTER_WEBUI_PORT=8080
+  #     - SPARK_UI_PORT=8080
+  #     - SPARK_EXTRA_ARGS="--packages com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --conf spark.cassandra.connection.host=scylla1 --conf spark.cassandra.connection.port=9042"
+  #   volumes:
+  #     - ./spark/jars:/opt/bitnami/spark/jars
+
+
+  # # Spark Workers
+  # spark-worker1: # Worker đầu tiên
+  #   image: bitnami/spark:latest
+  #   container_name: spark-worker1
+  #   networks:
+  #     - scylla-cluster
+  #   ports:
+  #     - "8082:8080" # Spark Worker1 Web UI (trên host:8082, trong container:8080)
+  #   environment:8080
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_CORES=1
+  #     - SPARK_WORKER_MEMORY=1G
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #     - SPARK_SSL_ENABLED=no
+  #     - SPARK_EXTRA_ARGS="--packages com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --conf spark.cassandra.connection.host=scylla1 --conf spark.cassandra.connection.port=9042"
+  #   volumes:
+  #     - ./spark/jars:/opt/bitnami/spark/jars
+
+  # spark-worker2: # Worker thứ hai
+  #   image: bitnami/spark:latest
+  #   container_name: spark-worker2
+  #   networks:
+  #     - scylla-cluster
+  #   ports:
+  #     - "8083:8080" # Spark Worker2 Web UI (trên host:8083, trong container:8080)
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_CORES=1
+  #     - SPARK_WORKER_MEMORY=1G
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #     - SPARK_SSL_ENABLED=no
+  #     - SPARK_EXTRA_ARGS="--packages com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --conf spark.cassandra.connection.host=scylla1 --conf spark.cassandra.connection.port=9042"
+  #   volumes:
+  #     - ./spark/jars:/opt/bitnami/spark/jars
+
+  # spark-sql-thrift-server:
+  #   image: bitnami/spark:latest
+  #   container_name: SparkSQLThriftServer
+  #   networks:
+  #     - scylla-cluster
+  #   ports:
+  #     - "10000:10000" # Cổng cho DBeaver kết nối (JDBC/Thrift)
+  #   environment:
+  #     - SPARK_MODE=client
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #     - SPARK_SSL_ENABLED=no
+  #     - SPARK_SUBMIT_ARGS=--packages com.datastax.spark:spark-cassandra-connector_2.12:3.5.0 --conf spark.cassandra.connection.host=scylla1 --conf spark.cassandra.connection.port=9042 --hiveconf hive.server2.thrift.port=10000 --hiveconf hive.server2.thrift.bind.host=0.0.0.0
+  #   command: /opt/bitnami/spark/bin/spark-sql --service
+  #   volumes:
+  #     - ./spark/jars:/opt/bitnami/spark/jars
+
+
+  # CockroachDB Cluster
+  cockroach1:
+    image: cockroachdb/cockroach:latest
+    container_name: CockroachDB1
+    networks:
+      - cockroach-cluster
+    ports:
+      - "26257:26257" # PostgreSQL/CockroachDB SQL port (tương tự như 9042 của Scylla)
+      - "8080:8080"   # Admin UI (tương tự như 9180 của Scylla)
+    volumes:
+      - CockroachDB1_data:/cockroach/cockroach-data
+    command: start --insecure --advertise-addr=cockroach1:26257 --join=cockroach1:26257,cockroach2:26257,cockroach3:26257 --cache=.25 --max-sql-memory=.25 --logtostderr=WARNING
+
+  cockroach2:
+    image: cockroachdb/cockroach:latest
+    container_name: CockroachDB2
+    networks:
+      - cockroach-cluster
+    ports:
+      - "26258:26257" # PostgreSQL/CockroachDB SQL port
+      - "8081:8080"   # Admin UI
+    volumes:
+      - CockroachDB2_data:/cockroach/cockroach-data
+    depends_on:
+      - cockroach1
+    command: start --insecure --advertise-addr=cockroach2:26257 --join=cockroach1:26257,cockroach2:26257,cockroach3:26257 --cache=.25 --max-sql-memory=.25 --logtostderr=WARNING
+
+  cockroach3:
+    image: cockroachdb/cockroach:latest
+    container_name: CockroachDB3
+    networks:
+      - cockroach-cluster
+    ports:
+      - "26259:26257" # PostgreSQL/CockroachDB SQL port
+      - "8082:8080"   # Admin UI
+    volumes:
+      - CockroachDB3_data:/cockroach/cockroach-data
+    depends_on:
+      - cockroach1
+    command: start --insecure --advertise-addr=cockroach3:26257 --join=cockroach1:26257,cockroach2:26257,cockroach3:26257 --cache=.25 --max-sql-memory=.25 --logtostderr=WARNING
+
+  # Init cluster: Service này sẽ chạy một lần để khởi tạo cluster.
+  # Nó sẽ tự động thử lại nếu thất bại, rất hữu ích khi các node khác chưa sẵn sàng.
+  cockroach-init:
+    image: cockroachdb/cockroach:latest
+    container_name: CockroachDB_Init
+    networks:
+      - cockroach-cluster
+    depends_on:
+      - cockroach1
+      - cockroach2
+      - cockroach3
+    command: init --insecure --host=cockroach1:26257
+    restart: on-failure
+
+  # PostgreSQL Database
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: np_on_db
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: always
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_db
+    networks:
+      - mongo-net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password # Bro nên đổi password này trong môi trường production
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+
+  # Mongo Express - Giao diện web để quản lý MongoDB
+  mongo-express:
+    image: mongo-express
+    container_name: mongo_express_ui
+    networks:
+      - mongo-net
+    ports:
+      - "8088:8081" # Truy cập giao diện web tại http://localhost:8088
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+    depends_on:
+      - mongodb
+    restart: always
+
+
+
+
+volumes:
+  ScyllaDB1_data:
+  ScyllaDB2_data:
+  ScyllaDB3_data:
+
+  CockroachDB1_data:
+  CockroachDB2_data:
+  CockroachDB3_data:
+
+  postgres_data:
+  pgadmin_data:
+  mongodb_data:
+
+
+
+# check---
+#    wsl -l -s 
+#    wsl --shutdown
+# Chuyển dữ liệu   wsl --export docker-desktop  D:\Docker_Volume\ScyllaDBData\docker-desktop.tar
+# Xoá dữ liệu cũ   wsl --unregister docker-desktop
+# Check file có tồn tại chưa   dir D:\D:\@Docker_Data\docker-desktop.tar
+# Bốc dữ liệu mới   wsl --import docker-desktop D:\D:\@Docker_Data\docker-desktop D:\D:\@Docker_Data\docker-desktop.tar
+
+
+# Tạo mới Keyspace "ScarLight" với replication_factor = 1 để test 
+#    CREATE KEYSPACE ScarLight WITH replication = {'class': 'NetworkTopologyStrategy','replication_factor': 1};
