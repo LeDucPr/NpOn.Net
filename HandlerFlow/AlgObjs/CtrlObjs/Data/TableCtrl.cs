@@ -27,10 +27,7 @@ public class TableCtrl : BaseCtrl
 
     [Fk<ProcessTableCtrl>($"{nameof(TableCtrl)}.{nameof(ProcessTableCtrl)}.{nameof(ProcessTableCtrl.Id)}")]
     public ProcessTableCtrl? ProcessTable { get; set; }
-
-
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
+    
 
     protected override void FieldMapper()
     {
@@ -40,7 +37,5 @@ public class TableCtrl : BaseCtrl
         FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
         FieldMap.Add(nameof(ProcessTableId), "process_table_id");
-        FieldMap.Add(nameof(Description), "description");
-        FieldMap.Add(nameof(IsActive), "is_active");
     }
 }

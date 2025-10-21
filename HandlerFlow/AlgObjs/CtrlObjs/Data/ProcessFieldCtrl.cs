@@ -20,9 +20,6 @@ public class ProcessFieldCtrl : BaseCtrl
     public required EFieldSize FieldSizeType { get; set; }
     public required int Size { get; set; }
 
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
-
     protected override void FieldMapper()
     {
         FieldMap ??= [];
@@ -32,7 +29,5 @@ public class ProcessFieldCtrl : BaseCtrl
         FieldMap.Add(nameof(FieldType), "field_type");
         FieldMap.Add(nameof(FieldSizeType), "field_size_type");
         FieldMap.Add(nameof(Size), "size");
-        FieldMap.Add(nameof(Description), "description");
-        FieldMap.Add(nameof(IsActive), "is_active");
     }
 }

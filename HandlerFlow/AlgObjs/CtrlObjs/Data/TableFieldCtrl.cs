@@ -19,12 +19,7 @@ public class TableFieldCtrl : BaseCtrl
     public required int Size { get; set; }
     public required EDb DatabaseType { get; set; }
     public required string FieldName { get; set; }
-
-
-    // process for get data action 
-
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
+    
 
     protected override void FieldMapper()
     {
@@ -35,7 +30,5 @@ public class TableFieldCtrl : BaseCtrl
         FieldMap.Add(nameof(FieldType), "field_type");
         FieldMap.Add(nameof(FieldSizeType), "field_size_type");
         FieldMap.Add(nameof(Size), "size");
-        FieldMap.Add(nameof(Description), "description");
-        FieldMap.Add(nameof(IsActive), "is_active");
     }
 }

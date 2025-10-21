@@ -54,17 +54,17 @@ class Program
             for (int rowIndex = 0; rowIndex < tableWrapper.RowWrappers.Count; rowIndex++)
             {
                 foreach (var rowCell in tableWrapper.RowWrappers[rowIndex]!.GetRowWrapper())
-
                     Console.WriteLine(
                         $"RowsCell[index] = {rowIndex} --- {rowCell.Key}: Type- {rowCell.Value.DbType};  Value - {rowCell.Value.ValueAsObject}");
+
                 Console.WriteLine();
             }
 
         var tableFieldCtrls = resultOfQuery?.GenericConverter(typeof(TableFieldCtrl))?.ToList();
         if (tableFieldCtrls is not { Count: > 0 })
             return;
-        
-        
+
+
         (string? _, List<BaseCtrl>? tableFieldCtrlsOutput) =
             factoryWrapper.GetDataWithConnection(tableFieldCtrls).GetAwaiter().GetResult();
 
