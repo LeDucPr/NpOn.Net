@@ -11,6 +11,8 @@ namespace HandlerFlow.AlgObjs.CtrlObjs.Data;
 [TableLoader("table_field_ctrl")]
 public class UnifiedTableCtrl : BaseCtrl
 {
+    public required string UnifiedTableName { get; set; }
+
     [FkId<TableFieldCtrl>(nameof(TableFieldId))]
     public required long TableFieldId { get; set; }
 
@@ -19,7 +21,6 @@ public class UnifiedTableCtrl : BaseCtrl
     public TableFieldCtrl? TableField { get; set; }
 
     // process for get data action 
-    public dynamic? Condition { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; }
 
@@ -27,8 +28,8 @@ public class UnifiedTableCtrl : BaseCtrl
     protected override void FieldMapper()
     {
         FieldMap ??= [];
+        FieldMap.Add(nameof(UnifiedTableName), "unified_table_name");
         FieldMap.Add(nameof(TableFieldId), "table_field_id");
-        FieldMap.Add(nameof(Condition), "condition");
         FieldMap.Add(nameof(Description), "description");
         FieldMap.Add(nameof(IsActive), "is_active");
     }
