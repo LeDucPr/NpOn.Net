@@ -15,15 +15,11 @@ public class ConnectionCtrl : BaseCtrl
     public ConnectionInfoCtrl? ConnectionInfo { get; set; }
 
     public required EDbLanguage QueryLanguageUse { get; set; }
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
 
     protected override void FieldMapper()
     {
         FieldMap ??= [];
         FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
         FieldMap.Add(nameof(QueryLanguageUse), "query_language_use");
-        FieldMap.Add(nameof(Description), "description");
-        FieldMap.Add(nameof(IsActive), "is_active");
     }
 }

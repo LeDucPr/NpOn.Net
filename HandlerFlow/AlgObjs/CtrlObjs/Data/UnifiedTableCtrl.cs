@@ -20,17 +20,11 @@ public class UnifiedTableCtrl : BaseCtrl
         $"{nameof(UnifiedTableCtrl)}.{nameof(TableFieldCtrl)}.{nameof(TableFieldCtrl.Id)}")]
     public TableFieldCtrl? TableField { get; set; }
 
-    // process for get data action 
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
-
 
     protected override void FieldMapper()
     {
         FieldMap ??= [];
         FieldMap.Add(nameof(UnifiedTableName), "unified_table_name");
         FieldMap.Add(nameof(TableFieldId), "table_field_id");
-        FieldMap.Add(nameof(Description), "description");
-        FieldMap.Add(nameof(IsActive), "is_active");
     }
 }

@@ -7,6 +7,9 @@ namespace HandlerFlow.AlgObjs.CtrlObjs
         #region Field Config
 
         [Pk(nameof(BaseCtrl.Id))] public required long Id { get; set; }
+        
+        public string? Description { get; set; }
+        public bool IsActive { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
@@ -29,6 +32,8 @@ namespace HandlerFlow.AlgObjs.CtrlObjs
             FieldMap.Add(nameof(Id), "id");
             FieldMap.Add(nameof(CreatedAt), "created_at");
             FieldMap.Add(nameof(UpdatedAt), "updated_at");
+            FieldMap.Add(nameof(Description), "description");
+            FieldMap.Add(nameof(IsActive), "is_active");
             FieldMapper();
         }
 

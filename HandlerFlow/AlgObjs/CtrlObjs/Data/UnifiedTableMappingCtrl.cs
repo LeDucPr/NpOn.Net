@@ -31,8 +31,6 @@ public class UnifiedTableMappingCtrl : BaseCtrl
     public long? JoinTableFieldId { get; set; } // the field to join on
     public TableFieldCtrl? JoinTableField { get; set; }
     public int? JoinOrder { get; set; }
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
 
     #region override
 
@@ -41,8 +39,9 @@ public class UnifiedTableMappingCtrl : BaseCtrl
         FieldMap ??= [];
         FieldMap.Add(nameof(TableFieldId), "table_field_id");
         FieldMap.Add(nameof(JoinType), "join_type");
-        FieldMap.Add(nameof(Description), "description");
-        FieldMap.Add(nameof(IsActive), "is_active");
+        FieldMap.Add(nameof(JoinTableFieldId), "join_table_field_id");
+        FieldMap.Add(nameof(JoinTableField), "join_table_field");
+        FieldMap.Add(nameof(JoinOrder), "join_order");
     }
 
     #endregion override
