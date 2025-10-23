@@ -2,26 +2,45 @@
 using Enums;
 using HandlerFlow.AlgObjs.CtrlObjs.Data;
 using System.Data;
+using CommonObject;
 
 namespace SystemController.ResultConverters;
 
 public static class JoiningTable
 {
-    public async static Task LoadData(
-        // Task<> /////////////////
-        )
+    public static async Task LoadData(
+        List<UnifiedTableMappingCtrl> unifiedTableMappings,
+        Func<List<UnifiedTableMappingCtrl>?, Task<INpOnWrapperResult>>? getBulkDataMethod
+    )
     {
+        if (getBulkDataMethod == null)
+            return;
+        List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> Mappings)> groupedByTable =
+            unifiedTableMappings.ValidateAndSort();
+        if (groupedByTable is not { Count: > 0 })
+            return;
         
+        List<(TableCtrl Table, INpOnWrapperResult WrapperResult)> results = [];
+        foreach (var grouped in groupedByTable)
+        {
+            INpOnWrapperResult? rs = await WrapperProcessers.Processer(getBulkDataMethod!, grouped.Mappings);
+            if (rs == null)
+                continue;
+            results.Add((grouped.Table!, rs));
+        }
+        
+        // todo: results -> S
     }
-    
-    
+
+
     /// <summary>
     /// Call this func when object build done from database
     /// </summary>
     /// <param name="tableMappings"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> Mappings)> ValidateAndSort(this List<UnifiedTableMappingCtrl>? tableMappings)
+    public static List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> Mappings)> ValidateAndSort(
+        this List<UnifiedTableMappingCtrl>? tableMappings)
     {
         if (tableMappings is not { Count: > 0 })
             return [];
@@ -78,7 +97,7 @@ public static class JoiningTable
                         );
                     })
                 .ToList();
-        
+
         if (groupedByTable.Count == 0)
             return [];
 
@@ -89,7 +108,7 @@ public static class JoiningTable
             // todo: build  query with group field with table name call in key (TableCtrl) - with field in table of database
             //
             //
-            
+
             TableCtrl? table = grouped.Table;
             if (table == null) // decoy data without null
                 return [];
