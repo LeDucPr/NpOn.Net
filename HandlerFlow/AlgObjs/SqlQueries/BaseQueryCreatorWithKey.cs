@@ -27,7 +27,7 @@ public sealed class BaseQueryCreatorWithKey
     private bool Validate(EDb dbType)
     {
         _dbType = dbType;
-        return _dbType == EDb.Postgres || _dbType == EDb.Mssql;
+        return _dbType == EDb.Postgres || _dbType == EDb.Mssql || _dbType == EDb.Cassandra || _dbType == EDb.ScyllaDb;
     }
 
     /// <summary>
