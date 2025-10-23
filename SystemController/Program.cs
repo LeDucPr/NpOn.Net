@@ -47,31 +47,51 @@ class Program
         IDbFactoryWrapper? dbFactoryWrapper =
             InitializationCtrlSystem.CreateDbFactoryWrapper(connectionInfoCtrl).Result;
 
-        string pgQuery = "Select * from table_field_ctrl where table_id = 1";
-        INpOnWrapperResult? resultOfQuery = dbFactoryWrapper?.QueryAsync(pgQuery).GetAwaiter().GetResult();
+        
+        
+        // string pgQuery = "Select * from table_field_ctrl where table_id = 1";
+        // INpOnWrapperResult? resultOfQuery = dbFactoryWrapper?.QueryAsync(pgQuery).GetAwaiter().GetResult();
+        //
+        // if (resultOfQuery is INpOnTableWrapper tableWrapper && tableWrapper.RowWrappers.Count > 0)
+        //     for (int rowIndex = 0; rowIndex < tableWrapper.RowWrappers.Count; rowIndex++)
+        //     {
+        //         foreach (var rowCell in tableWrapper.RowWrappers[rowIndex]!.GetRowWrapper())
+        //             Console.WriteLine(
+        //                 $"RowsCell[index] = {rowIndex} --- {rowCell.Key}: Type- {rowCell.Value.DbType};  Value - {rowCell.Value.ValueAsObject}");
+        //
+        //         Console.WriteLine();
+        //     }
+        //
+        // var tableFieldCtrls = resultOfQuery?.GenericConverter(typeof(TableFieldCtrl))?.ToList();
+        // if (tableFieldCtrls is not { Count: > 0 })
+        //     return;
+        //
+        //
+        // (string? _, List<BaseCtrl>? tableFieldCtrlsOutput) =
+        //     factoryWrapper.GetDataWithConnection(tableFieldCtrls).GetAwaiter().GetResult();
+        //
+        // if (tableFieldCtrlsOutput is not { Count: > 0 } || tableFieldCtrlsOutput.First() is not TableFieldCtrl)
+        //     return;
+        //
+        // List<TableFieldCtrl> tableFieldCtrlList = tableFieldCtrlsOutput.Cast<TableFieldCtrl>().ToList();
 
-        if (resultOfQuery is INpOnTableWrapper tableWrapper && tableWrapper.RowWrappers.Count > 0)
-            for (int rowIndex = 0; rowIndex < tableWrapper.RowWrappers.Count; rowIndex++)
-            {
-                foreach (var rowCell in tableWrapper.RowWrappers[rowIndex]!.GetRowWrapper())
-                    Console.WriteLine(
-                        $"RowsCell[index] = {rowIndex} --- {rowCell.Key}: Type- {rowCell.Value.DbType};  Value - {rowCell.Value.ValueAsObject}");
 
-                Console.WriteLine();
-            }
+        ////
 
-        var tableFieldCtrls = resultOfQuery?.GenericConverter(typeof(TableFieldCtrl))?.ToList();
-        if (tableFieldCtrls is not { Count: > 0 })
+        string pgQuery_unified_table_mapping_ctrl = "Select * from unified_table_mapping_ctrl";
+        INpOnWrapperResult? resultOfQueryTableFieldMappingCtrls =
+            dbFactoryWrapper?.QueryAsync(pgQuery_unified_table_mapping_ctrl).GetAwaiter().GetResult();
+        List<BaseCtrl>? unifiedTableFieldMappingCtrls = resultOfQueryTableFieldMappingCtrls
+            ?.GenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
+        if (unifiedTableFieldMappingCtrls is not { Count: > 0 })
             return;
+        
+        (string? _, unifiedTableFieldMappingCtrls) =
+            factoryWrapper.GetDataWithConnection(unifiedTableFieldMappingCtrls).GetAwaiter().GetResult();
 
+        
+        int a = 1;
 
-        (string? _, List<BaseCtrl>? tableFieldCtrlsOutput) =
-            factoryWrapper.GetDataWithConnection(tableFieldCtrls).GetAwaiter().GetResult();
-
-        if (tableFieldCtrlsOutput is not { Count: > 0 } || tableFieldCtrlsOutput.First() is not TableFieldCtrl)
-            return;
-
-        List<TableFieldCtrl> tableFieldCtrlList = tableFieldCtrlsOutput.Cast<TableFieldCtrl>().ToList();
         // if (tableFieldCtrlList)
 
 

@@ -15,21 +15,31 @@ public static class JoiningTable
     {
         if (getBulkDataMethod == null)
             return;
-        List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> Mappings)> groupedByTable =
+        List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> MappingSorteds)> groupedByTable =
             unifiedTableMappings.ValidateAndSort();
         if (groupedByTable is not { Count: > 0 })
             return;
         
-        List<(TableCtrl Table, INpOnWrapperResult WrapperResult)> results = [];
-        foreach (var grouped in groupedByTable)
-        {
-            INpOnWrapperResult? rs = await WrapperProcessers.Processer(getBulkDataMethod!, grouped.Mappings);
-            if (rs == null)
-                continue;
-            results.Add((grouped.Table!, rs));
-        }
-        
-        // todo: results -> S
+        // get data async with each table group
+        var tasks = groupedByTable
+            .Select((grouped, index) => new
+            {
+                Index = index,
+                Table = grouped.Table!,
+                Task = WrapperProcessers.Processer(getBulkDataMethod!, grouped.MappingSorteds)
+            })
+            .ToList();
+
+        var resultsArray = await Task.WhenAll(tasks.Select(t => t.Task));
+
+        List<(TableCtrl Table, INpOnWrapperResult WrapperResult)> results = tasks
+            .Zip(resultsArray, (t, rs) => new { t.Index, t.Table, Result = rs })
+            .Where(x => x.Result != null)
+            .OrderBy(x => x.Index) // order by to sort same as input index for loop
+            .Select(x => (x.Table, x.Result!))
+            .ToList();
+
+        int a = 1;
     }
 
 
@@ -39,7 +49,7 @@ public static class JoiningTable
     /// <param name="tableMappings"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> Mappings)> ValidateAndSort(
+    public static List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> MappingSorteds)> ValidateAndSort(
         this List<UnifiedTableMappingCtrl>? tableMappings)
     {
         if (tableMappings is not { Count: > 0 })
@@ -78,7 +88,7 @@ public static class JoiningTable
                 "All TableField.FieldName values must be unique within the tableMappings list.");
 
         // group (sort ascending - null as infinity)
-        List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> Mappings)> groupedByTable =
+        List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> MappingSorteds)> groupedByTable =
             tableMappings
                 .Where(m => m.TableField?.Table != null)
                 .GroupBy(
@@ -112,7 +122,7 @@ public static class JoiningTable
             TableCtrl? table = grouped.Table;
             if (table == null) // decoy data without null
                 return [];
-            List<UnifiedTableMappingCtrl> tableFieldMappings = grouped.Mappings;
+            List<UnifiedTableMappingCtrl> tableFieldMappings = grouped.MappingSorteds;
             if (tableFieldMappings is not { Count: > 0 })
                 return [];
         }

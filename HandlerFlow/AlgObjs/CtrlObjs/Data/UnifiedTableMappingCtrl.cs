@@ -7,7 +7,7 @@ namespace HandlerFlow.AlgObjs.CtrlObjs.Data;
 /// You can create async that all connections when their driver were
 /// Concat all table have in this with condition by Keys
 /// </summary>
-[TableLoader("table_field_ctrl")]
+[TableLoader("unified_table_mapping_ctrl")]
 public class UnifiedTableMappingCtrl : BaseCtrl
 {
     [FkId<UnifiedTableCtrl>(nameof(UnifiedTableId))]
@@ -21,7 +21,7 @@ public class UnifiedTableMappingCtrl : BaseCtrl
     [FkId<TableFieldCtrl>(nameof(TableFieldId))]
     public required long TableFieldId { get; set; }
 
-    [Fk<TableCtrl>(
+    [Fk<TableFieldCtrl>(
         $"{nameof(UnifiedTableMappingCtrl)}.{nameof(TableFieldCtrl)}.{nameof(TableFieldCtrl.Id)}")]
     public TableFieldCtrl? TableField { get; set; }
 
@@ -37,6 +37,7 @@ public class UnifiedTableMappingCtrl : BaseCtrl
     protected override void FieldMapper()
     {
         FieldMap ??= [];
+        FieldMap.Add(nameof(UnifiedTableId), "unified_table_id");
         FieldMap.Add(nameof(TableFieldId), "table_field_id");
         FieldMap.Add(nameof(JoinType), "join_type");
         FieldMap.Add(nameof(JoinTableFieldId), "join_table_field_id");
