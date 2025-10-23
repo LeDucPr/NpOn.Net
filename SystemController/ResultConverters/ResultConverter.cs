@@ -47,16 +47,17 @@ public static class ResultConverter
                         var enumValue = Enum.ToObject(actualType, convertedValue);
                         kvProp.Value.SetValue(newCtrl, enumValue);
                     }
-                    else 
+                    else
                         kvProp.Value.SetValue(newCtrl, convertedValue, null);
                 }
             }
+
             ctrlList.Add(newCtrl);
         }
 
         return ctrlList;
     }
-    
+
     public static IEnumerable<BaseCtrl>? PostgresConverter(this INpOnWrapperResult result, Type ctrlType)
     {
         if (!ctrlType.IsChildOfBaseCtrl())
@@ -96,10 +97,11 @@ public static class ResultConverter
                         var enumValue = Enum.ToObject(actualType, convertedValue);
                         kvProp.Value.SetValue(newCtrl, enumValue);
                     }
-                    else 
+                    else
                         kvProp.Value.SetValue(newCtrl, convertedValue, null);
                 }
             }
+
             ctrlList.Add(newCtrl);
         }
 

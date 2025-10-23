@@ -22,3 +22,7 @@ public interface INpOnTableWrapper
     IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers { get; }
     INpOnCollectionWrapper CollectionWrappers { get; }
 }
+
+public interface INpOnSuperTableWrapper : INpOnTableWrapper, INpOnWrapperResult
+{
+}

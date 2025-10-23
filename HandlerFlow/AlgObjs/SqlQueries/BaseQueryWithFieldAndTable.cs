@@ -25,7 +25,7 @@ public class BaseQueryWithFieldAndTable
             throw new NotSupportedException($"Database type '{dbType}' is not supported.");
     }
 
-    public BaseQueryWithFieldAndTable(List<UnifiedTableMappingCtrl> fieldMappings)
+    private BaseQueryWithFieldAndTable(List<UnifiedTableMappingCtrl> fieldMappings)
     {
         if (fieldMappings is not { Count : > 0 })
             throw new ArgumentException("Field not null");
@@ -40,6 +40,14 @@ public class BaseQueryWithFieldAndTable
         // _singlePk = singlePk; //////////////////////////////////////////////////////////
         _bulkPks = null;
     }
+
+    // từ hàm overload trên, tạo một đối tượng trả ra kết quả của câu truy vấn có chứa bảng và các trường được truy vấn dang static    public static BaseQueryWithFieldAndTable FromFieldMappings(List<UnifiedTableMappingCtrl> fieldMappings)
+    public static string CreateQuery(List<UnifiedTableMappingCtrl> fieldMappings)
+    {
+        var query = new BaseQueryWithFieldAndTable(fieldMappings);
+        return query.BuildSelectQuery(fieldMappings.Select(x => x.JoinTableField?.FieldName!).Distinct().ToList());
+    }
+
 
     /// <summary>
     /// Constructor for a query targeting a single entity by its primary key.

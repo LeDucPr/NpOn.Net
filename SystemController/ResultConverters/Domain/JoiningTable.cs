@@ -1,32 +1,76 @@
-﻿using CommonDb.DbResults;
-using Enums;
-using HandlerFlow.AlgObjs.CtrlObjs.Data;
-using System.Data;
+﻿using CommonDb;
+using CommonDb.DbResults;
 using CommonObject;
+using DbFactory;
+using Enums;
+using HandlerFlow.AlgObjs.CtrlObjs;
+using HandlerFlow.AlgObjs.CtrlObjs.Data;
+using HandlerFlow.AlgObjs.SqlQueries;
+using Npgsql;
+using SystemController.FactoryInitialzations;
 
-namespace SystemController.ResultConverters;
+namespace SystemController.ResultConverters.Domain;
 
-public static class JoiningTable
+public static class JoiningTableExtensions
 {
-    public static async Task LoadData(
+    [Obsolete("Obsolete")]
+    public static async Task<INpOnWrapperResult?> JoiningTable(
+        this INpOnWrapperResult result)
+    {
+        if (result is not INpOnTableWrapper tableWrapper)
+            return null;
+
+        List<BaseCtrl>? ctrls = result.GenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
+        if (ctrls is not { Count: > 0 })
+            return null;
+
+        List<UnifiedTableMappingCtrl> unifiedTableMappings = ctrls.Cast<UnifiedTableMappingCtrl>().ToList();
+        if (unifiedTableMappings is not { Count: > 0 })
+            return null;
+
+        // INpOnWrapperResult is table results (not inherit from BaseCtrl)
+        Func<TableCtrl, List<UnifiedTableMappingCtrl>?, Task<INpOnWrapperResult?>> getDataFunc =
+            async (table, groupedMappings) =>
+            {
+                if (groupedMappings is not { Count: > 0 })
+                    throw new InvalidOperationException($"{table.TableName}: Grouped mappings is not have any value.");
+                if (table.ConnectionInfo == null)
+                    throw new InvalidOperationException($"{table.TableName}: Connection info cannot be null.");
+                IDbFactoryWrapper? dbFactoryWrapper =
+                    InitializationCtrlSystem.CreateDbFactoryWrapper(table.ConnectionInfo).Result;
+                string queryWithFieldAndTableObject = BaseQueryWithFieldAndTable.CreateQuery(groupedMappings);
+                INpOnWrapperResult? getDataResult =
+                    dbFactoryWrapper?.QueryAsync(queryWithFieldAndTableObject).GetAwaiter().GetResult();
+
+                return null;
+            };
+
+        List<INpOnWrapperResult>? results = await JoiningTable(unifiedTableMappings, getDataFunc!);
+
+        //
+        INpOnSuperTableWrapper superTable = new NpOnSuperTableWrapper(results);
+        return superTable;
+    }
+
+    private static async Task<List<INpOnWrapperResult>?> JoiningTable(
         List<UnifiedTableMappingCtrl> unifiedTableMappings,
-        Func<List<UnifiedTableMappingCtrl>?, Task<INpOnWrapperResult>>? getBulkDataMethod
+        Func<TableCtrl, List<UnifiedTableMappingCtrl>?, Task<INpOnWrapperResult>>? getBulkDataMethod
     )
     {
         if (getBulkDataMethod == null)
-            return;
+            return null;
         List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> MappingSorteds)> groupedByTable =
             unifiedTableMappings.ValidateAndSort();
         if (groupedByTable is not { Count: > 0 })
-            return;
-        
+            return null;
+
         // get data async with each table group
         var tasks = groupedByTable
             .Select((grouped, index) => new
             {
                 Index = index,
                 Table = grouped.Table!,
-                Task = WrapperProcessers.Processer(getBulkDataMethod!, grouped.MappingSorteds)
+                Task = WrapperProcessers.Processer(getBulkDataMethod!, grouped.Table!, grouped.MappingSorteds)
             })
             .ToList();
 
@@ -39,7 +83,8 @@ public static class JoiningTable
             .Select(x => (x.Table, x.Result!))
             .ToList();
 
-        int a = 1;
+        // todo: Join with EDbJoinType to Create SuperTable from table
+        return null;
     }
 
 
@@ -49,7 +94,7 @@ public static class JoiningTable
     /// <param name="tableMappings"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> MappingSorteds)> ValidateAndSort(
+    private static List<(TableCtrl? Table, List<UnifiedTableMappingCtrl> MappingSorteds)> ValidateAndSort(
         this List<UnifiedTableMappingCtrl>? tableMappings)
     {
         if (tableMappings is not { Count: > 0 })
@@ -59,10 +104,17 @@ public static class JoiningTable
         HashSet<string> fieldNames = [];
         foreach (var tableMapping in tableMappings)
         {
-            EDbJoinType? joinType = tableMapping.JoinType;
-            long? joinTableFieldId = tableMapping.JoinTableFieldId;
+            EDbJoinType? joinType = tableMapping.JoinType == DefaultValueForObject.DefaultValueForEnumInt
+                ? null
+                : tableMapping.JoinType;
+            long? joinTableFieldId = tableMapping.JoinTableFieldId == DefaultValueForObject.DefaultValueForInt
+                ? null
+                : tableMapping.JoinTableFieldId;
             TableFieldCtrl? joinTableField = tableMapping.JoinTableField;
-            int? joinOrder = tableMapping.JoinOrder;
+            int? joinOrder = tableMapping.JoinOrder == DefaultValueForObject.DefaultValueForInt
+                ? null
+                : tableMapping.JoinOrder;
+            ;
 
             // Validate
             // Check if all four are null or all four are non-null
@@ -110,22 +162,6 @@ public static class JoiningTable
 
         if (groupedByTable.Count == 0)
             return [];
-
-        foreach (var grouped in groupedByTable)
-        {
-            //
-            //
-            // todo: build  query with group field with table name call in key (TableCtrl) - with field in table of database
-            //
-            //
-
-            TableCtrl? table = grouped.Table;
-            if (table == null) // decoy data without null
-                return [];
-            List<UnifiedTableMappingCtrl> tableFieldMappings = grouped.MappingSorteds;
-            if (tableFieldMappings is not { Count: > 0 })
-                return [];
-        }
 
         return groupedByTable;
     }

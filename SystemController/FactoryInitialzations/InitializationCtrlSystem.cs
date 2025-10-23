@@ -12,8 +12,7 @@ using MssqlExtCm.Connections;
 using PostgresExtCm.Connections;
 using SystemController.ResultConverters;
 
-
-namespace SystemController;
+namespace SystemController.FactoryInitialzations;
 
 public static class InitializationCtrlSystem
 {

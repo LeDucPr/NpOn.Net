@@ -9,7 +9,9 @@ using HandlerFlow.AlgObjs.CtrlObjs.Data;
 using HandlerFlow.AlgObjs.RaisingRouters;
 using Microsoft.Identity.Client;
 using PostgresExtCm.Connections;
+using SystemController.FactoryInitialzations;
 using SystemController.ResultConverters;
+using SystemController.ResultConverters.Domain;
 
 namespace SystemController;
 
@@ -89,6 +91,10 @@ class Program
         (string? _, unifiedTableFieldMappingCtrls) =
             factoryWrapper.GetDataWithConnection(unifiedTableFieldMappingCtrls).GetAwaiter().GetResult();
 
+        var aaa = resultOfQueryTableFieldMappingCtrls?.JoiningTable().GetAwaiter().GetResult();
+        
+        
+        
         
         int a = 1;
 
