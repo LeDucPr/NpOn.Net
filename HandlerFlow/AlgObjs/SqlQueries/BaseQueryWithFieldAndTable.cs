@@ -21,7 +21,7 @@ public class BaseQueryWithFieldAndTable
         if (dbType == null)
             throw new NotSupportedException($"Database type not null.");
         _dbType = (EDb)dbType;
-        if (_dbType != EDb.Postgres && _dbType != EDb.Mssql || _dbType == EDb.Cassandra || _dbType == EDb.ScyllaDb)
+        if (_dbType != EDb.Postgres && _dbType != EDb.Mssql && _dbType != EDb.Cassandra && _dbType != EDb.ScyllaDb)
             throw new NotSupportedException($"Database type '{dbType}' is not supported.");
     }
 
@@ -34,8 +34,8 @@ public class BaseQueryWithFieldAndTable
         if (!isInATable)
             return;
 
-        TableCtrl table = fieldMappings.First().JoinTableField?.Table!;
-        Validate(fieldMappings.First().JoinTableField?.Table?.DatabaseType);
+        Validate(fieldMappings.First().TableField?.Table?.ConnectionInfo?.DatabaseType);
+        TableCtrl table = fieldMappings.First().TableField?.Table ?? throw new ArgumentException("Table not null");
         _table = table.TableName;
         // _singlePk = singlePk; //////////////////////////////////////////////////////////
         _bulkPks = null;
@@ -46,7 +46,7 @@ public class BaseQueryWithFieldAndTable
     public static string CreateQuery(List<UnifiedTableMappingCtrl> fieldMappings, EDb dbType)
     {
         var query = new BaseQueryWithFieldAndTable(fieldMappings, dbType);
-        return query.BuildSelectQuery(fieldMappings.Select(x => x.JoinTableField?.FieldName!).Distinct().ToList());
+        return query.BuildSelectQuery(fieldMappings.Select(x => x.TableField?.FieldName!).Distinct().ToList());
     }
 
 
@@ -89,8 +89,9 @@ public class BaseQueryWithFieldAndTable
     /// Builds the SELECT query string based on the provided fields.
     /// </summary>
     /// <param name="fields">A list of column names to select.</param>
+    /// <param name="condition"></param>
     /// <returns>A complete SQL SELECT statement.</returns>
-    public string BuildSelectQuery(List<string> fields)
+    public string BuildSelectQuery(List<string> fields, string? condition = null)
     {
         if (fields is not { Count: > 0 })
             throw new ArgumentException("Fields list cannot be null or empty.", nameof(fields));
@@ -98,7 +99,8 @@ public class BaseQueryWithFieldAndTable
         var queryBuilder = new StringBuilder();
         queryBuilder.Append("SELECT ").Append(string.Join(", ", fields));
         queryBuilder.Append(" FROM ").Append(_table);
-        queryBuilder.Append(" WHERE ");
+        if (condition != null)
+            queryBuilder.Append(" WHERE ").Append(condition);
         if (_singlePk.HasValue) // = 
         {
             var pk = _singlePk.Value;

@@ -52,8 +52,7 @@ public static class JoiningTableExtensions
                         $"{table.TableName}: DbFactoryWrapper cannot be created from connection info.");
                 string queryWithFieldAndTableObject = BaseQueryWithFieldAndTable.CreateQuery(groupedMappings, table.ConnectionInfo.DatabaseType);
                 INpOnWrapperResult? getDataResult = await factoryWrapper.QueryAsync(queryWithFieldAndTableObject);
-
-                return null;
+                return getDataResult;
             };
 
         List<INpOnWrapperResult>? results = await JoiningTable(unifiedTableMappings, getDataFunc!);

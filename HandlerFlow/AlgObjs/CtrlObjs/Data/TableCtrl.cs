@@ -9,9 +9,7 @@ public class TableCtrl : BaseCtrl
 {
     public required string TableName { get; set; }
     public required ETableMode TableMode { get; set; }
-    public required EDb DatabaseType { get; set; }
-
-
+    
     // connection info
     [FkId<ConnectionInfoCtrl>(nameof(ConnectionInfoId))]
     public required long ConnectionInfoId { get; set; }
@@ -34,7 +32,6 @@ public class TableCtrl : BaseCtrl
         FieldMap ??= [];
         FieldMap.Add(nameof(TableName), "table_name");
         FieldMap.Add(nameof(TableMode), "table_mode");
-        FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
         FieldMap.Add(nameof(ProcessTableId), "process_table_id");
     }
