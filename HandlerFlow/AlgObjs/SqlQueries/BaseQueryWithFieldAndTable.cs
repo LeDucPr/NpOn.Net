@@ -25,7 +25,7 @@ public class BaseQueryWithFieldAndTable
             throw new NotSupportedException($"Database type '{dbType}' is not supported.");
     }
 
-    private BaseQueryWithFieldAndTable(List<UnifiedTableMappingCtrl> fieldMappings)
+    private BaseQueryWithFieldAndTable(List<UnifiedTableMappingCtrl> fieldMappings, EDb dbType)
     {
         if (fieldMappings is not { Count : > 0 })
             throw new ArgumentException("Field not null");
@@ -39,12 +39,13 @@ public class BaseQueryWithFieldAndTable
         _table = table.TableName;
         // _singlePk = singlePk; //////////////////////////////////////////////////////////
         _bulkPks = null;
+        _dbType = dbType;
     }
 
     // từ hàm overload trên, tạo một đối tượng trả ra kết quả của câu truy vấn có chứa bảng và các trường được truy vấn dang static    public static BaseQueryWithFieldAndTable FromFieldMappings(List<UnifiedTableMappingCtrl> fieldMappings)
-    public static string CreateQuery(List<UnifiedTableMappingCtrl> fieldMappings)
+    public static string CreateQuery(List<UnifiedTableMappingCtrl> fieldMappings, EDb dbType)
     {
-        var query = new BaseQueryWithFieldAndTable(fieldMappings);
+        var query = new BaseQueryWithFieldAndTable(fieldMappings, dbType);
         return query.BuildSelectQuery(fieldMappings.Select(x => x.JoinTableField?.FieldName!).Distinct().ToList());
     }
 

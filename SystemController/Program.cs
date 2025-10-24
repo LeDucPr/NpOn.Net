@@ -25,7 +25,7 @@ class Program
     static void Main(string[] args)
     {
         // kết nối đầu tiên được tạo bởi Pg (when deploy on server)
-        IDbFactoryWrapper factoryWrapper = new DbFactoryWrapper(
+        IDbFactoryWrapper pgFactoryWrapper = new DbFactoryWrapper(
             "Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password", DbTypeForFirstCreation,
             AmountConnections, UseCachingSession);
         ConnectionCtrl connectionCtrlDecoy = new ConnectionCtrl() // starter (chim mồi)
@@ -36,7 +36,7 @@ class Program
         };
 
         (string? sessionId, BaseCtrl? ctrl) =
-            factoryWrapper.GetDataWithConnection(connectionCtrlDecoy).GetAwaiter().GetResult();
+            pgFactoryWrapper.GetDataWithConnection(connectionCtrlDecoy).GetAwaiter().GetResult();
         if (sessionId == null || ctrl == null)
             return;
         // var aaaaaaaaaa = sessionId.GetLookupData(); // List(output detail with foreach)
@@ -88,10 +88,7 @@ class Program
         if (unifiedTableFieldMappingCtrls is not { Count: > 0 })
             return;
         
-        (string? _, unifiedTableFieldMappingCtrls) =
-            factoryWrapper.GetDataWithConnection(unifiedTableFieldMappingCtrls).GetAwaiter().GetResult();
-
-        var aaa = resultOfQueryTableFieldMappingCtrls?.JoiningTable().GetAwaiter().GetResult();
+        var aaa = pgFactoryWrapper.JoiningTable(resultOfQueryTableFieldMappingCtrls).GetAwaiter().GetResult();
         
         
         
