@@ -43,6 +43,13 @@ public static class DefaultValueForObjectExtensions
         return obj.ToString() ?? string.Empty;
     }
 
+    public static string AsEmptyString(this object? obj)
+    {
+        if (obj == null)
+            return string.Empty;
+        return obj.ToString()?.Trim() ?? string.Empty;
+    }
+
     public static DateTime AsDefaultDateTime(this object? obj)
     {
         if (obj == null)
