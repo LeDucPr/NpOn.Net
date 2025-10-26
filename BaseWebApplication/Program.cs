@@ -9,17 +9,17 @@ namespace BaseWebApplication;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = BuilderExtensions.CreateDefaultBuilder(args).GetAwaiter().GetResult();
 
         // Sử dụng async để lambda trả về Task, đúng với yêu cầu của AddCollectionServices
         // Giờ đây bạn có thể đăng ký các dịch vụ bên trong
-        builder.Services.AddCollectionServices((services) =>
+        await builder.Services.AddCollectionServices(async (services) =>
         {
             services.AddGrpc();
-            return Task.FromResult(services);
-        }).GetAwaiter().GetResult();
+            return services;
+        });
 
         var app = builder.Build();
 
