@@ -86,4 +86,16 @@ public static class DefaultValueForObjectExtensions
 
         return DateTime.MinValue;
     }
+
+    public static string AsArrayJoin(this IEnumerable<string>? strings)
+        => strings != null ? string.Join(",", strings) : string.Empty;
+    
+    public static string AsArrayJoin(this IEnumerable<string>? strings, string separator)
+        => strings != null ? string.Join(separator, strings) : string.Empty;
+    
+    public static string AsArrayJoin(this IEnumerable<object>? objs)
+        => objs != null ? string.Join(",", objs.Select(x => x?.ToString())) : string.Empty;
+    
+    public static string AsArrayJoin(this IEnumerable<object>? objs, string separator)
+        => objs != null ? string.Join(separator, objs.Select(x => x?.ToString())) : string.Empty;
 }

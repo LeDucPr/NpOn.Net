@@ -1,23 +1,26 @@
 ﻿using System.Diagnostics;
 using CommonMode;
 using Enums;
+using ProtoBuf;
 
 namespace CommonDb.DbResults;
 
+[ProtoContract]
 public interface INpOnWrapperResult
 {
     void SetSuccess();
     INpOnWrapperResult SetFail(EDbError error);
     INpOnWrapperResult SetFail(string errorString);
     INpOnWrapperResult SetFail(Exception ex);
-    long QueryTimeMilliseconds { get; }
-    bool Status { get; }
+    [ProtoMember(1)] long QueryTimeMilliseconds { get; }
+    [ProtoMember(2)] bool Status { get; }
 }
 
+[ProtoContract]
 public interface INpOnWrapperResult<out TParent, out TChild> : INpOnWrapperResult where TParent : class
 {
-    TParent Parent { get; }
-    TChild Result { get; }
+    [ProtoMember(1)] TParent Parent { get; }
+    [ProtoMember(2)] TChild Result { get; }
 }
 
 public abstract class NpOnWrapperResult : INpOnWrapperResult

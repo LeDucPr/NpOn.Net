@@ -1,8 +1,10 @@
-﻿namespace BaseWebApplication.Parameters;
+﻿using Enums;
+
+namespace CommonWebApplication.Parameters;
 
 public static class BuilderConfigurationExtensions
 {
-    public static object? TryGetConfig(this IConfiguration configuration, EConfiguration key)
+    public static object? TryGetConfig(this IConfiguration configuration, EApplicationConfiguration key)
     {
         var section = configuration.GetSection(key.ToString());
         if (section.Exists())
