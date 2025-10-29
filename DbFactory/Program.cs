@@ -23,9 +23,7 @@ class Program
         // await RunCassandraExample();
         // await RunMongoDbExample();
         // await RunPostgresExample();
-        await RunMssqlExample();
-        await RunMssqlExample();
-        await RunMssqlExample();
+        // await RunMssqlExample();
     }
 
     #region Mssql

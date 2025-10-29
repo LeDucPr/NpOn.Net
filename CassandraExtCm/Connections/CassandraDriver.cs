@@ -6,6 +6,9 @@ using CommonDb.Connections;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using Enums;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CassandraExtCm.Connections;
 
@@ -20,36 +23,37 @@ public class CassandraDriver : NpOnDbDriver
 
     public override bool IsValidSession => _session is { IsDisposed: false };
 
-    private ISession? NewSession =>
-        _cluster?.ConnectAsync(Option.Keyspace).ConfigureAwait(false).GetAwaiter().GetResult();
-
     public CassandraDriver(CassandraConnectOption option) : base(option)
     {
     }
 
     public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        if (_session is { IsDisposed: false })
+        if (IsValidSession)
         {
             if (Option.IsWaitNextTransaction)
             {
                 return; // Đã có session hợp lệ và option yêu cầu chờ.
             }
 
-            await DisconnectAsync();
+            await DisconnectAsync().ConfigureAwait(false);
         }
 
-        var cassandraBuilder = Cluster.Builder();
-        if (Option.ContactAddresses is { Length: > 0 })
+        if (_cluster == null)
         {
-            cassandraBuilder.AddContactPoints(Option.ContactAddresses);
-        }
+            var cassandraBuilder = Cluster.Builder();
+            if (Option.ContactAddresses is { Length: > 0 })
+            {
+                cassandraBuilder.AddContactPoints(Option.ContactAddresses);
+            }
 
-        _cluster = cassandraBuilder.Build();
+            _cluster = cassandraBuilder.Build();
+            Name = cassandraBuilder.ApplicationName;
+            Version = cassandraBuilder.ApplicationVersion;
+        }
+        
         _session = await _cluster.ConnectAsync(Option.Keyspace).ConfigureAwait(false);
         _mapper = new Mapper(_session);
-        Name = cassandraBuilder.ApplicationName;
-        Version = cassandraBuilder.ApplicationVersion;
     }
     
     public override async Task DisconnectAsync()
@@ -61,12 +65,15 @@ public class CassandraDriver : NpOnDbDriver
             if (_cluster != null)
                 await _cluster.ShutdownAsync().ConfigureAwait(false);
         }
+        else
+        {
+            _session?.Dispose();
+            _cluster?.Dispose();
+        }
 
         _session = null;
         _cluster = null;
         _mapper = null;
-        // ReSharper disable once RedundantBaseQualifier
-        await base.DisposeAsync();
     }
 
     public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
@@ -85,7 +92,7 @@ public class CassandraDriver : NpOnDbDriver
                 .ConfigureAwait(false);
             return new CassandraResultSetWrapper(rowSet);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return new CassandraResultSetWrapper().SetFail(EDbError.CommandTextSyntax);
         }
