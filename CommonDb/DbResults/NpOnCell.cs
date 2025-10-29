@@ -1,35 +1,38 @@
 ﻿using System.Data;
+using ProtoBuf;
 
 namespace CommonDb.DbResults;
 
 /// <summary>
 /// Primitive Data
 /// </summary>
+[ProtoContract]
 public interface INpOnCell
 {
-    object? ValueAsObject { get; } // Value of Cell
-    Type ValueType { get; } // type of System .Net
-    DbType DbType { get; } // type of ADO.Net 
-    string SourceTypeName { get; }
+    [ProtoMember(1)] object? ValueAsObject { get; } // Value of Cell
+    [ProtoMember(2)] Type ValueType { get; } // type of System .Net
+    [ProtoMember(3)] DbType DbType { get; } // type of ADO.Net 
+    [ProtoMember(4)] string SourceTypeName { get; }
 }
 
+[ProtoContract]
 public interface INpOnCell<out T> : INpOnCell
 {
-    T? Value { get; }
+    [ProtoMember(1)] T? Value { get; }
 }
 
 /// <summary>
 /// Use for Primitive values
 /// </summary>
 /// <typeparam name="T"></typeparam>
+[ProtoContract]
 public class NpOnCell<T> : INpOnCell<T>
 {
-    public T? Value { get; }
+    [ProtoMember(1)] public T? Value { get; }
     public Type ValueType => typeof(T);
-    public DbType DbType { get; }
-    public string SourceTypeName { get; }
-
-    public object? ValueAsObject => Value;
+    [ProtoMember(2)] public DbType DbType { get; }
+    [ProtoMember(3)] public string SourceTypeName { get; }
+    [ProtoMember(4)] public object? ValueAsObject => Value;
 
     public NpOnCell(T? value, DbType dbType, string sourceTypeName)
     {
