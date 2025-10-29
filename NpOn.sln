@@ -37,7 +37,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MssqlExtCm", "MssqlExtCm\Ms
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRExtCm", "SignalRExtCm\SignalRExtCm.csproj", "{DE949154-3E6A-43A7-9B1E-4CFC0DFCFD51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaseWebApplication", "BaseWebApplication\BaseWebApplication.csproj", "{9B3D4B4E-134C-41D2-BF1C-216DD7FCA2B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonWebApplication", "CommonWebApplication\CommonWebApplication.csproj", "{9B3D4B4E-134C-41D2-BF1C-216DD7FCA2B5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

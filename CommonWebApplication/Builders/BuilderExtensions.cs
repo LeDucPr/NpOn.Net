@@ -1,14 +1,14 @@
-﻿using BaseWebApplication.Parameters;
-using BaseWebApplication.Services;
-using CommonMode;
+﻿using CommonMode;
 using CommonObject;
+using CommonWebApplication.Parameters;
 using Enums;
 
-namespace BaseWebApplication.Builders;
+namespace CommonWebApplication.Builders;
 
 public static class BuilderExtensions
 {
-    public static async Task<IServiceCollection> AddCollectionServices(this IServiceCollection services, Func<IServiceCollection, Task<IServiceCollection>>? configure)
+    public static async Task<IServiceCollection> AddCollectionServices(this IServiceCollection services,
+        Func<IServiceCollection, Task<IServiceCollection>>? configure)
     {
         if (configure != null)
             await WrapperProcessers.Processer(configure!, services);
@@ -20,17 +20,17 @@ public static class BuilderExtensions
         var builder = WebApplication.CreateBuilder(args);
 
         // host-domain-start
-        string hostDomain = builder.Configuration.TryGetConfig(EConfiguration.HostDomain).AsDefaultString();
-        var hostPort = builder.Configuration.TryGetConfig(EConfiguration.HostPort).AsDefaultInt();
+        string hostDomain = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostDomain).AsDefaultString();
+        var hostPort = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostPort).AsDefaultInt();
         if (hostPort > 0)
             hostDomain = $"{hostDomain}:{hostPort}";
         if (string.IsNullOrWhiteSpace(hostDomain))
             throw new Exception(EWebApplicationError.HostDomain.GetDisplayName());
         builder.WebHost.UseUrls($"{hostDomain}:{hostPort}");
-        
+
         return builder;
     }
-    
+
     // public static async Task<IApplicationBuilder> Build(this IApplicationBuilder builder)
     // {
     //     

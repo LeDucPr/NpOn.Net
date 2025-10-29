@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BaseWebApplication.Parameters;
+namespace Enums;
 
-public enum EConfiguration
+public enum EApplicationConfiguration
 {
     [Display(Name = "HostPort")] HostPort,
     [Display(Name = "HostDomain")] HostDomain,

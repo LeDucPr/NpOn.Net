@@ -4,11 +4,9 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>CommonWebApplication</RootNamespace>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
-
-    <ItemGroup>
-        <Protobuf Include="Protos\greet.proto" GrpcServices="Server"/>
-    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
