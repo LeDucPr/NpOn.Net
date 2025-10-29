@@ -196,9 +196,6 @@ public class PostgresColumnCollection : IReadOnlyDictionary<string, PostgresColu
 
 public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
 {
-    private readonly DataTable _dataTable;
-    private readonly IReadOnlyDictionary<string, NpOnColumnSchemaInfo> _schemaMap;
-
     public IReadOnlyDictionary<int, PostgresRowWrapper> Rows { get; }
     public PostgresColumnCollection Columns { get; }
 
@@ -223,19 +220,19 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
             schemaMap.Add(columnName, schemaInfo);
         }
 
-        _schemaMap = schemaMap;
-        _dataTable = new DataTable();
-        _dataTable.Load(reader);
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap1 = schemaMap;
+        var dataTable = new DataTable();
+        dataTable.Load(reader);
 
-        Rows = _dataTable.Rows
+        Rows = dataTable.Rows
             .Cast<DataRow>()
             .Select((row, index) => new { row, index })
             .ToDictionary(
                 item => item.index,
-                item => new PostgresRowWrapper(item.row, _schemaMap) // schema -> Row
+                item => new PostgresRowWrapper(item.row, schemaMap1) // schema -> Row
             );
 
-        Columns = new PostgresColumnCollection(_dataTable, _schemaMap); // schema -> Column
+        Columns = new PostgresColumnCollection(dataTable, schemaMap1); // schema -> Column
         SetSuccess();
     }
 
