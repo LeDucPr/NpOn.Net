@@ -19,6 +19,9 @@ public interface INpOnConnectOption
     INpOnConnectOption? SetKeyspace<T>(string keyspace) where T : INpOnDbDriver;
     string? Keyspace { get; }
 
+    INpOnConnectOption? SetPort<T>(int port) where T : INpOnDbDriver;
+    int? Port { get; }
+
     INpOnConnectOption? SetDatabaseName(string databaseName);
     string? DatabaseName { get; }
 
@@ -99,6 +102,32 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
 
     // for databases
+
+    #region Port
+
+    private int? _port;
+
+    [Obsolete("Obsolete")]
+    public INpOnConnectOption? SetPort<T1>(int port) where T1 : INpOnDbDriver
+    {
+        try
+        {
+            if (!IsValid())
+                throw new ExecutionEngineException($"Port is not valid for {typeof(INpOnDbDriver)}");
+            _port = port;
+        }
+        catch (ExecutionEngineException)
+        {
+            _port = null;
+        }
+
+        return this;
+    }
+
+    public int? Port => _port;
+
+    #endregion Port
+
 
     #region Keyspace
 
@@ -264,13 +293,13 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
 
     #region KeyCode
 
-    private string? _code; 
+    private string? _code;
 
     public string Code
     {
         get
         {
-            if (_code != null) 
+            if (_code != null)
                 return _code;
 
             var sb = new StringBuilder();

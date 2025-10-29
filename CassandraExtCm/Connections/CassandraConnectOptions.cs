@@ -20,6 +20,12 @@ public class CassandraConnectOption : DbNpOnConnectOption<CassandraDriver>
                 _logger.LogError($"ConnectionString is require for {GetType()}");
                 throw new ArgumentNullException($"{GetType()} is require {nameof(ConnectionString)}");
             }
+
+            // if (Port == null || Port == 0) // Default = 9042 (Cassandra/ScyllaDb)
+            // {
+            //     _logger.LogError($"Port is require for {GetType()}");
+            //     throw new ArgumentNullException($"{GetType()} is require {nameof(Port)}");
+            // }
         }
         catch (ArgumentNullException)
         {
