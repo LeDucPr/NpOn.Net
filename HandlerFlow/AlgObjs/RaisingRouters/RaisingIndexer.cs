@@ -459,7 +459,7 @@ public static partial class RaisingIndexer
                     var ctrlByFkId = ctrlFromKeyEmpties?.FirstOrDefault(x => x.Id.ToString() == fkIdValue.ToString());
                     if (ctrlByFkId == null)
                         continue;
-                    var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
+                    // var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
                     navigationKeyInfo?.Property.SetValue(ctrl, ctrlByFkId); // may be null ??
                 }
             }
