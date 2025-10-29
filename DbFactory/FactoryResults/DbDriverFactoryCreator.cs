@@ -43,33 +43,33 @@ public class DbDriverFactoryCreator
         {
             case EDb.Postgres:
                 _connectOptions = new PostgresConnectOption().SetConnectionString(connectString);
-                _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
             case EDb.Mssql:
                 _connectOptions = new MssqlConnectOption().SetConnectionString(connectString);
-                _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
             case EDb.MongoDb:
                 _connectOptions = new MongoDbConnectOption().SetConnectionString(connectString);
-                _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
             case EDb.Cassandra:
                 _connectOptions = new CassandraConnectOption().SetConnectionString(connectString);
-                _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
             case EDb.ScyllaDb:
                 _connectOptions = new CassandraConnectOption().SetConnectionString(connectString);
-                _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
         }
     }
 
-    private async Task<IDbDriverFactory?> ConnectionCreator()
+    private async Task<IDbDriverFactory?> ConnectionCreator(EDb dbType)
     {
         try
         {
             DbErrors ??= [];
-            IDbDriverFactory factory = new DbDriverFactory(EDb.Postgres, _connectOptions!, _connectionNumber);
+            IDbDriverFactory factory = new DbDriverFactory(dbType, _connectOptions!, _connectionNumber);
             if (factory.GetConnectionNumbers != 0)
             {
                 if (factory.FirstValidConnection == null)
