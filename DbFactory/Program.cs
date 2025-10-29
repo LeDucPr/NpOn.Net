@@ -1,11 +1,9 @@
 ﻿using CassandraExtCm.Connections;
 using CassandraExtCm.Results;
-using CommonDb;
 using CommonDb.Connections;
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using DbFactory.FactoryResults;
-using DbFactory.HandlerFlows;
 using Enums;
 using MongoDbExtCm.Bsons;
 using MongoDbExtCm.Connections;
@@ -26,13 +24,6 @@ class Program
         // await RunMongoDbExample();
         // await RunPostgresExample();
         // await RunMssqlExample();
-        var a = new Ctrls("Host=localhost;Port=5432;Database=np_on_db;Username=postgres;Password=password");
-        var rs = await a.GetAllCtrls();
-        if (rs != null)
-            PrintPostgresTable(rs);
-        var rs2 = await a.GetAllCtrls();
-        if (rs2 != null)
-            PrintPostgresTable(rs2);
     }
 
     #region Mssql
@@ -44,7 +35,8 @@ class Program
         {
             // Thay thế bằng connection string của bạn
             var mssqlOptions = new MssqlConnectOption()
-                .SetConnectionString("Server=192.168.7.15;Database=Staging_Account;uid=sa;pwd=6L*4endZxS5#76NK$SsyEAzxXWy#F77R;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True");
+                .SetConnectionString(
+                    "Server=192.168.7.15;Database=Staging_Account;uid=sa;pwd=6L*4endZxS5#76NK$SsyEAzxXWy#F77R;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True");
 
             IDbDriverFactory factory = new DbDriverFactory(EDb.Mssql, mssqlOptions);
             await factory.OpenConnections();
@@ -76,13 +68,13 @@ class Program
             Console.ResetColor();
         }
     }
-    
-    
+
+
     private static void PrintMssqlTable(INpOnWrapperResult result, string indent = "")
     {
         if (result is not MssqlResultSetWrapper mssqlResult)
             return;
-        
+
         if (mssqlResult.Rows.Count == 0)
         {
             Console.WriteLine($"{indent}Query executed successfully but returned 0 rows.");
@@ -138,7 +130,7 @@ class Program
     }
 
     #endregion Mssql Test
-    
+
 
     #region Postgres Test
 
