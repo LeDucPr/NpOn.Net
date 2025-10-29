@@ -3,6 +3,7 @@ using CommonDb.Connections;
 using CommonMode;
 using Enums;
 using MongoDbExtCm.Connections;
+using MssqlExtCm.Connections;
 using PostgresExtCm.Connections;
 
 namespace DbFactory.FactoryResults;
@@ -42,6 +43,10 @@ public class DbDriverFactoryCreator
         {
             case EDb.Postgres:
                 _connectOptions = new PostgresConnectOption().SetConnectionString(connectString);
+                _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
+                break;
+            case EDb.Mssql:
+                _connectOptions = new MssqlConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator().GetAwaiter().GetResult();
                 break;
             case EDb.MongoDb:

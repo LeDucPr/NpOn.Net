@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="protobuf-net.Core" Version="3.2.56" />
         <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
         <PackageReference Include="Grpc.AspNetCore" Version="2.64.0"/>
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj" />

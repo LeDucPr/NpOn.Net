@@ -1,0 +1,30 @@
+namespace Enums;
+
+public enum EErrorCodeEnum
+{
+    NoErrorCode = 0,
+    Success = 1,
+    Fail = 2,
+    ErrorCommentLimit = 3,
+    ErrorCommentTime = 4,
+    InternalExceptions = 500,
+    Unauthorized = 401,
+    NullRequestExceptions = 501,
+    NotExistExceptions = 503,
+    UserNullException = 504,
+    IdNullException = 505,
+    CurrentWebsiteNullException = 506,
+    CurrentCompanyNullException = 507,
+    PermissionDeny = 403,
+    AntiXss = 502,
+    InternalExceptionsNotDefine = 508,
+    InternalExceptionsInService = 509,
+    AccountPasswordIsConfigured = 510,
+    OTPSendLimit = 511,
+    OTPVerifyLimit = 512,
+    OTPInvalid = 513,
+    CartIsChange = 514,
+    CurrentDealerNullException = 515,
+    CarExisted = 516,
+    NotGDCMVehicleException = 517,
+}

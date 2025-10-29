@@ -1,39 +1,88 @@
+using CommonMode;
+using CommonObject;
 using CommonWebApplication.Builders;
+using CommonWebApplication.Parameters;
+using Enums;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace CommonWebApplication;
 
 public abstract class CommonProgram
 {
-    protected readonly WebApplicationBuilder Builder;
+    protected readonly string[] Args;
+    protected IConfiguration AppConfig;
+
     protected CommonProgram(string[] args)
     {
-        Builder = BuilderExtensions.CreateDefaultBuilder(args).GetAwaiter().GetResult();
-        Base().GetAwaiter().GetResult();
+        Args = args;
     }
 
-    private async Task Base()
+    public async Task RunAsync()
     {
-        await Builder.Services.AddCollectionServices(async (services) =>
+        var builder = CreateDefaultBuilder(Args);
+        AppConfig = builder.Configuration;
+        await builder.Services.AddCollectionServices(async (services) =>
         {
-            services.AddGrpc();
+            ConfigureBaseServices(services);
+            await ConfigureServices(services);
             return services;
         });
 
-        await Init();
-        
-        var app = Builder.Build();
+        var app = builder.Build();
 
-        // app.MapGrpcService<GreeterService>();
-        app.MapGet("/",
-            () =>
-                "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-
-        app.Run();
+        await app.AddAppConfig(async (appConfig) =>
+        {
+            ConfigureBasePipeline(appConfig);
+            await ConfigurePipeline(appConfig);
+            return appConfig;
+        });
+        await app.RunAsync(); // run
     }
 
     /// <summary>
-    /// Builder.Services.AddCollectionServices --> Add Service use
+    /// Configures services that are common to all applications.
     /// </summary>
-    /// <returns></returns>
-    protected abstract Task Init();
+    protected virtual void ConfigureBaseServices(IServiceCollection services)
+    {
+        services.AddGrpc();
+    }
+
+    /// <summary>
+    /// Configures services specific to the derived application.
+    /// </summary>
+    protected abstract Task ConfigureServices(IServiceCollection services);
+
+    /// <summary>
+    /// Configures the common parts of the HTTP request pipeline.
+    /// </summary>
+    protected virtual void ConfigureBasePipeline(WebApplication app)
+    {
+        app.MapGet("/",
+            () =>
+                "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+        if (this.GetType() == typeof(CommonProgram))
+            throw new Exception($"{nameof(CommonProgram.ConfigureBasePipeline)} need override.");
+    }
+
+    /// <summary>
+    /// Configures the HTTP request pipeline specific to the derived application (e.g., mapping gRPC services).
+    /// </summary>
+    protected abstract Task ConfigurePipeline(WebApplication app);
+    
+    private WebApplicationBuilder CreateDefaultBuilder(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        // host-domain-start
+        string hostDomain = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostDomain).AsDefaultString();
+        var hostPort = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostPort).AsDefaultInt();
+        if (hostPort > 0)
+            hostDomain = $"{hostDomain}:{hostPort}";
+        if (string.IsNullOrWhiteSpace(hostDomain))
+            throw new Exception(EWebApplicationError.HostDomain.GetDisplayName());
+        builder.WebHost.UseUrls($"{hostDomain}:{hostPort}");
+        return builder;
+    }
 }
