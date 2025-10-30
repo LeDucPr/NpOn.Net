@@ -11,5 +11,9 @@
       <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
       <ProjectReference Include="..\HandlerFlow\HandlerFlow.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+    </ItemGroup>
     
 </Project>

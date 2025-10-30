@@ -15,7 +15,6 @@ public class CommonResponse
     [ProtoMember(5)] public DateTime ServerTime { get; set; } = DateTime.UtcNow;
     [ProtoMember(6)] public int? TotalRow { get; set; }
     
-    
     public void SetSuccess()
     {
         Status = true;
@@ -73,4 +72,9 @@ public class CommonResponse
     }
 
     public string? Message => ErrorMessages.AsArrayJoin();
+}
+
+[ProtoContract]
+public class CommonResponse<T> : CommonResponse{
+    [ProtoMember(7)] public T? Data { get; set; }
 }

@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
       <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.2" />
       <PackageReference Include="SqlConnection" Version="1.0.4">
         <PrivateAssets>all</PrivateAssets>

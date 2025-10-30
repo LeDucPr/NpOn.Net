@@ -1,18 +1,21 @@
+using System.Text.Json.Serialization;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication.Builders;
 using CommonWebApplication.Parameters;
 using Enums;
+using Grpc.Net.Client.Balancer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ProtoBuf.Grpc.Server;
+using Serilog;
 
 namespace CommonWebApplication;
 
 public abstract class CommonProgram
 {
     protected readonly string[] Args;
-    protected IConfiguration AppConfig;
 
     protected CommonProgram(string[] args)
     {
@@ -22,7 +25,7 @@ public abstract class CommonProgram
     public async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
-        AppConfig = builder.Configuration;
+        builder.Configuration.InitGlobal();
         await builder.Services.AddCollectionServices(async (services) =>
         {
             ConfigureBaseServices(services);
@@ -41,11 +44,49 @@ public abstract class CommonProgram
         await app.RunAsync(); // run
     }
 
+
+    #region For Enable Overrid Methods
+
     /// <summary>
     /// Configures services that are common to all applications.
     /// </summary>
     protected virtual void ConfigureBaseServices(IServiceCollection services)
     {
+        services.AddLogging(p => p.AddSerilog(Log.Logger)); // add Log
+        services.AddHttpContextAccessor(); // accessor 
+
+        // cors
+        string corsConfig = EApplicationConfiguration.CORS.GetAppSettingConfig().AsDefaultString();
+        if (corsConfig.Length > 0)
+        {
+            services.AddCors(options =>
+            {
+                var configs = corsConfig.Split(',').Select(p => p.Trim()).ToArray();
+                options.AddPolicy(EApplicationConfiguration.CorsPolicy.GetAppSettingConfig().AsDefaultString(),
+                    policyBuilder => policyBuilder.WithOrigins(configs).AllowAnyHeader().AllowCredentials()
+                );
+            });
+        }
+
+        // common controllers
+        services.AddControllers(options => { })
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            });
+        services.AddResponseCompression();
+
+        // common grpc
+        services.AddCodeFirstGrpc(config =>
+        {
+            config.ResponseCompressionLevel = System.IO.Compression.CompressionLevel.NoCompression;
+            config.MaxReceiveMessageSize = int.MaxValue;
+            config.MaxSendMessageSize = int.MaxValue;
+            //config.Interceptors.Add<>();
+        });
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+        int dnsRsvF = EApplicationConfiguration.DnsResolverFactory.GetAppSettingConfig().AsDefaultInt();
+        services.AddSingleton<ResolverFactory>(new DnsResolverFactory(refreshInterval: TimeSpan.FromSeconds(dnsRsvF)));
         services.AddGrpc();
     }
 
@@ -70,7 +111,12 @@ public abstract class CommonProgram
     /// Configures the HTTP request pipeline specific to the derived application (e.g., mapping gRPC services).
     /// </summary>
     protected abstract Task ConfigurePipeline(WebApplication app);
-    
+
+    #endregion For Enable Overrid Methods
+
+
+    #region Private Methods
+
     private WebApplicationBuilder CreateDefaultBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -85,4 +131,6 @@ public abstract class CommonProgram
         builder.WebHost.UseUrls($"{hostDomain}:{hostPort}");
         return builder;
     }
+
+    #endregion Private Methods
 }

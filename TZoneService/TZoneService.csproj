@@ -8,11 +8,13 @@
 
     <ItemGroup>
         <PackageReference Include="Grpc.AspNetCore" Version="2.64.0"/>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
       <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
+      <ProjectReference Include="..\ITZoneService\ITZoneService.csproj" />
     </ItemGroup>
 
 </Project>

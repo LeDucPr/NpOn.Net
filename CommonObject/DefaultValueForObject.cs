@@ -18,6 +18,7 @@ public static class DefaultValueForObjectExtensions
         return DefaultValueForObject.DefaultValueForInt;
     }
 
+
     public static long AsDefaultLong(this object? obj)
     {
         if (obj == null)
@@ -26,6 +27,7 @@ public static class DefaultValueForObjectExtensions
             return result;
         return DefaultValueForObject.DefaultValueForLong;
     }
+
 
     public static int AsDefaultEnum<TEnum>(this object? obj) where TEnum : struct, Enum
     {
@@ -36,6 +38,7 @@ public static class DefaultValueForObjectExtensions
         return DefaultValueForObject.DefaultValueForEnumInt;
     }
 
+
     public static string AsDefaultString(this object? obj)
     {
         if (obj == null)
@@ -43,12 +46,14 @@ public static class DefaultValueForObjectExtensions
         return obj.ToString() ?? string.Empty;
     }
 
+
     public static string AsEmptyString(this object? obj)
     {
         if (obj == null)
             return string.Empty;
         return obj.ToString()?.Trim() ?? string.Empty;
     }
+
 
     public static DateTime AsDefaultDateTime(this object? obj)
     {
@@ -58,6 +63,17 @@ public static class DefaultValueForObjectExtensions
             return result;
         return DateTime.MinValue;
     }
+
+
+    public static bool AsDefaultBool(this object? obj)
+    {
+        if (obj == null)
+            return false;
+        if (bool.TryParse(obj.ToString(), out bool result))
+            return result;
+        return false;
+    }
+
 
     // chuyển sang định dạng ngày tiêu chuẩn của thế giới 
     public static DateTime AsDefaultStandardDateTime(this object? obj)
@@ -89,13 +105,13 @@ public static class DefaultValueForObjectExtensions
 
     public static string AsArrayJoin(this IEnumerable<string>? strings)
         => strings != null ? string.Join(",", strings) : string.Empty;
-    
+
     public static string AsArrayJoin(this IEnumerable<string>? strings, string separator)
         => strings != null ? string.Join(separator, strings) : string.Empty;
-    
+
     public static string AsArrayJoin(this IEnumerable<object>? objs)
         => objs != null ? string.Join(",", objs.Select(x => x?.ToString())) : string.Empty;
-    
+
     public static string AsArrayJoin(this IEnumerable<object>? objs, string separator)
         => objs != null ? string.Join(separator, objs.Select(x => x?.ToString())) : string.Empty;
 }

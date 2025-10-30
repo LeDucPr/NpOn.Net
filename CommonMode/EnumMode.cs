@@ -1,10 +1,39 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using Enums;
+using Microsoft.Extensions.Configuration;
 
 namespace CommonMode;
 
 public static class EnumMode
 {
+    #region ConfigMode
+
+    public static void InitGlobal(this IConfiguration configuration)
+    {
+        var keys = Enum.GetValues(typeof(EApplicationConfiguration));
+        foreach (EApplicationConfiguration key in keys)
+        {
+            if (Configs.ContainsKey(key)) continue;
+            string keyConfig = key.GetDisplayName();
+            var config = configuration.GetSection(keyConfig);
+            string? valueConfig = config.Value;
+            Configs.Add(key, valueConfig ?? string.Empty);
+        }
+    }
+
+    private static readonly IDictionary<EApplicationConfiguration, string> Configs =
+        new Dictionary<EApplicationConfiguration, string>();
+
+    public static string? GetAppSettingConfig(this EApplicationConfiguration eApplication)
+    {
+        Configs.TryGetValue(eApplication, out var value);
+        return value;
+    }
+
+    #endregion ConfigMode
+
+
     #region Flag Operations
 
     public static bool HasFlag<TEnum>(this TEnum value, TEnum flag) where TEnum : struct, Enum

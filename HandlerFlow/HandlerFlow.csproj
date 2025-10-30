@@ -14,4 +14,8 @@
         <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+    </ItemGroup>
+
 </Project>
