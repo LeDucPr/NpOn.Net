@@ -22,44 +22,18 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        // services.AddSingleton<IDbFactoryWrapper>(factory =>
-        // {
-        //     string connectionString =
-        //         AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionString).AsDefaultString();
-        //     int connectionNumber = AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionNumber).AsDefaultInt();
-        //     IDbFactoryWrapper factoryWrapper =
-        //         new DbFactoryWrapper(connectionString, EDb.Mssql, connectionNumber, true);
-        //     
-        //     string stringQuery = "select * from Users where id = 'C000175'";
-        //     INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
-        //
-        //     return factoryWrapper;
-        // });
+        services.AddSingleton<IDbFactoryWrapper>(factory =>
+        {
+            string connectionString =
+                AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionString).AsDefaultString();
+            int connectionNumber = AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionNumber).AsDefaultInt();
+            IDbFactoryWrapper factoryWrapper =
+                new DbFactoryWrapper(connectionString, EDb.Mssql, connectionNumber, true);
+            // string stringQuery = "select * from Users where id = 'C000175'";
+            // INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
+            return factoryWrapper;
+        });
         
-        string connectionString =
-            AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionString).AsDefaultString();
-        int connectionNumber = AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionNumber).AsDefaultInt();
-        IDbFactoryWrapper factoryWrapper =
-            new DbFactoryWrapper(connectionString, EDb.Mssql, connectionNumber, true);
-            
-        string stringQuery = "select * from Users where id = 'C000175'";
-        INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
-        
-        
-        
-        
-        string connectionString1 =
-            AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionString).AsDefaultString();
-        int connectionNumber1 = AppConfig.TryGetConfig(EApplicationConfiguration.ConnectionNumber).AsDefaultInt();
-        IDbFactoryWrapper factoryWrapper1 =
-            new DbFactoryWrapper(connectionString, EDb.Mssql, connectionNumber, true);
-            
-        string stringQuery1 = "select * from Users where id = 'C000175'";
-        INpOnWrapperResult? resultOfQuery1 = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
-        
-        
-
-
         return Task.CompletedTask;
     }
 
