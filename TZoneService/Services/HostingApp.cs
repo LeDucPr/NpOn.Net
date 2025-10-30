@@ -9,7 +9,7 @@ public class HostingApp(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         logger.LogInformation("LoyaltyManager AppHostedService is starting");
-        var a = await cfService.CCC();
+        var a = await cfService.TestC();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

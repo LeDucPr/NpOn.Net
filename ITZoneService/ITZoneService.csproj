@@ -10,4 +10,9 @@
       <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
+      <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
+    </ItemGroup>
+
 </Project>
