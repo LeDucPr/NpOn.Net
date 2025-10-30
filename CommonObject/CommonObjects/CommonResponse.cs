@@ -1,9 +1,8 @@
 using CommonMode;
-using CommonObject;
 using Enums;
 using ProtoBuf;
 
-namespace CommonWebApplication.Objects;
+namespace CommonObject.CommonObjects;
 
 [ProtoContract]
 public class CommonResponse

@@ -9,6 +9,12 @@
     <ItemGroup>
       <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+      <PackageReference Include="protobuf-net.Core" Version="3.2.56" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommonMode\CommonMode.csproj" />
+      <ProjectReference Include="..\GenericEnums\GenericEnums.csproj" />
     </ItemGroup>
 
 </Project>

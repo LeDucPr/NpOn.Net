@@ -5,11 +5,13 @@ using CommonWebApplication.Builders;
 using CommonWebApplication.Parameters;
 using Enums;
 using Grpc.Net.Client.Balancer;
+using GrpcAddService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ProtoBuf.Grpc.Server;
 using Serilog;
+using Microsoft.AspNetCore.Authentication;
 
 namespace CommonWebApplication;
 
@@ -68,6 +70,9 @@ public abstract class CommonProgram
             });
         }
 
+        // authentication 
+        services.AddTransient<AuthenticationToken>();
+
         // common controllers
         services.AddControllers(options => { })
             .AddJsonOptions(options =>
@@ -84,10 +89,11 @@ public abstract class CommonProgram
             config.MaxSendMessageSize = int.MaxValue;
             //config.Interceptors.Add<>();
         });
+        services.RegisterGrpcClientLoadBalancing(); // add DI multi Services
         AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
         int dnsRsvF = EApplicationConfiguration.DnsResolverFactory.GetAppSettingConfig().AsDefaultInt();
         services.AddSingleton<ResolverFactory>(new DnsResolverFactory(refreshInterval: TimeSpan.FromSeconds(dnsRsvF)));
-        services.AddGrpc();
+        // services.AddGrpc();
     }
 
     /// <summary>

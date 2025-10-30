@@ -2,11 +2,11 @@
 using CommonDb.DbResults;
 using CommonObject.CommonObjects;
 
-namespace ITZoneService;
+namespace ITZoneCallTestService;
 
 [ServiceContract]
-public interface ICfService
+public interface ICfCallTestService
 {
     [OperationContract]
-    Task<CommonResponse<INpOnWrapperResult>> TestC();
+    Task<CommonResponse<INpOnWrapperResult>> TestCallC();
 }

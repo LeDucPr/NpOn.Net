@@ -28,6 +28,7 @@
         <ProjectReference Include="..\CommonObject\CommonObject.csproj"/>
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
         <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
+        <ProjectReference Include="..\GrpcAddService\GrpcAddService.csproj" />
     </ItemGroup>
 
 </Project>

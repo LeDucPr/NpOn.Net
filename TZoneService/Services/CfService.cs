@@ -1,5 +1,5 @@
 using CommonDb.DbResults;
-using CommonWebApplication.Objects;
+using CommonObject.CommonObjects;
 using CommonWebApplication.Services;
 using DbFactory;
 using ITZoneService;
@@ -15,16 +15,13 @@ public class CfService(
     {
         return await CommonProcess<INpOnWrapperResult>(async (response) =>
         {
-            // Gán dữ liệu mặc định
-           
-            // Thực hiện query
             string msQuery = "Select * from Users where id = 'C000175'";
             INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(msQuery);
 
-            // Nếu muốn, bạn có thể xử lý kết quả query ở đây
             if (resultOfQuery != null)
             {
                 response.Data = resultOfQuery;
+                response.SetSuccess();
             }
         });
     }

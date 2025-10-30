@@ -16,4 +16,12 @@ public enum EApplicationConfiguration
     [Display(Name = "CorsPolicy")] CorsPolicy, // - string
     // ReSharper disable once InconsistentNaming
     [Display(Name = "CORS")] CORS, // - string
+    [Display(Name = "KeepAlivePingDelaySeconds")] KeepAlivePingDelaySeconds, // - int
+    [Display(Name = "KeepAlivePingTimeoutSeconds")] KeepAlivePingTimeoutSeconds, // - int
+    [Display(Name = "IsDevEnvironment")] IsDevEnvironment, // - boolean
+    
+    #region UrlZone
+    TZoneCallTestServiceUrl,
+    TZoneServiceUrl,
+    #endregion UrlZone
 }

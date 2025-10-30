@@ -8,11 +8,12 @@
 
     <ItemGroup>
       <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+      <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
-      <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
+      <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
     </ItemGroup>
 
 </Project>

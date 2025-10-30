@@ -17,9 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
-      <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
-      <ProjectReference Include="..\ITZoneService\ITZoneService.csproj" />
+        <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
+        <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
+        <ProjectReference Include="..\ITZoneCallTestService\ITZoneCallTestService.csproj" />
+        <ProjectReference Include="..\ITZoneService\ITZoneService.csproj" />
     </ItemGroup>
 
 </Project>

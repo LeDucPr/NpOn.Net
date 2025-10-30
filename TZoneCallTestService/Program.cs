@@ -3,10 +3,10 @@ using CommonObject;
 using CommonWebApplication;
 using DbFactory;
 using Enums;
-using ITZoneService;
-using TZoneService.Services;
+using ITZoneCallTestService;
+using TZoneCallTestService.Services;
 
-namespace TZoneService;
+namespace TZoneCallTestService;
 
 public sealed class Program : CommonProgram
 {
@@ -39,21 +39,21 @@ public sealed class Program : CommonProgram
         }
 
         // Add Service
-        services.AddTransient<ICfService, CfService>();
+        services.AddTransient<ICfCallTestService, CfCallTestService>();
         
         return Task.CompletedTask;
     }
 
     protected override void ConfigureBasePipeline(WebApplication app)
     {
-        app.MapGet("/", () => "TZoneService");
+        app.MapGet("/", () => "TZoneCallTestService");
         base.ConfigureBasePipeline(app);
     }
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
         // Add Map Grpc Service
-        app.MapGrpcService<CfService>();
+        app.MapGrpcService<CfCallTestService>();
         return Task.CompletedTask;
     }
 }

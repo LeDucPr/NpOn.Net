@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>GrpcAddService</RootNamespace>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8"/>
+        <PackageReference Include="protobuf-net.Grpc" Version="1.2.2"/>
+        <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2"/>
+        <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.2.2"/>
+
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
+        <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
+        <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
+        <ProjectReference Include="..\ITZoneCallTestService\ITZoneCallTestService.csproj" />
+        <ProjectReference Include="..\ITZoneService\ITZoneService.csproj" />
+    </ItemGroup>
+</Project>
