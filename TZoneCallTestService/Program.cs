@@ -22,16 +22,16 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<IDbFactoryWrapper>(factory =>
-        {
-            string connectionString = EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
-            int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
-            IDbFactoryWrapper factoryWrapper =
-                new DbFactoryWrapper(connectionString, EDb.Mssql, connectionNumber, true);
-            // string stringQuery = "select * from Users where id = 'C000175'";
-            // INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
-            return factoryWrapper;
-        });
+        // services.AddSingleton<IDbFactoryWrapper>(factory =>
+        // {
+        //     string connectionString = EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
+        //     int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
+        //     IDbFactoryWrapper factoryWrapper =
+        //         new DbFactoryWrapper(connectionString, EDb.Mssql, connectionNumber, true);
+        //     // string stringQuery = "select * from Users where id = 'C000175'";
+        //     // INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
+        //     return factoryWrapper;
+        // });
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())
         {

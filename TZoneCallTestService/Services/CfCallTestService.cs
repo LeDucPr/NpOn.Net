@@ -8,7 +8,7 @@ using ITZoneService;
 namespace TZoneCallTestService.Services;
 
 public class CfCallTestService(
-    IDbFactoryWrapper dbFactoryWrapper,
+    // IDbFactoryWrapper dbFactoryWrapper,
     ICfService cfService,
     ILogger<CommonService> logger
 ) : CommonService(logger), ICfCallTestService

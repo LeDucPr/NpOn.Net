@@ -15,8 +15,8 @@ public class CfService(
     {
         return await CommonProcess<INpOnWrapperResult>(async (response) =>
         {
-            string msQuery = "Select * from Users where id = 'C000175'";
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(msQuery);
+            string pgQuery = "Select * from server_ctrl";
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
 
             if (resultOfQuery != null)
             {
