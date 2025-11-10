@@ -6,4 +6,7 @@ public static class JsonConverter
 {
     public static string ToJson(object? obj) => JsonConvert.SerializeObject(obj);
     public static T? FromJson<T>(string? json) => JsonConvert.DeserializeObject<T>(json ?? string.Empty);
+
+    public static object? FromJson(string? json, Type type) =>
+        JsonConvert.DeserializeObject(json ?? string.Empty, type);
 }

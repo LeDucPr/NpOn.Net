@@ -5,22 +5,20 @@ using ProtoBuf;
 
 namespace CommonDb.DbResults;
 
-[ProtoContract]
 public interface INpOnWrapperResult
 {
     void SetSuccess();
     INpOnWrapperResult SetFail(EDbError error);
     INpOnWrapperResult SetFail(string errorString);
     INpOnWrapperResult SetFail(Exception ex);
-    [ProtoMember(1)] long QueryTimeMilliseconds { get; }
-    [ProtoMember(2)] bool Status { get; }
+    long QueryTimeMilliseconds { get; }
+    bool Status { get; }
 }
 
-[ProtoContract]
 public interface INpOnWrapperResult<out TParent, out TChild> : INpOnWrapperResult where TParent : class
 {
-    [ProtoMember(1)] TParent Parent { get; }
-    [ProtoMember(2)] TChild Result { get; }
+    TParent Parent { get; }
+    TChild Result { get; }
 }
 
 public abstract class NpOnWrapperResult : INpOnWrapperResult

@@ -5,6 +5,7 @@ using ProtoBuf;
 namespace CommonObject.CommonObjects;
 
 [ProtoContract]
+[ProtoInclude(100, typeof(CommonResponse<>))]
 public class CommonResponse
 {
     [ProtoMember(1)] public bool Status { get; set; }
