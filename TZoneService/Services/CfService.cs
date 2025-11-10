@@ -1,4 +1,5 @@
 using CommonDb.DbResults;
+using CommonDb.DbResults.Grpc;
 using CommonObject.CommonObjects;
 using CommonWebApplication.Services;
 using DbFactory;
@@ -11,18 +12,23 @@ public class CfService(
     ILogger<CommonService> logger
 ) : CommonService(logger), ICfService
 {
-    public async Task<CommonResponse<INpOnWrapperResult>> TestC()
+    public async Task<CommonResponse<INpOnGrpcObject>> TestC()
     {
-        return await CommonProcess<INpOnWrapperResult>(async (response) =>
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
             string pgQuery = "Select * from server_ctrl";
             INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
-
-            if (resultOfQuery != null)
+            
+            if (!(resultOfQuery is INpOnTableWrapper tableWrapper))
             {
-                response.Data = resultOfQuery;
-                response.SetSuccess();
+                response.SetFail(["Incorrect data type"]);
+                return;
             }
+
+            var grpcTable = tableWrapper.ToGrpcTable();
+
+            response.Data = grpcTable;
+            response.SetSuccess();
         });
     }
 }

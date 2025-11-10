@@ -3,7 +3,7 @@
 namespace CommonDb.DbResults.Grpc;
 
 [ProtoContract]
-public class NpOnGrpcRow
+public class NpOnGrpcRow : INpOnGrpcObject
 {
     [ProtoMember(1)] public Dictionary<string, NpOnGrpcCell> Cells { get; set; } = new();
 }

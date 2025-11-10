@@ -34,11 +34,12 @@ public class LoggerInterceptor(
         Task<TResponse> t)
     {
         var startTime = Stopwatch.GetTimestamp();
-        var actionTracking = $"/{serviceName}/{action}";
+        var actionTracking = $"/{serviceName}/{action}";        
         try
         {
             var response = await t;
             var executeTime = Stopwatch.GetElapsedTime(startTime);
+
             logger.LogInformation("Service Request host {Host} url {ActionTracking} executeTime {ExecuteTime}",
                 Host,
                 actionTracking,
@@ -48,14 +49,7 @@ public class LoggerInterceptor(
         catch (Exception ex)
         {
             var executeTime = Stopwatch.GetElapsedTime(startTime);
-            // Log error to the console.
-            // Note: Configuring .NET Core logging is the recommended way to log errors
-            // https://docs.microsoft.com/aspnet/core/grpc/diagnostics#grpc-client-logging
-            // var initialColor = Console.ForegroundColor;
-            // Console.ForegroundColor = ConsoleColor.Red;
-            LogError(ex,
-                $"GRPC call error - ServiceName: {serviceName} - Action: {action} - Message: {ex.Message}", serviceName,
-                action);
+            LogError(ex, $"GRPC call error - ServiceName: {serviceName} - Action: {action} - Message: {ex.Message}", serviceName, action);
             // Console.ForegroundColor = initialColor;
             throw;
         }

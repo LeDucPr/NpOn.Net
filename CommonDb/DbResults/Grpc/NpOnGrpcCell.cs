@@ -7,7 +7,7 @@ using CommonObject;
 namespace CommonDb.DbResults.Grpc;
 
 [ProtoContract]
-public class NpOnGrpcCell
+public class NpOnGrpcCell : INpOnGrpcObject
 {
     [ProtoMember(1)] public byte[]? ValueBytes { get; set; } // dữ liệu gốc
     [ProtoMember(2)] public DbType DbType { get; set; } // kiểu DbType

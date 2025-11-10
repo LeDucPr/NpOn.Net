@@ -1,4 +1,5 @@
 using CommonDb.DbResults;
+using CommonDb.DbResults.Grpc;
 using CommonObject.CommonObjects;
 using CommonWebApplication.Services;
 using DbFactory;
@@ -13,12 +14,12 @@ public class CfCallTestService(
     ILogger<CommonService> logger
 ) : CommonService(logger), ICfCallTestService
 {
-    public async Task<CommonResponse<INpOnWrapperResult>> TestCallC()
+    public async Task<CommonResponse<INpOnGrpcObject>> TestCallC()
     {
-        return await CommonProcess<INpOnWrapperResult>(async (response) =>
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
             var accResponse = await cfService.TestC();
-            INpOnWrapperResult? resultAcc = accResponse.Data;
+            INpOnGrpcObject? resultAcc = accResponse.Data;
             if (accResponse.Status && resultAcc != null)
             {
                 response.Data = resultAcc;

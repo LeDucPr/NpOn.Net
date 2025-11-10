@@ -1,5 +1,6 @@
 ﻿using System.ServiceModel;
 using CommonDb.DbResults;
+using CommonDb.DbResults.Grpc;
 using CommonObject.CommonObjects;
 
 namespace ITZoneCallTestService;
@@ -8,5 +9,5 @@ namespace ITZoneCallTestService;
 public interface ICfCallTestService
 {
     [OperationContract]
-    Task<CommonResponse<INpOnWrapperResult>> TestCallC();
+    Task<CommonResponse<INpOnGrpcObject>> TestCallC();
 }
