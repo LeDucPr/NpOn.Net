@@ -8,14 +8,34 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
-      <ProjectReference Include="..\HandlerFlow\HandlerFlow.csproj" />
-      <ProjectReference Include="..\SystemController\SystemController.csproj" />
+        <ProjectReference Include="..\DbFactory\DbFactory.csproj"/>
+        <ProjectReference Include="..\HandlerFlow\HandlerFlow.csproj"/>
+        <ProjectReference Include="..\SystemController\SystemController.csproj"/>
     </ItemGroup>
 
+    <!--    <P2>  -->
     <ItemGroup>
-      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
-      <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0-rc.2.25502.107" />
+        <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj"/>
+        <ProjectReference Include="..\IFaCareTestService\IFaCareTestService.csproj"/>
+        <ProjectReference Include="..\ITZoneService\ITZoneService.csproj"/>
     </ItemGroup>
+
+        <ItemGroup>
+          <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+          <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0-rc.2.25502.107" />
+        </ItemGroup>
+
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="10.0.0-rc.2.25502.107" />
+        <PackageReference Include="protobuf-net" Version="3.2.56"/>
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2"/>
+        <PackageReference Include="Serilog" Version="4.3.0"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4"/>
+    </ItemGroup>
+
 
 </Project>
