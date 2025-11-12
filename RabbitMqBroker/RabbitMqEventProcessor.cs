@@ -23,7 +23,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
     private readonly string[] _routingKeys;
     private readonly string[] _topics;
     private readonly string _rabbitMqExChangeNotifyListen;
-    private readonly string[] _exChangesTrigger;
+    private readonly string[] _exchangesTrigger;
     private readonly string[] _workerGroup;
 
     public RabbitMqEventProcessor(
@@ -37,7 +37,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
         string[] routingKeys,
         string[] topics,
         string rabbitMqExChangeNotifyListen,
-        string[] exChangesTrigger,
+        string[] exchangesTrigger,
         string[] workerGroup
     )
     {
@@ -52,7 +52,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
         _routingKeys = routingKeys;
         _topics = topics;
         _rabbitMqExChangeNotifyListen = rabbitMqExChangeNotifyListen;
-        _exChangesTrigger = exChangesTrigger;
+        _exchangesTrigger = exchangesTrigger;
         _workerGroup = workerGroup;
     }
 
@@ -153,11 +153,11 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
         }
 
         await _rabbitMqConnection.RegisterQueue(_exchange, queues);
-        if (_exChangesTrigger.Length > 0)
+        if (_exchangesTrigger.Length > 0)
         {
-            (string ExChange, string Type)[] exchanges = new (string ExChange, string Type)[_exChangesTrigger.Length];
+            (string ExChange, string Type)[] exchanges = new (string ExChange, string Type)[_exchangesTrigger.Length];
             i = 0;
-            foreach (var exChangeTrigger in _exChangesTrigger)
+            foreach (var exChangeTrigger in _exchangesTrigger)
             {
                 exchanges[i] = (exChangeTrigger, ExchangeType.Fanout);
                 i++;
@@ -167,7 +167,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
         }
 
         await _rabbitMqConnection.SubscribeQueueAsync(_topics, ProcessMessage);
-        await _rabbitMqConnection.SubscribeExchangeAsync(_exChangesTrigger, ProcessMessage);
+        await _rabbitMqConnection.SubscribeExchangeAsync(_exchangesTrigger, ProcessMessage);
         if (_rabbitMqExChangeNotifyListen.Length > 0)
         {
             await _rabbitMqConnection.SubscribeExchangeAsync([_rabbitMqExChangeNotifyListen], ProcessMessage);

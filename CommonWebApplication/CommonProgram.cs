@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using ProtoBuf.Grpc.Server;
 using Serilog;
 using Microsoft.AspNetCore.Authentication;
+using RabbitMqBroker;
+using TYT.EventBus;
 
 namespace CommonWebApplication;
 
@@ -94,6 +96,50 @@ public abstract class CommonProgram
         int dnsRsvF = EApplicationConfiguration.DnsResolverFactory.GetAppSettingConfig().AsDefaultInt();
         services.AddSingleton<ResolverFactory>(new DnsResolverFactory(refreshInterval: TimeSpan.FromSeconds(dnsRsvF)));
         // services.AddGrpc();
+
+        // rabbitMq
+        bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
+        if (isUseRabbitMq)
+        {
+            string rabbitMqHost = EApplicationConfiguration.RabbitMqHost.GetAppSettingConfig().AsDefaultString();
+            if (rabbitMqHost.Length > 0)
+            {
+                string virtualHost =
+                    EApplicationConfiguration.VirtualHost.GetAppSettingConfig().AsDefaultString();
+
+                string rabbitMqUserName =
+                    EApplicationConfiguration.RabbitMqUserName.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqPassword =
+                    EApplicationConfiguration.RabbitMqPassword.GetAppSettingConfig().AsDefaultString();
+                services.AddSingleton<RabbitMqConnectionPool>(sp =>
+                {
+                    ILogger<RabbitMqConnectionPool> logger = sp.GetRequiredService<ILogger<RabbitMqConnectionPool>>();
+                    int poolSize = EApplicationConfiguration.RabbitMqPoolSize.GetAppSettingConfig().AsDefaultInt();
+                    if (poolSize <= 0)
+                        poolSize = 1; // default
+                    return new RabbitMqConnectionPool(logger, poolSize, [rabbitMqHost], virtualHost,
+                        rabbitMqUserName, rabbitMqPassword);
+                });
+            }
+
+            if (EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool())
+            {
+                string rabbitMqExchange =
+                    EApplicationConfiguration.RabbitMqExchange.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqRoutingRoot =
+                    EApplicationConfiguration.RabbitMqRoutingRoot.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqRouting = EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqQueues = EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqExchangeNotify =
+                    EApplicationConfiguration.RabbitMqExchangeNotify.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqExchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger.GetAppSettingConfig().AsDefaultString(); 
+                if (rabbitMqExchange.Length > 0 || rabbitMqExchangeNotify.Length > 0 || rabbitMqExchangesTrigger.Length > 0)
+                {
+                    services.AddSingleton<IRabbitMqEventProcessor, RabbitMqEventProcessor>();
+                }
+            }
+           
+        }
     }
 
     /// <summary>
@@ -128,8 +174,8 @@ public abstract class CommonProgram
         var builder = WebApplication.CreateBuilder(args);
 
         // host-domain-start
-        string hostDomain = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostDomain).AsDefaultString();
-        var hostPort = builder.Configuration.TryGetConfig(EApplicationConfiguration.HostPort).AsDefaultInt();
+        string hostDomain = EApplicationConfiguration.HostDomain.GetAppSettingConfig().AsDefaultString();
+        var hostPort = EApplicationConfiguration.HostPort.GetAppSettingConfig().AsDefaultInt();
         if (hostPort > 0)
             hostDomain = $"{hostDomain}:{hostPort}";
         if (string.IsNullOrWhiteSpace(hostDomain))

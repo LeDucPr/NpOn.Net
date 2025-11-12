@@ -29,6 +29,7 @@
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
         <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
         <ProjectReference Include="..\GrpcAddService\GrpcAddService.csproj" />
+        <ProjectReference Include="..\RabbitMqBroker\RabbitMqBroker.csproj" />
     </ItemGroup>
 
 </Project>
