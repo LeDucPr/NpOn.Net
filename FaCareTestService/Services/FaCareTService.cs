@@ -6,6 +6,7 @@ using FaCareTestService.SignalR;
 using IFaCareTestService;
 using Microsoft.AspNetCore.SignalR;
 using ProtoBuf.Grpc;
+using System.Collections.Concurrent;
 
 namespace FaCareTestService.Services;
 
@@ -49,7 +50,8 @@ public class FaCareTService(
                     else
                     {
                         // các batch tiếp theo dựa vào last_guid string
-                        pgQuery = $"SELECT _id FROM data_t_ WHERE _id < '{lastGuidStr}' ORDER BY _id DESC LIMIT {chunkSize}";
+                        pgQuery =
+                            $"SELECT _id FROM data_t_ WHERE _id < '{lastGuidStr}' ORDER BY _id DESC LIMIT {chunkSize}";
                     }
 
                     INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
@@ -91,4 +93,5 @@ public class FaCareTService(
 
         return response;
     }
+
 }
