@@ -9,6 +9,8 @@
     <ItemGroup>
       <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.10" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+      <PackageReference Include="protobuf-net" Version="3.2.56" />
     </ItemGroup>
 
     <ItemGroup>
