@@ -13,7 +13,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
     private readonly ConcurrentDictionary<Type, HashSet<IRabbitMqMessageHandler>> _handlers = [];
     private readonly ConcurrentDictionary<string, HashSet<string>> _eventHandlerFilterQueues = [];
     private readonly ILogger _logger;
-    private readonly IRabbitMqEventStorageRepository? _eventStorageRepository;
+    // private readonly IRabbitMqEventStorageRepository? _eventStorageRepository;
     private readonly IServiceProvider _serviceProvider;
     private readonly RabbitMqConnectionPool _rabbitMqConnection;
 
@@ -28,7 +28,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
 
     public RabbitMqEventProcessor(
         ILogger<RabbitMqEventProcessor> logger,
-        IRabbitMqEventStorageRepository? eventStorageRepository,
+        // IRabbitMqEventStorageRepository? eventStorageRepository,
         IServiceProvider serviceProvider,
         RabbitMqConnectionPool rabbitMqConnection,
         string exchange,
@@ -42,7 +42,7 @@ public class RabbitMqEventProcessor : IRabbitMqEventProcessor
     )
     {
         _logger = logger;
-        _eventStorageRepository = eventStorageRepository;
+        // _eventStorageRepository = eventStorageRepository;
         _serviceProvider = serviceProvider;
         _rabbitMqConnection = rabbitMqConnection;
 

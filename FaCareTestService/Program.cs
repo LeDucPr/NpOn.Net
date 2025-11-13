@@ -46,7 +46,7 @@ public sealed class Program : CommonProgram
 
         // Add Service
         services.AddTransient<IFaCareTService, FaCareTService>();
-
+        services.AddSingleton<ITestQueueService, TestQueueService>();
         return Task.CompletedTask;
     }
 

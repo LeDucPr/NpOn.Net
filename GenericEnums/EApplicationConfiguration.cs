@@ -38,6 +38,9 @@ public enum EApplicationConfiguration
     [Display(Name = "RabbitMqExchangeNotify")] RabbitMqExchangeNotify, // string
     [Display(Name = "VirtualHost")] VirtualHost, // string
     [Display(Name = "RabbitMqExchangesTrigger")] RabbitMqExchangesTrigger, // string
+    [Display(Name = "EventHandlerFilterQueues")] EventHandlerFilterQueues, // string
+    [Display(Name = "RabbitMqExChangeNotifyListen")] RabbitMqExChangeNotifyListen, // string[]
+    [Display(Name = "WorkerGroup")] WorkerGroup, // string[]
     #endregion RabbitMq
     
     #region UrlZone

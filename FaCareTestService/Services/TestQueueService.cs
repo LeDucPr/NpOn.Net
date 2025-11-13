@@ -12,6 +12,14 @@ public class TestQueueService(
     IDbFactoryWrapper dbFactoryWrapper,
     ILogger<CommonService> logger) : CommonService(logger), ITestQueueService
 {
+    public async Task<CommonResponse<string>> TestRabbitMqHandler()
+    {
+        return await CommonProcess<string>(async (response) =>
+        {
+            
+        });
+    }
+    
     public async Task<CommonResponse<INpOnGrpcObject>> TestQueue2C()
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
@@ -20,7 +28,6 @@ public class TestQueueService(
             response.SetSuccess("Queue processing completed.");
         });
     }
-
 
     private async Task<CommonResponse<INpOnGrpcObject>> T2Queue()
     {
