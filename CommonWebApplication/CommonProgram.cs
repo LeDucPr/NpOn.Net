@@ -13,7 +13,6 @@ using ProtoBuf.Grpc.Server;
 using Serilog;
 using Microsoft.AspNetCore.Authentication;
 using RabbitMqBroker;
-using TYT.EventBus;
 
 namespace CommonWebApplication;
 

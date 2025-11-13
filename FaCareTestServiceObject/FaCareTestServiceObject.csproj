@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="protobuf-net" Version="3.2.56" />
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2" />
+        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
+      <ProjectReference Include="..\GenericEnums\GenericEnums.csproj" />
+    </ItemGroup>
+    
+</Project>

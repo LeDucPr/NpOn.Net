@@ -4,9 +4,8 @@ using Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
-using RabbitMqBroker;
 
-namespace TYT.EventBus;
+namespace RabbitMqBroker;
 
 public class RabbitMqEventProcessor : IRabbitMqEventProcessor
 {

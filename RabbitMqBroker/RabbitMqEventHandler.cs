@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace RabbitMqBroker;
 
-public class CommonEventHandler(ILogger<CommonEventHandler> logger)
+public class RabbitMqEventHandler(ILogger<RabbitMqEventHandler> logger)
 {
     private readonly List<IRabbitMqEvent> _events = [];
     private const bool IsUseQueue = false;

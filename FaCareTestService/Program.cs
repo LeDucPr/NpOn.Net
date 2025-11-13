@@ -1,13 +1,17 @@
 using CommonMode;
 using CommonObject;
+using CommonObject.CommonObjects;
 using CommonWebApplication;
 using DbFactory;
 using Enums;
+using FaCareTestService.Handlers.RabbitMqHandlers;
 using FaCareTestService.Services;
 using IFaCareTestService;
 using FaCareTestService.SignalR;
+using FaCareTestServiceObject.ServiceObjects.RabbitMqEvents;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
+using RabbitMqBroker;
 
 namespace FaCareTestService;
 
@@ -44,6 +48,10 @@ public sealed class Program : CommonProgram
 
         services.AddSignalR(); // Add SignalR
 
+        // Add RabbitMqHandler
+        services.AddTransient<IRabbitMqMessageHandler<RabbitMqTestEvent>, TestQueueRabbitMqHandler>()
+            .AddTransient<TestQueueRabbitMqHandler>();
+        
         // Add Service
         services.AddTransient<IFaCareTService, FaCareTService>();
         services.AddSingleton<ITestQueueService, TestQueueService>();

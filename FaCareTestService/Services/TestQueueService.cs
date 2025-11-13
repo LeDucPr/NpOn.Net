@@ -4,22 +4,44 @@ using CommonDb.DbResults.Grpc;
 using CommonObject.CommonObjects;
 using CommonWebApplication.Services;
 using DbFactory;
+using FaCareTestServiceObject.ServiceObjects.RabbitMqEvents;
 using IFaCareTestService;
+using RabbitMqBroker;
 
 namespace FaCareTestService.Services;
 
 public class TestQueueService(
     IDbFactoryWrapper dbFactoryWrapper,
+    IRabbitMqEventProcessor rabbitMqEventProcessor,
     ILogger<CommonService> logger) : CommonService(logger), ITestQueueService
 {
     public async Task<CommonResponse<string>> TestRabbitMqHandler()
     {
-        return await CommonProcess<string>(async (response) =>
+        return await CommonProcessRbMqEvent<string>(async (response) =>
         {
-            
+            EventAdd(new RabbitMqTestEvent
+            {
+                KuIsHss = "ciuweiufiwsgfcyiwcyigwcuywcyg8u8yf",
+            });
+            // rabbitMqEventProcessor.Handle();
         });
     }
-    
+
+    public async Task<CommonResponse<string>> ProcessEventRbMqT2(RabbitMqTestEvent @event)
+    {
+        return await CommonProcessRbMqEvent<string>(async (response) =>
+        {
+            Console.WriteLine(@event.KuIsHss);
+            int a = 11;
+            a = 11;
+            a = 11;
+            a = 11;
+            a = 11;
+            a = 11;
+        });
+    }
+
+
     public async Task<CommonResponse<INpOnGrpcObject>> TestQueue2C()
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>

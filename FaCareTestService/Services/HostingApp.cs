@@ -12,7 +12,8 @@ public class HostingApp(
     {
         logger.LogInformation("T2C AppHostedService is starting");
         // var a = await faCareTService.TestCallSgnR();
-        await testQueueService.TestQueue2C();
+        // await testQueueService.TestQueue2C();
+        await testQueueService.TestRabbitMqHandler();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

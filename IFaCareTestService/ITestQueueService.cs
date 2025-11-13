@@ -1,6 +1,7 @@
 using System.ServiceModel;
 using CommonDb.DbResults.Grpc;
 using CommonObject.CommonObjects;
+using FaCareTestServiceObject.ServiceObjects.RabbitMqEvents;
 
 namespace IFaCareTestService;
 
@@ -8,5 +9,10 @@ namespace IFaCareTestService;
 public interface ITestQueueService
 {
     [OperationContract]
+    Task<CommonResponse<string>> TestRabbitMqHandler();
+    
+    [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> TestQueue2C();
+    
+    Task<CommonResponse<string>> ProcessEventRbMqT2(RabbitMqTestEvent @event);
 }
