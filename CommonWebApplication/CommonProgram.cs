@@ -4,6 +4,7 @@ using CommonObject;
 using CommonWebApplication.Builders;
 using CommonWebApplication.Parameters;
 using Enums;
+using CommonWebApplication.Services;
 using Grpc.Net.Client.Balancer;
 using GrpcAddService;
 using Microsoft.AspNetCore.Builder;
@@ -127,14 +128,17 @@ public abstract class CommonProgram
                     EApplicationConfiguration.RabbitMqExchange.GetAppSettingConfig().AsDefaultString();
                 string rabbitMqRoutingRoot =
                     EApplicationConfiguration.RabbitMqRoutingRoot.GetAppSettingConfig().AsDefaultString();
-                string rabbitMqRouting = EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig().AsDefaultString();
-                string rabbitMqQueues = EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqRouting =
+                    EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig().AsDefaultString();
+                string rabbitMqQueues =
+                    EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig().AsDefaultString();
                 string rabbitMqExchangeNotify =
                     EApplicationConfiguration.RabbitMqExchangeNotify.GetAppSettingConfig().AsDefaultString();
-                string rabbitMqExchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger.GetAppSettingConfig().AsDefaultString(); 
-                if (rabbitMqExchange.Length > 0 || rabbitMqExchangeNotify.Length > 0 || rabbitMqExchangesTrigger.Length > 0)
+                string rabbitMqExchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger
+                    .GetAppSettingConfig().AsDefaultString();
+                if (rabbitMqExchange.Length > 0 || rabbitMqExchangeNotify.Length > 0 ||
+                    rabbitMqExchangesTrigger.Length > 0)
                 {
-                    // SỬA LỖI: Đăng ký RabbitMqEventProcessor bằng factory để truyền các giá trị cấu hình
                     services.AddSingleton<IRabbitMqEventProcessor, RabbitMqEventProcessor>(sp =>
                     {
                         var logger = sp.GetRequiredService<ILogger<RabbitMqEventProcessor>>();
@@ -142,21 +146,33 @@ public abstract class CommonProgram
                         var connectionPool = sp.GetRequiredService<RabbitMqConnectionPool>();
 
                         // Đọc các giá trị cấu hình
-                        string exchange = EApplicationConfiguration.RabbitMqExchange.GetAppSettingConfig().AsDefaultString();
-                        string exchangeNotify = EApplicationConfiguration.RabbitMqExchangeNotify.GetAppSettingConfig().AsDefaultString();
-                        string filterQueuesConfig = EApplicationConfiguration.EventHandlerFilterQueues.GetAppSettingConfig().AsDefaultString().ToLower();
-                        string[] routingKeys = EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig().AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
-                        string[] topics = EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig().AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
-                        string exchangeNotifyListen = EApplicationConfiguration.RabbitMqExChangeNotifyListen.GetAppSettingConfig().AsDefaultString();
-                        string[] exchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger.GetAppSettingConfig().AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
-                        string[] workerGroup = EApplicationConfiguration.WorkerGroup.GetAppSettingConfig().AsDefaultString().ToLower().Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        string exchange = EApplicationConfiguration.RabbitMqExchange.GetAppSettingConfig()
+                            .AsDefaultString();
+                        string exchangeNotify = EApplicationConfiguration.RabbitMqExchangeNotify.GetAppSettingConfig()
+                            .AsDefaultString();
+                        string filterQueuesConfig = EApplicationConfiguration.EventHandlerFilterQueues
+                            .GetAppSettingConfig().AsDefaultString().ToLower();
+                        string[] routingKeys = EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig()
+                            .AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        string[] topics = EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig()
+                            .AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        string exchangeNotifyListen = EApplicationConfiguration.RabbitMqExChangeNotifyListen
+                            .GetAppSettingConfig().AsDefaultString();
+                        string[] exchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger
+                            .GetAppSettingConfig().AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        string[] workerGroup = EApplicationConfiguration.WorkerGroup.GetAppSettingConfig()
+                            .AsDefaultString().ToLower().Split(',',
+                                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-                        return new RabbitMqEventProcessor(logger, serviceProvider, connectionPool, exchange, exchangeNotify,
-                            filterQueuesConfig, routingKeys, topics, exchangeNotifyListen, exchangesTrigger, workerGroup);
+                        return new RabbitMqEventProcessor(logger, serviceProvider, connectionPool, exchange,
+                            exchangeNotify,
+                            filterQueuesConfig, routingKeys, topics, exchangeNotifyListen, exchangesTrigger,
+                            workerGroup);
                     });
+
+                    services.AddHostedService<RabbitMqBusStarter>();
                 }
             }
-           
         }
     }
 

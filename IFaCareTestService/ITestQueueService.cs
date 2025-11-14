@@ -14,5 +14,6 @@ public interface ITestQueueService
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> TestQueue2C();
     
+    [OperationContract]
     Task<CommonResponse<string>> ProcessEventRbMqT2(RabbitMqTestEvent @event);
 }

@@ -9,7 +9,7 @@ public enum ETableMode
     [Display(Name = "ReadOnly")] ReadOnly = 1 << 0,
     [Display(Name = "WriteEnable")] WriteEnable = 1 << 1,
     [Display(Name = "ViewMaterial")] ViewMaterial = 1 << 2,
-    [Display(Name = "FromExecuteProcess")] FromExecuteProcess = 1 << 4,
+    [Display(Name = "FromExecuteProcess")] FromExecuteProcess = 1 << 3,
 }
 
 public enum EFieldSize
