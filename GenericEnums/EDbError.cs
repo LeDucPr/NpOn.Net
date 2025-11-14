@@ -29,9 +29,10 @@ public enum EDbError
 
     #region Query/Command
 
-    [Display(Name = "Command Execution Error")]
-    Command,
+    [Display(Name = "Command Execution Error")] Command,
 
+    [Display(Name = "Execution Function Error")] ExecFuncName,
+    
     [Display(Name = "CommandText Invalid")]
     CommandText,
 

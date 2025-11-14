@@ -7,6 +7,9 @@ using System.Data;
 using CommonDb.DbResults;
 using Enums;
 using PostgresExtCm.Results;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq; // Cần thiết cho JsonConvert.SerializeObject và Formatting.None
+using NpgsqlTypes;
 
 namespace PostgresExtCm.Connections;
 
@@ -69,4 +72,125 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
+
+    public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
+    {
+        if (!IsValidSession || _connection == null) // Check enabled connection 
+            return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
+        if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
+            return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
+        try
+        {
+            await using var pgCommand = _connection.CreateCommand();
+            List<object?> paramPlaceholderComponents = new List<object?>();
+
+            pgCommand.CommandType = CommandType.Text;
+
+            foreach (var param in execCommand.Params)
+            {
+                var value = param.Value ?? DBNull.Value;
+                var npgsqlParam = new NpgsqlParameter
+                {
+                    ParameterName = param.Key,
+                    Value = value
+                };
+
+                if (value != DBNull.Value)
+                {
+                    var valueType = value.GetType();
+                    var npgsqlDbType = valueType.ToNpgsqlDbType(); // ?? ưu tiên 
+                    if (npgsqlDbType.HasValue)
+                        npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
+                    paramPlaceholderComponents.Add(value);
+
+                    // if (npgsqlDbType is NpgsqlDbType.Json)
+                    // {
+                    //     if (value is JToken jTokenValue)
+                    //     {
+                    //         npgsqlParam.Value = jTokenValue.ToString(Formatting.None);
+                    //     }
+                    //     else if (value is System.Text.Json.JsonDocument jsonDocumentValue)
+                    //     {
+                    //         npgsqlParam.Value = jsonDocumentValue.RootElement.ToString();
+                    //     }
+                    // }
+                    // else if (!npgsqlDbType.HasValue) 
+                    // {
+                    //     npgsqlParam.DbType = valueType.ToDbType();
+                    // }
+                }
+                // pgCommand.Parameters.Add(npgsqlParam);
+            }
+
+            string paramPlaceholders = $"'{string.Join(",", paramPlaceholderComponents)}'";
+            pgCommand.CommandText = $"SELECT * FROM {execCommand.FuncName}({paramPlaceholders})";
+            if (string.IsNullOrWhiteSpace(execCommand.AliasForSingleColumnOutput))
+                pgCommand.CommandText += $" as {execCommand.AliasForSingleColumnOutput}";
+            await using var reader = await pgCommand.ExecuteReaderAsync();
+            return new PostgresResultSetWrapper(reader);
+        }
+        catch (Exception ex)
+        {
+            return new PostgresResultSetWrapper().SetFail(ex);
+        }
+    }
+
+
+    // public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
+    // {
+    //     if (!IsValidSession || _connection == null) // Check enabled connection 
+    //         return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
+    //     if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
+    //         return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
+    //     try
+    //     {
+    //         await using var pgCommand = _connection.CreateCommand();
+    //         pgCommand.CommandType = CommandType.StoredProcedure;
+    //         pgCommand.CommandText = execCommand.FuncName;
+    //
+    //         foreach (var param in execCommand.Params)
+    //         {
+    //             var value = param.Value ?? DBNull.Value;
+    //             var npgsqlParam = new NpgsqlParameter
+    //             {
+    //                 ParameterName = param.Key,
+    //                 Value = value
+    //             };
+    //
+    //             if (value != DBNull.Value)
+    //             {
+    //                 var valueType = value.GetType();
+    //                 var npgsqlDbType = valueType.ToNpgsqlDbType(); // ?? ưu tiên 
+    //                 if (npgsqlDbType.HasValue)
+    //                     npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
+    //                 if (npgsqlDbType.HasValue && npgsqlDbType.Value == NpgsqlDbType.Json)
+    //                 {
+    //                     if (value is JToken jTokenValue)
+    //                     {
+    //                         npgsqlParam.Value = jTokenValue.ToString(Formatting.None);
+    //                     }
+    //                     else if (value is System.Text.Json.JsonDocument jsonDocumentValue)
+    //                     {
+    //                         npgsqlParam.Value = jsonDocumentValue.RootElement.ToString();
+    //                     }
+    //                 }
+    //                 else if (!npgsqlDbType.HasValue)
+    //                 {
+    //                     npgsqlParam.DbType = valueType.ToDbType();
+    //                 }
+    //             }
+    //
+    //             pgCommand.Parameters.Add(npgsqlParam);
+    //         }
+    //         
+    //         NpgsqlDataAdapter ad = new NpgsqlDataAdapter(pgCommand);
+    //         DataTable tb = new DataTable();
+    //         ad.Fill(tb);
+    //         return new PostgresResultSetWrapper(tb);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return new PostgresResultSetWrapper().SetFail(ex);
+    //     }
+    // }
 }

@@ -75,7 +75,7 @@ public static class DefaultValueForObjectExtensions
     }
 
 
-    // chuyển sang định dạng ngày tiêu chuẩn của thế giới 
+    // convert to world standard
     public static DateTime AsDefaultStandardDateTime(this object? obj)
     {
         if (obj == null)
@@ -110,8 +110,8 @@ public static class DefaultValueForObjectExtensions
         => strings != null ? string.Join(separator, strings) : string.Empty;
 
     public static string AsArrayJoin(this IEnumerable<object>? objs)
-        => objs != null ? string.Join(",", objs.Select(x => x?.ToString())) : string.Empty;
+        => objs != null ? string.Join(",", objs.Select(x => x.ToString())) : string.Empty;
 
     public static string AsArrayJoin(this IEnumerable<object>? objs, string separator)
-        => objs != null ? string.Join(separator, objs.Select(x => x?.ToString())) : string.Empty;
+        => objs != null ? string.Join(separator, objs.Select(x => x.ToString())) : string.Empty;
 }

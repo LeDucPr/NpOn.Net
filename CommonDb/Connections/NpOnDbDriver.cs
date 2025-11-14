@@ -16,6 +16,7 @@ public interface INpOnDbDriver
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
     Task<INpOnWrapperResult> Query(INpOnDbCommand? command);
+    Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand);
     Task<bool> IsAliveAsync(CancellationToken cancellationToken = default);
 }
 
@@ -30,6 +31,11 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public abstract Task DisconnectAsync();
 
     public virtual Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    {
+        throw new NotImplementedException("Need to override this method");
+    }
+
+    public virtual Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
     {
         throw new NotImplementedException("Need to override this method");
     }

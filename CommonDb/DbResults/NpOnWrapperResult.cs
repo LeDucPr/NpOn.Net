@@ -50,7 +50,7 @@ public abstract class NpOnWrapperResult : INpOnWrapperResult
         _isSuccess = true;
         SetStopExecute();
     }
-
+    
     public INpOnWrapperResult SetFail(EDbError error)
     {
         _errorString = error.GetDisplayName();

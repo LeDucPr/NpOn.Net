@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿﻿using System.Data;
+using NpgsqlTypes;
 
 namespace PostgresExtCm.Results;
 
@@ -38,7 +39,26 @@ public static class PostgresUtils
         // XML 
         [typeof(System.Xml.Linq.XDocument)] = DbType.Xml,
         [typeof(System.Xml.XmlDocument)] = DbType.Xml,
+        // json 
+        [typeof(Newtonsoft.Json.Linq.JObject)] = DbType.String,
+        [typeof(Newtonsoft.Json.Linq.JArray)] = DbType.String,
+        [typeof(System.Text.Json.JsonDocument)] = DbType.String,
+        [typeof(Newtonsoft.Json.Linq.JToken)] = DbType.String,
     };
+
+    private static readonly Dictionary<Type, NpgsqlDbType> NpgsqlTypeMap = new()
+    {
+        // json
+        [typeof(Newtonsoft.Json.Linq.JObject)] = NpgsqlDbType.Json,
+        [typeof(Newtonsoft.Json.Linq.JArray)] = NpgsqlDbType.Json,
+        [typeof(System.Text.Json.JsonDocument)] = NpgsqlDbType.Json,
+        [typeof(Newtonsoft.Json.Linq.JToken)] = NpgsqlDbType.Json,
+    };
+
+    public static NpgsqlDbType? ToNpgsqlDbType(this Type type)
+    {
+        return NpgsqlTypeMap.GetValueOrDefault(type);
+    }
 
     public static DbType ToDbType(this Type type)
     {

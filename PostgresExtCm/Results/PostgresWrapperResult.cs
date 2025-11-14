@@ -235,6 +235,41 @@ public class PostgresResultSetWrapper : NpOnWrapperResult, INpOnTableWrapper
         Columns = new PostgresColumnCollection(dataTable, schemaMap1); // schema -> Column
         SetSuccess();
     }
+    
+    public PostgresResultSetWrapper(DataTable? dataTable)
+    {
+        if (dataTable == null)
+        {
+            SetFail(EDbError.PostgresDataTableNull);
+            return;
+        }
+
+        // Lấy schema từ DataTable
+        var schemaMap = new Dictionary<string, NpOnColumnSchemaInfo>();
+        foreach (DataColumn col in dataTable.Columns)
+        {
+            var schemaInfo = new NpOnColumnSchemaInfo(
+                col.ColumnName,
+                col.DataType,          // .NET type
+                col.DataType.Name      // tên type (có thể map sang Postgres nếu cần)
+            );
+            schemaMap.Add(col.ColumnName, schemaInfo);
+        }
+
+        IReadOnlyDictionary<string, NpOnColumnSchemaInfo> schemaMap1 = schemaMap;
+
+        Rows = dataTable.Rows
+            .Cast<DataRow>()
+            .Select((row, index) => new { row, index })
+            .ToDictionary(
+                item => item.index,
+                item => new PostgresRowWrapper(item.row, schemaMap1)
+            );
+
+        Columns = new PostgresColumnCollection(dataTable, schemaMap1);
+        SetSuccess();
+    }
+
 
     public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers
     {
