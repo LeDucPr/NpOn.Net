@@ -58,6 +58,7 @@ public abstract class CommonProgram
     {
         services.AddLogging(p => p.AddSerilog(Log.Logger)); // add Log
         services.AddHttpContextAccessor(); // accessor 
+        services.AddSingleton<ILogAction, LogAction>(); // as log ??
 
         // cors
         string corsConfig = EApplicationConfiguration.CORS.GetAppSettingConfig().AsDefaultString();
