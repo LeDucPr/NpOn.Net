@@ -7,9 +7,6 @@ using Enums;
 using CommonWebApplication.Services;
 using Grpc.Net.Client.Balancer;
 using GrpcAddService;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using ProtoBuf.Grpc.Server;
 using Serilog;
 using Microsoft.AspNetCore.Authentication;
@@ -58,7 +55,6 @@ public abstract class CommonProgram
     {
         services.AddLogging(p => p.AddSerilog(Log.Logger)); // add Log
         services.AddHttpContextAccessor(); // accessor 
-        services.AddSingleton<ILogAction, LogAction>(); // as log ??
 
         // cors
         string corsConfig = EApplicationConfiguration.CORS.GetAppSettingConfig().AsDefaultString();
@@ -73,8 +69,12 @@ public abstract class CommonProgram
             });
         }
 
+        services.AddSingleton<ILogAction, LogAction>(); // as log ??
+
         // authentication 
         services.AddTransient<AuthenticationToken>();
+        services.AddTransient<ContextService>();
+        services.AddTransient<AuthenService>();
 
         // common controllers
         services.AddControllers(options => { })

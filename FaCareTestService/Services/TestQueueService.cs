@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using CommonDb.DbResults;
 using CommonDb.DbResults.Grpc;
-using CommonObject.CommonObjects;
+using CommonGrpcObject;
 using CommonWebApplication.Services;
 using DbFactory;
 using FaCareTestServiceObject.ServiceObjects.RabbitMqEvents;

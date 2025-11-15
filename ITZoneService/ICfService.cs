@@ -1,5 +1,6 @@
 ﻿using System.ServiceModel;
 using CommonDb.DbResults.Grpc;
+using CommonGrpcObject;
 using CommonObject.CommonObjects;
 
 namespace ITZoneService;

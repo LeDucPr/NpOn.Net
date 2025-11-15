@@ -1,8 +1,9 @@
 using CommonMode;
+using CommonObject;
 using Enums;
 using ProtoBuf;
 
-namespace CommonObject.CommonObjects;
+namespace CommonGrpcObject;
 
 [ProtoContract]
 [ProtoInclude(100, typeof(CommonResponse<>))]

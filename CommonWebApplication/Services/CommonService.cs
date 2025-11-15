@@ -1,3 +1,4 @@
+using CommonGrpcObject;
 using CommonObject.CommonObjects;
 using RabbitMqBroker;
 

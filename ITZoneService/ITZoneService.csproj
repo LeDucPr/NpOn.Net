@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CommonDb\CommonDb.csproj" />
+      <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj" />
       <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
     </ItemGroup>
 

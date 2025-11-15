@@ -7,6 +7,7 @@ using IFaCareTestService;
 using Microsoft.AspNetCore.SignalR;
 using ProtoBuf.Grpc;
 using System.Collections.Concurrent;
+using CommonGrpcObject;
 
 namespace FaCareTestService.Services;
 

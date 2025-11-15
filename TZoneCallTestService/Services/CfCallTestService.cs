@@ -1,5 +1,6 @@
 using CommonDb.DbResults;
 using CommonDb.DbResults.Grpc;
+using CommonGrpcObject;
 using CommonObject.CommonObjects;
 using CommonWebApplication.Services;
 using DbFactory;

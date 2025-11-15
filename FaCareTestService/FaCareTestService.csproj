@@ -22,6 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj" />
         <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
         <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
         <ProjectReference Include="..\IFaCareTestService\IFaCareTestService.csproj" />

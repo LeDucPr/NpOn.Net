@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj" />
       <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
       <ProjectReference Include="..\GenericEnums\GenericEnums.csproj" />
     </ItemGroup>
