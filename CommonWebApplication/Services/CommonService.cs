@@ -15,8 +15,8 @@ public class CommonService(ILogger<CommonService> logger) : RabbitMqEventHandler
         }
         catch (Exception e)
         {
-            response.SetFail(e.Message);
-            logger.LogError($"{e.Message}");
+            response.SetFail($"An unexpected error occurred: {e.Message}");
+            logger.LogError(e, "An error occurred in CommonProcessRbMqEvent: {ErrorMessage}", e.Message);
         }
         return response;
     }
@@ -31,8 +31,8 @@ public class CommonService(ILogger<CommonService> logger) : RabbitMqEventHandler
         }
         catch (Exception e)
         {
-            response.SetFail(e.Message);
-            logger.LogError($"{e.Message}");
+            response.SetFail($"An unexpected error occurred: {e.Message}");
+            logger.LogError(e, "An error occurred in CommonProcess: {ErrorMessage}", e.Message);
         }
         return response;
     }
@@ -46,8 +46,8 @@ public class CommonService(ILogger<CommonService> logger) : RabbitMqEventHandler
         }
         catch (Exception e)
         {
-            response.SetFail(e.Message);
-            logger.LogError($"{e.Message}");
+            response.SetFail($"An unexpected error occurred: {e.Message}");
+            logger.LogError(e, "An error occurred in CommonProcess: {ErrorMessage}", e.Message);
         }
         return response;
     }

@@ -53,7 +53,6 @@ public abstract class CommonProgram
     /// </summary>
     protected virtual void ConfigureBaseServices(IServiceCollection services)
     {
-        services.AddLogging(p => p.AddSerilog(Log.Logger)); // add Log
         services.AddHttpContextAccessor(); // accessor 
 
         // cors
@@ -71,8 +70,18 @@ public abstract class CommonProgram
 
         // logger
         services.AddSingleton<ILogAction, LogAction>(); // as log ??
-        services.AddLogging(p => p.AddSerilog(Log.Logger));
-
+        
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug() // Ensure the general minimum is low enough
+            .WriteTo.Console()
+            .WriteTo.File(
+                path: $"logs/log-{DateTime.Now:yyyyMMdd_HHmmss}.txt", // start time
+                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information // Information
+            )
+            .CreateLogger();
+        
+        services.AddLogging(p => p.AddSerilog(Log.Logger)); // add log (console)
+        
         // authentication 
         services.AddTransient<AuthenticationToken>();
         services.AddTransient<ContextService>();
