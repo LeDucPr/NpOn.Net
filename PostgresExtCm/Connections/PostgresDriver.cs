@@ -83,9 +83,6 @@ public class PostgresDriver : NpOnDbDriver
         {
             await using var pgCommand = _connection.CreateCommand();
             List<object?> paramPlaceholderComponents = new List<object?>();
-
-            pgCommand.CommandType = CommandType.Text;
-
             foreach (var param in execCommand.Params)
             {
                 var value = param.Value ?? DBNull.Value;
@@ -102,28 +99,12 @@ public class PostgresDriver : NpOnDbDriver
                     if (npgsqlDbType.HasValue)
                         npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
                     paramPlaceholderComponents.Add(value);
-
-                    // if (npgsqlDbType is NpgsqlDbType.Json)
-                    // {
-                    //     if (value is JToken jTokenValue)
-                    //     {
-                    //         npgsqlParam.Value = jTokenValue.ToString(Formatting.None);
-                    //     }
-                    //     else if (value is System.Text.Json.JsonDocument jsonDocumentValue)
-                    //     {
-                    //         npgsqlParam.Value = jsonDocumentValue.RootElement.ToString();
-                    //     }
-                    // }
-                    // else if (!npgsqlDbType.HasValue) 
-                    // {
-                    //     npgsqlParam.DbType = valueType.ToDbType();
-                    // }
                 }
-                // pgCommand.Parameters.Add(npgsqlParam);
             }
 
             string paramPlaceholders = $"'{string.Join(",", paramPlaceholderComponents)}'";
             pgCommand.CommandText = $"SELECT * FROM {execCommand.FuncName}({paramPlaceholders})";
+            pgCommand.CommandType = CommandType.Text;
             if (string.IsNullOrWhiteSpace(execCommand.AliasForSingleColumnOutput))
                 pgCommand.CommandText += $" as {execCommand.AliasForSingleColumnOutput}";
             await using var reader = await pgCommand.ExecuteReaderAsync();

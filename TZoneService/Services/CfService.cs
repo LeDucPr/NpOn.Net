@@ -16,13 +16,13 @@ public class CfService(
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            string pgQuery = "Select * from server_ctrl";
+            // string pgQuery = "Select * from server_ctrl";
             // pgQuery = $"SELECT _id FROM data_t_ ORDER BY _id DESC LIMIT {1}";
             // INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
 
             string funcName = "sp_dyn_patient_rank_search_cccccccccccccccccccccc";
 
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.uteFunc(
                 funcName,
                 new Dictionary<string, object>
                 {

@@ -79,7 +79,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         {
             INpOnDbExecCommand execCommand = new NpOnDbExecCommand(_dbType, funcName, parameters, isUseOutputJsonAsName);
             if (isUseInputJson)
-                execCommand = execCommand.UseFullJsonBlock();
+                execCommand = execCommand.AsFullJsonBlock();
             INpOnWrapperResult result = await _factory.FirstValidConnection.Driver.ExecuteFunc(execCommand);
             return result;
         }

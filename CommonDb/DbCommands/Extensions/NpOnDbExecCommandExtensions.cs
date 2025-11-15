@@ -5,7 +5,7 @@ namespace CommonDb.DbCommands.Extensions
 {
     public static class NpOnDbExecCommandExtensions
     {
-        public static INpOnDbExecCommand UseFullJsonBlock(this INpOnDbExecCommand execCommand)
+        public static INpOnDbExecCommand AsFullJsonBlock(this INpOnDbExecCommand execCommand)
         {
             if (execCommand.Params is not { Count: > 0 })
                 return execCommand;
