@@ -22,7 +22,7 @@ public class CfService(
 
             string funcName = "sp_dyn_patient_rank_search_cccccccccccccccccccccc";
 
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.uteFunc(
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
                 funcName,
                 new Dictionary<string, object>
                 {
