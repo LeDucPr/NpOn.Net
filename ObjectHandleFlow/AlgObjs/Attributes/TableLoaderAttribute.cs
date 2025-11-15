@@ -12,7 +12,7 @@ public sealed class TableLoaderAttribute(string tableName) : Attribute
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Constructor,
     AllowMultiple = true, Inherited = true)]
-public sealed class TableLoaderAttribute<T> : TableAttribute where T : BaseCtrl
+public sealed class TableLoaderAttribute<T> : TableAttribute where T : SysBaseCtrl
 {
     public Type RelatedType => typeof(T);
     public string? TableName { get; }

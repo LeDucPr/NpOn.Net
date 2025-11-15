@@ -5,7 +5,7 @@ using ObjectHandlerFlow.AlgObjs.Attributes;
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Data;
 
 [TableLoader("process_field_ctrl")]
-public class ProcessFieldCtrl : BaseCtrl
+public class ProcessFieldCtrl : SysBaseCtrl
 {
     [FkId<ProcessTableCtrl>(nameof(ProcessTableId))] public required long ProcessTableId { get; set; }
 

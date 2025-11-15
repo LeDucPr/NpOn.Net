@@ -4,7 +4,7 @@ using ObjectHandlerFlow.AlgObjs.Attributes;
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Data;
 
 [TableLoader("process_table_ctrl")]
-public class ProcessTableCtrl : BaseCtrl
+public class ProcessTableCtrl : SysBaseCtrl
 {
     public required string ProcessName { get; set; }
     public required EDb DatabaseType { get; set; }

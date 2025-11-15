@@ -35,9 +35,9 @@ public sealed class BaseQueryCreatorWithKey
     /// </summary>
     /// <param name="ctrl"></param>
     /// <exception cref="NotSupportedException"></exception>
-    public BaseQueryCreatorWithKey(BaseCtrl ctrl)
+    public BaseQueryCreatorWithKey(SysBaseCtrl ctrl)
     {
-        if (!ctrl.GetType().IsChildOfBaseCtrl())
+        if (!ctrl.GetType().IsChildOfSysBaseCtrl())
             throw new ArgumentException("Control object must be a derivative of BaseCtrl.", nameof(ctrl));
         TableLoaderAttribute? tableLoaderAttr = ctrl.GetType().GetClassAttribute<TableLoaderAttribute>();
         if (tableLoaderAttr == null)
@@ -58,7 +58,7 @@ public sealed class BaseQueryCreatorWithKey
     /// </summary>
     /// <param name="ctrls"></param>
     /// <exception cref="NotSupportedException"></exception>
-    public BaseQueryCreatorWithKey(List<BaseCtrl> ctrls)
+    public BaseQueryCreatorWithKey(List<SysBaseCtrl> ctrls)
     {
         if (ctrls is not { Count: > 0 } ||
             ctrls.Select(t => t.GetType()).Distinct().ToArray() is not { Length: 1 })

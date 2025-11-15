@@ -1,3 +1,4 @@
+using CommonDb.DbResults.Grpc;
 using CommonMode;
 using CommonObject;
 using Enums;
@@ -6,7 +7,11 @@ using ProtoBuf;
 namespace CommonGrpcObject;
 
 [ProtoContract]
-[ProtoInclude(100, typeof(CommonResponse<>))]
+[ProtoInclude(100, typeof(CommonResponse<INpOnGrpcObject>))]
+[ProtoInclude(200, typeof(CommonResponse<NpOnGrpcCell>))]
+[ProtoInclude(300, typeof(CommonResponse<NpOnGrpcColumn>))]
+[ProtoInclude(400, typeof(CommonResponse<NpOnGrpcRow>))]
+[ProtoInclude(500, typeof(CommonResponse<NpOnGrpcTable>))]
 public class CommonResponse
 {
     [ProtoMember(1)] public bool Status { get; set; }

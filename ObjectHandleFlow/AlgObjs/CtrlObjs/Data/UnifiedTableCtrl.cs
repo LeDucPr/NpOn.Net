@@ -7,7 +7,7 @@ namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Data;
 /// Concat all table have in this with condition by Keys
 /// </summary>
 [TableLoader("unified_table_ctrl")]
-public class UnifiedTableCtrl : BaseCtrl
+public class UnifiedTableCtrl : SysBaseCtrl
 {
     public required string UnifiedTableName { get; set; }
 

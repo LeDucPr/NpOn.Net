@@ -30,7 +30,7 @@ class Program
             QueryLanguageUse = (EDbLanguage)0,
         };
 
-        (string? sessionId, BaseCtrl? ctrl) =
+        (string? sessionId, SysBaseCtrl? ctrl) =
             pgFactoryWrapper.GetDataWithConnection(connectionCtrlDecoy).GetAwaiter().GetResult();
         if (sessionId == null || ctrl == null)
             return;
@@ -77,7 +77,7 @@ class Program
         string pgQuery_unified_table_mapping_ctrl = "Select * from unified_table_mapping_ctrl";
         INpOnWrapperResult? resultOfQueryTableFieldMappingCtrls =
             dbFactoryWrapper?.QueryAsync(pgQuery_unified_table_mapping_ctrl).GetAwaiter().GetResult();
-        List<BaseCtrl>? unifiedTableFieldMappingCtrls = resultOfQueryTableFieldMappingCtrls
+        List<SysBaseCtrl>? unifiedTableFieldMappingCtrls = resultOfQueryTableFieldMappingCtrls
             ?.GenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
         if (unifiedTableFieldMappingCtrls is not { Count: > 0 })
             return;

@@ -21,5 +21,9 @@
       <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
       <ProjectReference Include="..\GenericEnums\GenericEnums.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="BusinessObjects\" />
+    </ItemGroup>
     
 </Project>

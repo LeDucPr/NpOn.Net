@@ -5,7 +5,7 @@ using ObjectHandlerFlow.AlgObjs.Attributes;
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Data;
 
 [TableLoader("table_field_ctrl")]
-public class TableFieldCtrl : BaseCtrl
+public class TableFieldCtrl : SysBaseCtrl
 {
     [FkId<TableCtrl>(nameof(TableId))] public required long TableId { get; set; }
 

@@ -2,7 +2,7 @@
 
 namespace ObjectHandlerFlow.AlgObjs.RaisingRouters;
 
-public record DataLookup(BaseCtrl Ctrl, Exception? Exception);
+public record DataLookup(SysBaseCtrl Ctrl, Exception? Exception);
 
 public record JoinListLookup(string SessionId)
 {

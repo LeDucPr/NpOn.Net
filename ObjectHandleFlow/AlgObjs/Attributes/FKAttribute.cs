@@ -4,7 +4,7 @@ using ObjectHandlerFlow.AlgObjs.CtrlObjs;
 namespace ObjectHandlerFlow.AlgObjs.Attributes;
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
-public sealed class FkAttribute<T> : ForeignKeyAttribute where T : BaseCtrl
+public sealed class FkAttribute<T> : ForeignKeyAttribute where T : SysBaseCtrl
 {
     public Type RelatedType => typeof(T);
     public string? ForeignKeyName { get; }

@@ -4,7 +4,6 @@ using CommonDb.DbResults;
 using DbFactory;
 using Enums;
 using HandleFlow.ResultConverters;
-using HandlerFlow.AlgObjs.CtrlObjs;
 using MongoDbExtCm.Connections;
 using MssqlExtCm.Connections;
 using ObjectHandlerFlow.AlgObjs.CtrlObjs;
@@ -24,10 +23,10 @@ public static class InitializationCtrlSystem
     /// <param name="decoyObject"></param>
     /// <param name="isUseCache"></param>
     /// <returns></returns>
-    public static async Task<(string? SessionId, BaseCtrl? Ctrl)> GetDataWithConnection
-        (this IDbFactoryWrapper factory, BaseCtrl decoyObject, bool isUseCache = false)
+    public static async Task<(string? SessionId, SysBaseCtrl? Ctrl)> GetDataWithConnection
+        (this IDbFactoryWrapper factory, SysBaseCtrl decoyObject, bool isUseCache = false)
     {
-        (string? sessionId, BaseCtrl? ctrl) =
+        (string? sessionId, SysBaseCtrl? ctrl) =
             (await decoyObject.JoiningData(
                 ((ctrl) =>
                 {
@@ -55,10 +54,10 @@ public static class InitializationCtrlSystem
     /// <param name="decoyObjects"></param>
     /// <param name="isUseCache"></param>
     /// <returns></returns>
-    public static async Task<(string? SessionId, List<BaseCtrl>? Ctrls)> GetDataWithConnection
-        (this IDbFactoryWrapper factory, List<BaseCtrl> decoyObjects, bool isUseCache = false)
+    public static async Task<(string? SessionId, List<SysBaseCtrl>? Ctrls)> GetDataWithConnection
+        (this IDbFactoryWrapper factory, List<SysBaseCtrl> decoyObjects, bool isUseCache = false)
     {
-        (string? sessionId, List<BaseCtrl>? ctrls) =
+        (string? sessionId, List<SysBaseCtrl>? ctrls) =
             (await decoyObjects.JoiningListData(
                 ((ctrls) =>
                 {

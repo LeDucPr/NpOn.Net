@@ -6,7 +6,7 @@ using ObjectHandlerFlow.AlgObjs.CtrlObjs;
 namespace ObjectHandlerFlow.AlgObjs.Attributes;
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
-public sealed class ConditionAttribute<T1, T2> : Attribute where T1 : BaseCtrl where T2 : BaseCtrl
+public sealed class ConditionAttribute<T1, T2> : Attribute where T1 : SysBaseCtrl where T2 : SysBaseCtrl
 {
     public string ConditionKey1 { get; }
     public string ConditionKey2 { get; }

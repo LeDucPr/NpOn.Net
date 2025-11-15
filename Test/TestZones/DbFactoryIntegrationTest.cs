@@ -31,19 +31,19 @@ public static class DbFactoryIntegrationTest
         };
 
 
-        Func<BaseCtrl, Task<string>> createStringQueryMethod = async (ctrl) =>
+        Func<SysBaseCtrl, Task<string>> createStringQueryMethod = async (ctrl) =>
         {
             BaseQueryCreatorWithKey queryCreator = new BaseQueryCreatorWithKey(ctrl);
             return queryCreator.CreateQueryWithId(dbTypeForFirstCreation);
         };
 
-        Func<string, Type, Task<BaseCtrl?>> getDataMethod = async (query, type) =>
+        Func<string, Type, Task<SysBaseCtrl?>> getDataMethod = async (query, type) =>
         {
             INpOnWrapperResult? result = await factoryWrapper.QueryAsync(query);
             var ctrl = result?.PostgresConverter(type);
             return ctrl?.FirstOrDefault();
         };
-        (string? sessionId, BaseCtrl? connCtrl) =
+        (string? sessionId, SysBaseCtrl? connCtrl) =
             await connectionCtrl.JoiningData(createStringQueryMethod, getDataMethod, true, true, -1);
         if (sessionId == null)
         {

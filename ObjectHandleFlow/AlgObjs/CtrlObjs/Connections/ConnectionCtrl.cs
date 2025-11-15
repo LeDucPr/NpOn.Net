@@ -4,7 +4,7 @@ using ObjectHandlerFlow.AlgObjs.Attributes;
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Connections;
 
 [TableLoader("connection_ctrl")]
-public class ConnectionCtrl : BaseCtrl
+public class ConnectionCtrl : SysBaseCtrl
 {
     [FkId<ConnectionInfoCtrl>(nameof(ConnectionInfoId))]
     public required long ConnectionInfoId { get; set; }

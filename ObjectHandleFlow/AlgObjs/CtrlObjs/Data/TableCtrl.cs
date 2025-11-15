@@ -5,7 +5,7 @@ using ObjectHandlerFlow.AlgObjs.CtrlObjs.Connections;
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Data;
 
 [TableLoader("table_ctrl")]
-public class TableCtrl : BaseCtrl
+public class TableCtrl : SysBaseCtrl
 {
     public required string TableName { get; set; }
     public required ETableMode TableMode { get; set; }

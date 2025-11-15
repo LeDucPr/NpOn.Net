@@ -60,7 +60,7 @@ public static partial class RaisingIndexer
     /// </summary>
     /// <param name="ctrl"></param>
     /// <returns></returns>
-    public static BaseCtrl? AnalyzeAndDisplayKeys(this BaseCtrl? ctrl)
+    public static SysBaseCtrl? AnalyzeAndDisplayKeys(this SysBaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;
@@ -70,7 +70,7 @@ public static partial class RaisingIndexer
         return ctrl;
     }
 
-    public static KeyMetadataInfo? KeyMetadata(this BaseCtrl? ctrl)
+    public static KeyMetadataInfo? KeyMetadata(this SysBaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;
@@ -78,7 +78,7 @@ public static partial class RaisingIndexer
         return metadata;
     }
 
-    public static IEnumerable<KeyInfo>? PrimaryKeys(this BaseCtrl? ctrl)
+    public static IEnumerable<KeyInfo>? PrimaryKeys(this SysBaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;
@@ -86,7 +86,7 @@ public static partial class RaisingIndexer
         return pks;
     }
 
-    public static IEnumerable<KeyInfo>? ForeignKeys(this BaseCtrl? ctrl)
+    public static IEnumerable<KeyInfo>? ForeignKeys(this SysBaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;
@@ -94,7 +94,7 @@ public static partial class RaisingIndexer
         return fks;
     }
 
-    public static IEnumerable<KeyInfo>? ForeignKeyIds(this BaseCtrl? ctrl)
+    public static IEnumerable<KeyInfo>? ForeignKeyIds(this SysBaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;
@@ -102,7 +102,7 @@ public static partial class RaisingIndexer
         return fkIds;
     }
 
-    public static bool IsTableLoaderAttached(this BaseCtrl? ctrl)
+    public static bool IsTableLoaderAttached(this SysBaseCtrl? ctrl)
         => GetOrScanTypeEnableObjectCache(ctrl?.GetType());
 
     #endregion Public Methods (Get Data from cache)
@@ -141,8 +141,8 @@ public static partial class RaisingIndexer
 
     private static FieldInfo GetOrScanFieldMap(Type ctrlType)
     {
-        var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
-        var fieldMap = emptyCtrl?.FieldMap ?? ctrlType.CreateDefaultFieldMapperWithEmptyObject()?.FieldMap;
+        var emptyCtrl = (SysBaseCtrl?)Activator.CreateInstance(ctrlType);
+        var fieldMap = emptyCtrl?.FieldMap ?? ctrlType.CreateDefaultFieldMapperWithEmptySysBaseCtrlObject()?.FieldMap;
         if (fieldMap == null || fieldMap.Count == 0)
             return new FieldInfo(new Dictionary<string, PropertyInfo>());
         // AdvancedTypeKey (unique with fieldMap + ctrlType)
@@ -163,7 +163,7 @@ public static partial class RaisingIndexer
         });
     }
 
-    public static FieldInfo? MapperFieldInfo(this BaseCtrl? ctrl)
+    public static FieldInfo? MapperFieldInfo(this SysBaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;
@@ -176,10 +176,10 @@ public static partial class RaisingIndexer
 
 public static partial class RaisingIndexer
 {
-    public static async Task<(string? sessionId, BaseCtrl? outCtrl)> JoiningData(
-        this BaseCtrl? decoyCtrl,
-        Func<BaseCtrl, Task<string>>? createStringQueryMethod,
-        Func<string, Type, Task<BaseCtrl?>>? getDataMethod,
+    public static async Task<(string? sessionId, SysBaseCtrl? outCtrl)> JoiningData(
+        this SysBaseCtrl? decoyCtrl,
+        Func<SysBaseCtrl, Task<string>>? createStringQueryMethod,
+        Func<string, Type, Task<SysBaseCtrl?>>? getDataMethod,
         bool isLoadMapper = true,
         bool isUseCachingForLookupData = false,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
@@ -254,7 +254,7 @@ public static partial class RaisingIndexer
             if (fkType == null)
                 continue;
 
-            if (!fkType.IsChildOfBaseCtrl())
+            if (!fkType.IsChildOfSysBaseCtrl())
                 continue;
 
             // value info
@@ -274,13 +274,13 @@ public static partial class RaisingIndexer
                 continue;
 
 
-            var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
+            var ctrlFromKeyEmpty = (SysBaseCtrl?)Activator.CreateInstance(fkType);
             KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
                 fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
             if (ctrlFromKeyEmpty != null)
             {
                 // Get PropertyInfo 'ID' from new object
-                var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
+                var idPropOfNewObject = fkType.GetProperty(nameof(SysBaseCtrl.Id));
                 if (navigationKeyInfo != null && idPropOfNewObject != null)
                 {
                     object convertedIdValue = Convert.ChangeType(fkIdValue, idPropOfNewObject.PropertyType);
@@ -288,7 +288,7 @@ public static partial class RaisingIndexer
                 }
             }
 
-            (sessionId, BaseCtrl? fkCtrl) = await JoiningData(ctrlFromKeyEmpty,
+            (sessionId, SysBaseCtrl? fkCtrl) = await JoiningData(ctrlFromKeyEmpty,
                 createStringQueryMethod, getDataMethod, // functions
                 isLoadMapper, isUseCachingForLookupData, // control parameters
                 recursionStopLoss, ++currentRecursionLoop, sessionId); // recursions 
@@ -299,10 +299,10 @@ public static partial class RaisingIndexer
     }
 
 
-    public static async Task<(string? sessionId, List<BaseCtrl>? outCtrls)> JoiningListData(
-        this List<BaseCtrl>? decoyCtrlList,
-        Func<List<BaseCtrl>, Task<string>>? createBulkQueryMethod,
-        Func<string, Type, Task<List<BaseCtrl>?>>? getBulkDataMethod,
+    public static async Task<(string? sessionId, List<SysBaseCtrl>? outCtrls)> JoiningListData(
+        this List<SysBaseCtrl>? decoyCtrlList,
+        Func<List<SysBaseCtrl>, Task<string>>? createBulkQueryMethod,
+        Func<string, Type, Task<List<SysBaseCtrl>?>>? getBulkDataMethod,
         bool isLoadMapper = true,
         bool isUseCachingForLookupData = false,
         int recursionStopLoss = -1, // max size of recursion loop (-1 == unlimited)
@@ -330,7 +330,7 @@ public static partial class RaisingIndexer
 
         var groupedByType = decoyCtrlList
             .GroupBy(t => t.GetType())
-            .Select(g => new KeyValuePair<Type, List<BaseCtrl>>(g.Key, g.ToList()))
+            .Select(g => new KeyValuePair<Type, List<SysBaseCtrl>>(g.Key, g.ToList()))
             .ToList();
 
 
@@ -340,8 +340,8 @@ public static partial class RaisingIndexer
         {
             // ------ Fetch Bulk Data ------
             Type ctrlTypeOfGroup = group.Key;
-            List<BaseCtrl> groupCtrlByType = group.Value;
-            List<BaseCtrl> allResults = new List<BaseCtrl>();
+            List<SysBaseCtrl> groupCtrlByType = group.Value;
+            List<SysBaseCtrl> allResults = new List<SysBaseCtrl>();
 
             for (int i = 0; i < groupCtrlByType.Count; i += trunkSizeOfIdOnQuery)
             {
@@ -402,7 +402,7 @@ public static partial class RaisingIndexer
                 if (fkType == null)
                     continue;
 
-                if (!fkType.IsChildOfBaseCtrl())
+                if (!fkType.IsChildOfSysBaseCtrl())
                     continue;
 
                 // value info
@@ -416,7 +416,7 @@ public static partial class RaisingIndexer
                 if (fkIdInfo == null)
                     continue;
 
-                List<BaseCtrl>? ctrlFromKeyEmpties = [];
+                List<SysBaseCtrl>? ctrlFromKeyEmpties = [];
                 HashSet<string?> idList = [];
                 KeyInfo? navigationKeyInfo = fks.FirstOrDefault(fk =>
                     fk.Attribute.GetPropertyTypeFromAttribute(nameof(FkAttribute<>.RelatedType)) == fkType);
@@ -424,14 +424,14 @@ public static partial class RaisingIndexer
                 // Add Value to ForeignKey Field
                 foreach (var ctrl in groupCtrlByType)
                 {
-                    var ctrlFromKeyEmpty = (BaseCtrl?)Activator.CreateInstance(fkType);
+                    var ctrlFromKeyEmpty = (SysBaseCtrl?)Activator.CreateInstance(fkType);
                     var fkIdValue = fkIdInfo.Property.GetValue(ctrl);
                     if (fkIdValue == null)
                         continue;
                     if (ctrlFromKeyEmpty != null)
                     {
                         // Get PropertyInfo 'ID' from new object
-                        var idPropOfNewObject = fkType.GetProperty(nameof(BaseCtrl.Id));
+                        var idPropOfNewObject = fkType.GetProperty(nameof(SysBaseCtrl.Id));
                         if (navigationKeyInfo != null && idPropOfNewObject != null)
                         {
                             object convertedIdValue = Convert.ChangeType(fkIdValue, idPropOfNewObject.PropertyType);

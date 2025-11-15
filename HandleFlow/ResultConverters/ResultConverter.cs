@@ -1,5 +1,4 @@
 ﻿using CommonDb.DbResults;
-using HandlerFlow.AlgObjs.CtrlObjs;
 using ObjectHandlerFlow.AlgObjs.CtrlObjs;
 using ObjectHandlerFlow.AlgObjs.RaisingRouters;
 using PostgresExtCm.Results;
@@ -8,9 +7,9 @@ namespace HandleFlow.ResultConverters;
 
 public static class ResultConverter
 {
-    public static IEnumerable<BaseCtrl>? GenericConverter(this INpOnWrapperResult result, Type ctrlType)
+    public static IEnumerable<SysBaseCtrl>? GenericConverter(this INpOnWrapperResult result, Type ctrlType)
     {
-        if (!ctrlType.IsChildOfBaseCtrl())
+        if (!ctrlType.IsChildOfSysBaseCtrl())
             return null;
 
         if (result is not INpOnTableWrapper tableWrapper)
@@ -20,7 +19,7 @@ public static class ResultConverter
         if (columnNames.Length == 0)
             return null;
 
-        var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+        var emptyCtrl = (SysBaseCtrl?)Activator.CreateInstance(ctrlType);
         FieldInfo? mapField = emptyCtrl.MapperFieldInfo();
         if (mapField == null)
             return null;
@@ -28,10 +27,10 @@ public static class ResultConverter
         if (mapField.KeyProperties is not { Count: > 0 }) // is not has any mapper field/property
             return null;
 
-        List<BaseCtrl> ctrlList = new();
+        List<SysBaseCtrl> ctrlList = new();
         foreach (var row in tableWrapper.RowWrappers)
         {
-            var newCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+            var newCtrl = (SysBaseCtrl?)Activator.CreateInstance(ctrlType);
             if (newCtrl == null)
                 continue;
             foreach (var kvProp in mapField.KeyProperties)
@@ -59,9 +58,9 @@ public static class ResultConverter
         return ctrlList;
     }
 
-    public static IEnumerable<BaseCtrl>? PostgresConverter(this INpOnWrapperResult result, Type ctrlType)
+    public static IEnumerable<SysBaseCtrl>? PostgresConverter(this INpOnWrapperResult result, Type ctrlType)
     {
-        if (!ctrlType.IsChildOfBaseCtrl())
+        if (!ctrlType.IsChildOfSysBaseCtrl())
             return null;
 
         if (result is not PostgresResultSetWrapper pgResult)
@@ -71,7 +70,7 @@ public static class ResultConverter
         if (columnNames.Length == 0)
             return null;
 
-        var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+        var emptyCtrl = (SysBaseCtrl?)Activator.CreateInstance(ctrlType);
         FieldInfo? mapField = emptyCtrl.MapperFieldInfo();
         if (mapField == null)
             return null;
@@ -79,10 +78,10 @@ public static class ResultConverter
         if (mapField.KeyProperties is not { Count: > 0 }) // is not has any mapper field/property
             return null;
 
-        List<BaseCtrl> ctrlList = new();
+        List<SysBaseCtrl> ctrlList = new();
         foreach (var row in pgResult.Rows)
         {
-            var newCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+            var newCtrl = (SysBaseCtrl?)Activator.CreateInstance(ctrlType);
             if (newCtrl == null)
                 continue;
             foreach (var kvProp in mapField.KeyProperties)

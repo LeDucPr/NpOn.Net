@@ -4,7 +4,7 @@ using ObjectHandlerFlow.AlgObjs.Attributes;
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs.Connections;
 
 [TableLoader("server_ctrl")]
-public class ServerCtrl : BaseCtrl
+public class ServerCtrl : SysBaseCtrl
 {
     public string? ServerName { get; set; }
     public required EServer ServerType { get; set; } 

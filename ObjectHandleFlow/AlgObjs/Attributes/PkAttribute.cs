@@ -22,7 +22,7 @@ public sealed class PkAttribute : Attribute
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true, Inherited = true)]
-public sealed class PkAttribute<T> : Attribute where T : BaseCtrl
+public sealed class PkAttribute<T> : Attribute where T : SysBaseCtrl
 {
     public Type RelatedType => typeof(T);
     public string? PrimaryKeyName { get; }
