@@ -17,6 +17,7 @@
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
         <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
 <!--        <PackageReference Include="protobuf-net.Grpc" Version="1.2.2"/>-->
 <!--        <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.2.2"/>-->
 <!--        <PackageReference Include="protobuf-net.Core" Version="3.2.56"/>-->
@@ -25,6 +26,7 @@
     </ItemGroup>
     
     <ItemGroup>
+        <ProjectReference Include="..\AccountServiceObject\AccountServiceObject.csproj" />
         <ProjectReference Include="..\CommonObject\CommonObject.csproj"/>
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
         <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>

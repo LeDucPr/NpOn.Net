@@ -35,5 +35,6 @@ public class ConnectionInfoCtrl : SysBaseCtrl
         FieldMap.Add(nameof(ConnectString), "connect_string");
         FieldMap.Add(nameof(SslEnabled), "ssl_enabled");
         FieldMap.Add(nameof(OptionsParams), "options_params");
+        base.FieldMapper();
     }
 }

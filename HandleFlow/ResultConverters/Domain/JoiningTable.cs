@@ -26,7 +26,7 @@ public static class JoiningTableExtensions
         if (unifiedTableMappingDecoys is not INpOnTableWrapper)
             return null;
 
-        List<SysBaseCtrl>? ctrls = unifiedTableMappingDecoys.GenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
+        List<SysBaseCtrl>? ctrls = unifiedTableMappingDecoys.SysGenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
         if (ctrls is not { Count: > 0 })
             return null;
 

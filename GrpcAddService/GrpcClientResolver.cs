@@ -18,6 +18,7 @@ public static class GrpcClientResolver
         
         services.ZoneServiceRegisterGrpc();
         services.ZoneCallTestServiceRegisterGrpc();
+        services.AccountServiceRegisterGrpc();
         return services;
     }
 

@@ -18,5 +18,6 @@ public class ProcessTableCtrl : SysBaseCtrl
         FieldMap.Add(nameof(DatabaseType), "database_type");
         FieldMap.Add(nameof(HandlingString), "handling_string");
         FieldMap.Add(nameof(NextHandlingString), "next_handling_string");
+        base.FieldMapper();
     }
 }

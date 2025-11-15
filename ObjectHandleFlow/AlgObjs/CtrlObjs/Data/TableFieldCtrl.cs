@@ -27,5 +27,6 @@ public class TableFieldCtrl : SysBaseCtrl
         FieldMap.Add(nameof(FieldType), "field_type");
         FieldMap.Add(nameof(FieldSizeType), "field_size_type");
         FieldMap.Add(nameof(Size), "size");
+        base.FieldMapper();
     }
 }

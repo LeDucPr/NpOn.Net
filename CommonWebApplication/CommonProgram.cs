@@ -69,7 +69,9 @@ public abstract class CommonProgram
             });
         }
 
+        // logger
         services.AddSingleton<ILogAction, LogAction>(); // as log ??
+        services.AddLogging(p => p.AddSerilog(Log.Logger));
 
         // authentication 
         services.AddTransient<AuthenticationToken>();

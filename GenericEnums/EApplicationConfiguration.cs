@@ -43,8 +43,13 @@ public enum EApplicationConfiguration
     [Display(Name = "WorkerGroup")] WorkerGroup, // string[]
     #endregion RabbitMq
     
+    #region Authen + Token
+    JwtTokensKey,
+    #endregion Authen + Token
+    
     #region UrlZone
     TZoneCallTestServiceUrl,
     TZoneServiceUrl,
+    AccountServiceUrl,
     #endregion UrlZone
 }

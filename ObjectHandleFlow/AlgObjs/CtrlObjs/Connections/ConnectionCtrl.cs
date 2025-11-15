@@ -20,5 +20,6 @@ public class ConnectionCtrl : SysBaseCtrl
         FieldMap ??= [];
         FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
         FieldMap.Add(nameof(QueryLanguageUse), "query_language_use");
+        base.FieldMapper();
     }
 }

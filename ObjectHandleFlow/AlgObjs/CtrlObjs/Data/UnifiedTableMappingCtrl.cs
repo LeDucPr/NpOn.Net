@@ -43,6 +43,7 @@ public class UnifiedTableMappingCtrl : SysBaseCtrl
         FieldMap.Add(nameof(JoinTableFieldId), "join_table_field_id");
         FieldMap.Add(nameof(JoinTableField), "join_table_field");
         FieldMap.Add(nameof(JoinOrder), "join_order");
+        base.FieldMapper();
     }
 
     #endregion override

@@ -78,7 +78,7 @@ class Program
         INpOnWrapperResult? resultOfQueryTableFieldMappingCtrls =
             dbFactoryWrapper?.QueryAsync(pgQuery_unified_table_mapping_ctrl).GetAwaiter().GetResult();
         List<SysBaseCtrl>? unifiedTableFieldMappingCtrls = resultOfQueryTableFieldMappingCtrls
-            ?.GenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
+            ?.SysGenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
         if (unifiedTableFieldMappingCtrls is not { Count: > 0 })
             return;
 

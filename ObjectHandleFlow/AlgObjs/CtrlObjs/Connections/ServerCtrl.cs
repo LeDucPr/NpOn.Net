@@ -18,5 +18,6 @@ public class ServerCtrl : SysBaseCtrl
         FieldMap.Add(nameof(ServerType), "server_type");
         FieldMap.Add(nameof(Host), "host");
         FieldMap.Add(nameof(Port), "port");
+        base.FieldMapper();
     }
 }

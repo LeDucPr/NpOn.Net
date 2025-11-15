@@ -11,7 +11,7 @@ public class AdvancedTypeKey : IEquatable<AdvancedTypeKey>
 
     public AdvancedTypeKey(Dictionary<string, string> fieldMap, Type ctrlType)
     {
-        if (!ctrlType.IsChildOfSysBaseCtrl())
+        if (!ctrlType.IsChildOfBaseCtrl())
             throw new IncompleteInitialization();
 
         CtrlType = ctrlType;

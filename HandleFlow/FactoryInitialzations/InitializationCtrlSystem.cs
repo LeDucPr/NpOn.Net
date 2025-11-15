@@ -37,7 +37,7 @@ public static class InitializationCtrlSystem
                 {
                     INpOnWrapperResult? result = await factory.QueryAsync(query);
                     // var ctrl = result?.PostgresConverter(type);
-                    var ctrl = result?.GenericConverter(type);
+                    var ctrl = result?.SysGenericConverter(type);
                     return ctrl?.FirstOrDefault();
                 }),
                 true, isUseCache, -1));
@@ -68,7 +68,7 @@ public static class InitializationCtrlSystem
                 {
                     INpOnWrapperResult? result = await factory.QueryAsync(query);
                     // var ctrl = result?.PostgresConverter(type);
-                    var ctrls = result?.GenericConverter(type);
+                    var ctrls = result?.SysGenericConverter(type);
                     return ctrls?.ToList();
                 }),
                 true, false, -1));

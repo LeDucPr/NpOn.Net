@@ -1,4 +1,13 @@
-﻿using CommonObject;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+// using System.Reflection.Metadata;
+using System.Security.Claims;
+using System.Text;
+using AccountServiceObject.BusinessObjects;
+using CommonMode;
+using CommonObject;
+using Enums;
+using Microsoft.IdentityModel.Tokens;
 using RabbitMqBroker;
 
 namespace CommonWebApplication.Services;
@@ -7,18 +16,21 @@ public class ContextService(
     ILogger<ContextService> logger,
     IHttpContextAccessor? httpContextAccessor,
     IServiceProvider serviceProvider,
-    RabbitMqConnectionPool rabbitMqConnectionPool,
+    // RabbitMqConnectionPool rabbitMqConnectionPool,
     AuthenService authenService,
     ILogAction logAction
 )
 {
+    // for header 
+    public const string HeaderLanguage = "language";
     public const string SessionCode = "VuaChocCho";
+    private const string DefaultLang = "vi";
 
     // EApplicationConfiguration.RabbitMqHost.GetAppSettingConfig().AsDefaultString();
     private readonly IServiceProvider _serviceProvider =
         httpContextAccessor?.HttpContext?.RequestServices ?? serviceProvider;
 
-    public readonly RabbitMqConnectionPool RabbitMqConnectionPool = rabbitMqConnectionPool;
+    // public readonly RabbitMqConnectionPool RabbitMqConnectionPool = rabbitMqConnectionPool;
     public readonly ILogAction LogAction = logAction;
 
     public string GetIp()
@@ -52,31 +64,23 @@ public class ContextService(
         return result.AsDefaultString();
     }
 
-    public AccountLoginInfo? UserInfo()
+    #region user info
+
+    public AccountLoginInfoObject? UserInfo()
     {
         var isAuthenticated = httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;
         if (!isAuthenticated)
-        {
             return null;
-        }
 
-        string? key = SessionKeyGet();
+        string? key = GetSessionKey();
         if (string.IsNullOrEmpty(key))
-        {
             return null;
-        }
 
         var userInfo = authenService.GetLoginInfoSync(key);
         return userInfo;
     }
 
-    public AccountLoginInfo? UserInfoBySessionId(string sessionId)
-    {
-        var userInfo = authenService.GetLoginInfoSync(sessionId);
-        return userInfo;
-    }
-
-    public AccountLoginInfo UserInfoRequired()
+    public AccountLoginInfoObject UserInfoRequired()
     {
         var userInfo = UserInfo();
         if (userInfo == null)
@@ -87,7 +91,15 @@ public class ContextService(
         return userInfo;
     }
 
-    public string? SessionKeyGet()
+    public AccountLoginInfoObject? UserInfoBySessionId(string sessionId)
+    {
+        var userInfo = authenService.GetLoginInfoSync(sessionId);
+        return userInfo;
+    }
+
+    #endregion user info
+
+    public string? GetSessionKey()
     {
         return httpContextAccessor?.HttpContext?.User.FindFirst(SessionCode)?.Value;
     }
@@ -99,7 +111,8 @@ public class ContextService(
 
     public bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
     {
-        var mySecret = Encoding.UTF8.GetBytes(ConfigSettingEnum.JwtTokensKey.GetConfig());
+        var mySecret =
+            Encoding.UTF8.GetBytes(EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig().AsDefaultString());
         var mySecurityKey = new SymmetricSecurityKey(mySecret);
         var tokenHandler = new JwtSecurityTokenHandler();
         try
@@ -136,27 +149,20 @@ public class ContextService(
     {
         get
         {
-            var lang = (httpContextAccessor?.HttpContext?.Request.Headers["language"]).AsEmpty();
+            var lang = (httpContextAccessor?.HttpContext?.Request.Headers[HeaderLanguage]).AsDefaultString();
             if (string.IsNullOrEmpty(lang))
             {
-                return "vn";
+                return DefaultLang;
             }
 
             return lang;
         }
     }
 
-    public string ClientId()
+    public string CheckAndReturnHeaderFromSession()
     {
-        var clientId = (httpContextAccessor?.HttpContext?.Request.Headers["TYTClientId"]).AsEmpty();
-        return clientId;
-    }
-
-    public string DealerTMVId => ConfigSettingEnum.DealerTMVId.GetConfig();
-
-    public string GetContextWebsiteId()
-    {
-        return (httpContextAccessor?.HttpContext?.Items[Constant.ContextWebsiteId]).AsEmpty();
+        var clientId = (httpContextAccessor?.HttpContext?.Request.Headers[SessionCode]).AsDefaultString();
+        return clientId; // maybe null => empty string
     }
 
     public void Set404()

@@ -1,13 +1,15 @@
 ﻿using ObjectHandlerFlow.AlgObjs.Attributes;
+using ProtoBuf;
 
 namespace ObjectHandlerFlow.AlgObjs.CtrlObjs;
 
+[ProtoContract]
 public abstract class BaseCtrl
 {
     #region Field Config
 
     // field mapper (initializer)
-    public Dictionary<string, string>? FieldMap { get; protected set; }
+    public abstract Dictionary<string, string>? FieldMap { get; protected set; }
 
     /// <summary>
     /// call in first requisition 
@@ -56,7 +58,7 @@ public static class BaseCtrlExtensions
     /// </summary>
     /// <param name="ctrlType"></param>
     /// <returns></returns>
-    public static BaseCtrl? CreateDefaultFieldMapperWithEmptyObject(this Type ctrlType)
+    public static BaseCtrl? CreateDefaultFieldMapperWithEmptyBaseCtrlObject(this Type ctrlType)
     {
         var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
         emptyCtrl?.CreateDefaultFieldMapper();

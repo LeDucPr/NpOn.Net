@@ -141,8 +141,8 @@ public static partial class RaisingIndexer
 
     private static FieldInfo GetOrScanFieldMap(Type ctrlType)
     {
-        var emptyCtrl = (SysBaseCtrl?)Activator.CreateInstance(ctrlType);
-        var fieldMap = emptyCtrl?.FieldMap ?? ctrlType.CreateDefaultFieldMapperWithEmptySysBaseCtrlObject()?.FieldMap;
+        var emptyCtrl = (BaseCtrl?)Activator.CreateInstance(ctrlType);
+        var fieldMap = emptyCtrl?.FieldMap ?? ctrlType.CreateDefaultFieldMapperWithEmptyBaseCtrlObject()?.FieldMap;
         if (fieldMap == null || fieldMap.Count == 0)
             return new FieldInfo(new Dictionary<string, PropertyInfo>());
         // AdvancedTypeKey (unique with fieldMap + ctrlType)
@@ -163,7 +163,7 @@ public static partial class RaisingIndexer
         });
     }
 
-    public static FieldInfo? MapperFieldInfo(this SysBaseCtrl? ctrl)
+    public static FieldInfo? MapperFieldInfo(this BaseCtrl? ctrl)
     {
         if (ctrl == null)
             return null;

@@ -9,10 +9,84 @@ namespace CommonDb.DbResults.Grpc;
 [ProtoContract]
 public class NpOnGrpcCell : INpOnGrpcObject
 {
-    [ProtoMember(1)] public byte[]? ValueBytes { get; set; } // dữ liệu gốc
-    [ProtoMember(2)] public DbType DbType { get; set; } // kiểu DbType
-    [ProtoMember(3)] public string? ValueTypeName { get; set; } // tên kiểu .NET
+    [ProtoMember(1)] public byte[]? ValueBytes { get; set; }
+    [ProtoMember(2)] public DbType DbType { get; set; }
+    [ProtoMember(3)] public string? ValueTypeName { get; set; }
     [ProtoMember(4)] public string? SourceTypeName { get; set; }
+
+    public object? ValueAsObject => GetValue();
+
+    public T? GetValue<T>()
+    {
+        object? obj = GetValue();
+        if (obj is T v) return v;
+        return default;
+    }
+
+    private object? GetValue()
+    {
+        if (ValueBytes == null || ValueBytes.Length == 0) return null;
+        if (string.IsNullOrWhiteSpace(ValueTypeName)) return null;
+
+        Type? type = Type.GetType(ValueTypeName, throwOnError: false);
+        if (type == null)
+            return string.Empty;
+            // throw new InvalidOperationException($"Cannot loadable type: {ValueTypeName}");
+        
+        if (type == typeof(byte[])) // byte[] → trả luôn
+            return ValueBytes;
+        
+        if (type == typeof(string)) // string → UTF8
+            return Encoding.UTF8.GetString(ValueBytes);
+        
+        if (type.IsEnum) // enum → cast
+        {
+            long raw = BitConverter.ToInt64(ValueBytes, 0);
+            return Enum.ToObject(type, raw);
+        }
+        
+        if (IsPrimitiveLike(type)) // primitive + DateTime + decimal
+        {
+            object raw = ConvertPrimitive(ValueBytes, type);
+            return Convert.ChangeType(raw, type);
+        }
+        
+        using var ms = new MemoryStream(ValueBytes); // complex object → protobuf deserialize
+        return /*ProtoBuf.*/Serializer.NonGeneric.Deserialize(type, ms);
+    }
+
+    private static bool IsPrimitiveLike(Type t)
+    {
+        return t.IsPrimitive
+               || t == typeof(decimal)
+               || t == typeof(DateTime);
+    }
+
+    private static object ConvertPrimitive(byte[] bytes, Type type)
+    {
+        if (type == typeof(int)) return BitConverter.ToInt32(bytes, 0);
+        if (type == typeof(long)) return BitConverter.ToInt64(bytes, 0);
+        if (type == typeof(short)) return BitConverter.ToInt16(bytes, 0);
+        if (type == typeof(bool)) return BitConverter.ToBoolean(bytes, 0);
+        if (type == typeof(float)) return BitConverter.ToSingle(bytes, 0);
+        if (type == typeof(double)) return BitConverter.ToDouble(bytes, 0);
+
+        if (type == typeof(decimal))
+        {
+            int[] bits = new int[4];
+            for (int i = 0; i < 4; i++)
+                bits[i] = BitConverter.ToInt32(bytes, i * 4);
+            return new decimal(bits);
+        }
+
+        if (type == typeof(DateTime))
+        {
+            long ticks = BitConverter.ToInt64(bytes, 0);
+            return new DateTime(ticks, DateTimeKind.Utc);
+        }
+
+        throw new NotSupportedException($"not support primitive: {type}");
+    }
 }
 
 public static class NpOnGrpcCellExtensions

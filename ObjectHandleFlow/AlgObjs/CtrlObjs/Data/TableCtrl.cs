@@ -34,5 +34,6 @@ public class TableCtrl : SysBaseCtrl
         FieldMap.Add(nameof(TableMode), "table_mode");
         FieldMap.Add(nameof(ConnectionInfoId), "connection_info_id");
         FieldMap.Add(nameof(ProcessTableId), "process_table_id");
+        base.FieldMapper();
     }
 }

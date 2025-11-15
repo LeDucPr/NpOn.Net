@@ -24,5 +24,6 @@ public class UnifiedTableCtrl : SysBaseCtrl
         FieldMap ??= [];
         // FieldMap.Add(nameof(TableFieldId), "table_field_id");
         FieldMap.Add(nameof(UnifiedTableName), "unified_table_name");
+        base.FieldMapper();
     }
 }
