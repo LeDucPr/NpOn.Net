@@ -52,7 +52,7 @@ public abstract class DbNpOnConnectOption<T> : INpOnConnectOption
     private DateTime _expiredConnectionTime;
     private string? _connectionString;
 
-    protected readonly ILogger<DbNpOnConnectOption<T>> _logger =
+    protected readonly ILogger<DbNpOnConnectOption<T>> Logger =
         new Logger<DbNpOnConnectOption<T>>(new NullLoggerFactory());
 
     #region Validate

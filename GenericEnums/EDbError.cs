@@ -38,6 +38,9 @@ public enum EDbError
 
     [Display(Name = "CommandText Syntax Invalid")]
     CommandTextSyntax,
+    
+    [Display(Name = "Redis Command Invalid")]
+    CommandNotSupported,
 
     #endregion Query/Command
 
@@ -64,6 +67,9 @@ public enum EDbError
 
     [Display(Name = "MongoDb BsonDocument (Result is null)")]
     MongoDbBsonDocumentNull,
-
+    
+    [Display(Name = "Redis Value (Result is null)")]
+    RedisValueIsNull,
+    
     #endregion Result
 }

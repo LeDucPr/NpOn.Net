@@ -28,7 +28,7 @@ public class CfCallTestService(
             AccountInfoAliasTestObject? resultAcc = accResponse.Data;
             if (accResponse.Status || resultAcc != null)
             {
-                Console.WriteLine(resultAcc.Host);
+                Console.WriteLine(resultAcc?.Host);
             }
 
 

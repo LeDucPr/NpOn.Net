@@ -11,7 +11,7 @@ public class PostgresConnectOption : DbNpOnConnectOption<PostgresDriver>
         {
             if (string.IsNullOrWhiteSpace(ConnectionString))
             {
-                _logger.LogError($"ConnectionString is require for {GetType()}");
+                Logger.LogError($"ConnectionString is require for {GetType()}");
                 throw new ArgumentNullException($"{GetType()} is require {nameof(ConnectionString)}");
             }
         }

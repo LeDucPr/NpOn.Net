@@ -11,13 +11,13 @@ public class MongoDbConnectOption : DbNpOnConnectOption<MongoDbDriver>
         {
             if (string.IsNullOrWhiteSpace(ConnectionString))
             {
-                _logger.LogError($"ConnectionString is require for {GetType()}");
+                Logger.LogError($"ConnectionString is require for {GetType()}");
                 throw new ArgumentNullException($"{GetType()} is require {nameof(ConnectionString)}");
             }
 
             if (string.IsNullOrWhiteSpace(DatabaseName))
             {
-                _logger.LogError($"DatabaseName is require for {GetType()}");
+                Logger.LogError($"DatabaseName is require for {GetType()}");
                 throw new ArgumentNullException($"{GetType()} is require {nameof(DatabaseName)}");
             }
         }
