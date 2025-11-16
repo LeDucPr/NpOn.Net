@@ -34,7 +34,7 @@ public class LoggerInterceptor(
         Task<TResponse> t)
     {
         var startTime = Stopwatch.GetTimestamp();
-        var actionTracking = $"/{serviceName}/{action}";        
+        var actionTracking = $"/{serviceName}/{action}";
         try
         {
             var response = await t;
@@ -49,9 +49,12 @@ public class LoggerInterceptor(
         catch (Exception ex)
         {
             var executeTime = Stopwatch.GetElapsedTime(startTime);
-            LogError(ex, $"GRPC call error - ServiceName: {serviceName} - Action: {action} - Message: {ex.Message}", serviceName, action);
+            LogError(ex, $"GRPC call error - ServiceName: {serviceName} - Action: {action} - Message: {ex.Message}",
+                serviceName, action);
             // Console.ForegroundColor = initialColor;
+#if DEBUG
             throw;
+#endif
         }
     }
 

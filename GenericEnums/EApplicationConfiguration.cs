@@ -24,6 +24,7 @@ public enum EApplicationConfiguration
     [Display(Name = "KeepAlivePingTimeoutSeconds")] KeepAlivePingTimeoutSeconds, // - int
     [Display(Name = "IsDevEnvironment")] IsDevEnvironment, // - boolean
     
+    
     #region RabbitMq
     [Display(Name = "IsUseRabbitMq")] IsUseRabbitMq, // bool
     
@@ -43,18 +44,34 @@ public enum EApplicationConfiguration
     [Display(Name = "WorkerGroup")] WorkerGroup, // string[]
     #endregion RabbitMq
     
+    
     #region Authen + Token
-    JwtTokensKey,
+    [Display(Name = "Jwt key for Tokens")]JwtTokensKey, // - string
+    [Display(Name = "CookieAuthenName")] CookieAuthenName, // - string
+    [Display(Name = "CookieDomain")] CookieDomain, // - string
+    [Display(Name = "AccountManagerAutomaticKeyGeneration")] AccountManagerAutomaticKeyGeneration, // - bool
     #endregion Authen + Token
     
-    #region UrlZone
-    TZoneCallTestServiceUrl,
-    TZoneServiceUrl,
-    AccountServiceUrl,
-    #endregion UrlZone
+    
+    #region Middleware
+    [Display(Name = "IsUseMiddlewareLogger")] IsUseMiddlewareLogger, // - boolean
+    #endregion Middleware 
+    
+    
+    #region App - Controller - Service
+    [Display(Name = "AppName")] AppName, // - string
+    #endregion App - Controller - Service
+    
     
     #region Exception
-    [Display(Name = "Exception Url")] ExceptionUrl, 
-    [Display(Name = "Unauthenticated Account Url")] UnauthenticatedAccountUrl,
+    [Display(Name = "Exception Url")] ExceptionUrl, // - string
+    [Display(Name = "Unauthenticated Account Url")] UnauthenticatedAccountUrl, // - string
     #endregion Exception 
+    
+    
+    #region UrlZone
+    TZoneCallTestServiceUrl, // - string
+    TZoneServiceUrl, // - string
+    AccountServiceUrl, // - string
+    #endregion UrlZone
 }

@@ -1,7 +1,10 @@
+using System.Net;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication.Builders;
+using CommonWebApplication.Middlewares;
 using CommonWebApplication.Parameters;
 using Enums;
 using CommonWebApplication.Services;
@@ -10,7 +13,15 @@ using GrpcAddService;
 using ProtoBuf.Grpc.Server;
 using Serilog;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.Net.Http.Headers;
 using RabbitMqBroker;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace CommonWebApplication;
 
@@ -70,7 +81,7 @@ public abstract class CommonProgram
 
         // logger
         services.AddSingleton<ILogAction, LogAction>(); // as log ??
-        
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug() // Ensure the general minimum is low enough
             .WriteTo.Console()
@@ -79,9 +90,9 @@ public abstract class CommonProgram
                 restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information // Information
             )
             .CreateLogger();
-        
+
         services.AddLogging(p => p.AddSerilog(Log.Logger)); // add log (console)
-        
+
         // authentication 
         services.AddTransient<AuthenticationToken>();
         services.AddTransient<ContextService>();
@@ -184,6 +195,85 @@ public abstract class CommonProgram
 
                     services.AddHostedService<RabbitMqBusStarter>();
                 }
+            }
+
+            ////// Controller
+            // authorization 
+            services.AddAuthorization();
+            // authorization policy
+            services.AddAuthorization(options =>
+            {
+                var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+                    JwtBearerDefaults.AuthenticationScheme,
+                    CookieAuthenticationDefaults.AuthenticationScheme);
+                defaultAuthorizationPolicyBuilder =
+                    defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+                options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+            });
+
+            // authentication
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                {
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.SameSite = SameSiteMode.Unspecified;
+                    options.Cookie.Name =
+                        EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
+                    options.LoginPath = string.Empty;
+                    options.LogoutPath = string.Empty;
+                    options.AccessDeniedPath = string.Empty;
+                    string cookieDomain =
+                        EApplicationConfiguration.CookieDomain.GetAppSettingConfig().AsDefaultString();
+                    if (cookieDomain.Length > 0)
+                    {
+                        options.Cookie.Domain = cookieDomain;
+                    }
+#if DEBUG
+                    options.Events.OnRedirectToLogin = context =>
+                    {
+                        if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
+                        {
+                            if (context.Request.Path.StartsWithSegments("/api") &&
+                                context.Response.StatusCode == (int)HttpStatusCode.OK)
+                                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                            else
+                                context.Response.Redirect(context.RedirectUri);
+                        }
+
+                        return Task.FromResult(0);
+                    };
+#endif
+                })
+                .AddPolicyScheme("JwtBearer", "Cookie", options =>
+                {
+                    options.ForwardDefaultSelector = context =>
+                    {
+                        string? authorization = context.Request.Headers[HeaderNames.Authorization];
+                        if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                            return JwtBearerDefaults.AuthenticationScheme;
+                        return CookieAuthenticationDefaults.AuthenticationScheme;
+                    };
+                });
+#if DEBUG
+            if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
+                IdentityModelEventSource.ShowPII = true;
+#endif
+            IDataProtectionBuilder dataProtectionBuilder = services
+                .AddDataProtection()
+                .UseCustomCryptographicAlgorithms(
+                    new ManagedAuthenticatedEncryptorConfiguration()
+                    {
+                        EncryptionAlgorithmType = typeof(Aes),
+                        EncryptionAlgorithmKeySize = 256,
+                        ValidationAlgorithmType = typeof(HMACSHA512)
+                    });
+            if (!EApplicationConfiguration.AccountManagerAutomaticKeyGeneration.GetAppSettingConfig().AsDefaultBool())
+            {
+                dataProtectionBuilder.DisableAutomaticKeyGeneration();
             }
         }
     }
