@@ -15,7 +15,7 @@ namespace CommonGrpcObject;
 public class CommonResponse
 {
     [ProtoMember(1)] public bool Status { get; set; }
-    [ProtoMember(2)] public EErrorCodeEnum? ErrorCode { get; set; }
+    [ProtoMember(2)] public EErrorCode? ErrorCode { get; set; }
     [ProtoMember(3)] public List<string>? ErrorMessages { get; set; }
     [ProtoMember(4)] public int Version { get; set; }
     [ProtoMember(5)] public DateTime ServerTime { get; set; } = DateTime.UtcNow;
@@ -24,7 +24,7 @@ public class CommonResponse
     public void SetSuccess()
     {
         Status = true;
-        ErrorCode = EErrorCodeEnum.NoErrorCode;
+        ErrorCode = EErrorCode.NoErrorCode;
     }
 
     public void SetSuccess(string message)
@@ -32,10 +32,10 @@ public class CommonResponse
         Status = true;
         ErrorMessages ??= [];
         ErrorMessages.Add(message);
-        ErrorCode = EErrorCodeEnum.NoErrorCode;
+        ErrorCode = EErrorCode.NoErrorCode;
     }
 
-    public void SetFail(EErrorCodeEnum code)
+    public void SetFail(EErrorCode code)
     {
         Status = false;
         ErrorCode = code;
@@ -44,7 +44,7 @@ public class CommonResponse
         ErrorMessages.Add(message);
     }
 
-    public void SetFail(string? message, EErrorCodeEnum code = EErrorCodeEnum.NoErrorCode)
+    public void SetFail(string? message, EErrorCode code = EErrorCode.NoErrorCode)
     {
         Status = false;
         ErrorCode = code;
@@ -52,7 +52,7 @@ public class CommonResponse
         ErrorMessages.Add(message.AsDefaultString());
     }
 
-    public void SetFail(Exception ex, EErrorCodeEnum code = EErrorCodeEnum.NoErrorCode)
+    public void SetFail(Exception ex, EErrorCode code = EErrorCode.NoErrorCode)
     {
         Status = false;
         ErrorCode = code;
@@ -61,7 +61,7 @@ public class CommonResponse
         ErrorMessages.Add(message);
     }
     
-    public void SetFail(IEnumerable<string>? messages, EErrorCodeEnum code = EErrorCodeEnum.NoErrorCode)
+    public void SetFail(IEnumerable<string>? messages, EErrorCode code = EErrorCode.NoErrorCode)
     {
         Status = false;
         ErrorCode = code;

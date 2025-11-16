@@ -1,6 +1,6 @@
 namespace Enums;
 
-public enum EErrorCodeEnum
+public enum EErrorCode
 {
     NoErrorCode = 0,
     Success = 1,

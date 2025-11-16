@@ -8,12 +8,12 @@ public class HostingApp(
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("LoyaltyManager AppHostedService is starting");
+        logger.LogInformation("AccountService AppHostedService is starting");
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("LoyaltyManager AppHostedService is stopping");
+        logger.LogInformation("AccountService AppHostedService is stopping");
         return Task.CompletedTask;
     }
 }

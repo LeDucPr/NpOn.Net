@@ -52,4 +52,9 @@ public enum EApplicationConfiguration
     TZoneServiceUrl,
     AccountServiceUrl,
     #endregion UrlZone
+    
+    #region Exception
+    [Display(Name = "Exception Url")] ExceptionUrl, 
+    [Display(Name = "Unauthenticated Account Url")] UnauthenticatedAccountUrl,
+    #endregion Exception 
 }

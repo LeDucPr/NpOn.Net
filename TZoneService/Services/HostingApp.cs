@@ -8,13 +8,13 @@ public class HostingApp(
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("LoyaltyManager AppHostedService is starting");
+        logger.LogInformation("TZoneService AppHostedService is starting");
         var a = await cfService.TestC();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("LoyaltyManager AppHostedService is stopping");
+        logger.LogInformation("TZoneService AppHostedService is stopping");
         return Task.CompletedTask;
     }
 }
