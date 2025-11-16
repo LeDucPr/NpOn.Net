@@ -4,7 +4,6 @@ namespace CommonWebApplication.Services;
 
 public class AuthenService(ILogger<CommonService> logger) : CommonService(logger)
 {
-    
     public AccountLoginInfoObject? GetLoginInfoSync(string key)
     {
         if (string.IsNullOrEmpty(key))

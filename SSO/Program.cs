@@ -1,18 +1,9 @@
-using System.Net;
-using System.Security.Cryptography;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication;
 using CommonWebApplication.Middlewares;
 using Enums;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.Net.Http.Headers;
-using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
+using SSO.Middlewares;
 
 namespace SSO;
 
@@ -30,15 +21,21 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        
+        // services.AddTransient<SSO.Middlewares.AuthenFilterHandlerMiddleware>();
+        services.AddControllers();
         return Task.CompletedTask;
     }
 
     protected override void ConfigureBasePipeline(WebApplication app)
     {
+        app.UseHttpsRedirection();
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapControllers();
         string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
         app.MapGet("/", () => appName);
-        base.ConfigureBasePipeline(app);
+        // base.ConfigureBasePipeline(app);
     }
 
     protected override Task ConfigurePipeline(WebApplication app)
@@ -47,6 +44,8 @@ public sealed class Program : CommonProgram
         {
             app.UseRequestResponseLogging();
         }
+
+        // app.UseAuthenFilterHandlerMiddleware();
         return Task.CompletedTask;
     }
 }

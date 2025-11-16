@@ -40,6 +40,7 @@ public sealed class Program : CommonProgram
 
         // Add Service
         services.AddTransient<IUserService, UserService>();
+        services.AddTransient<IAuthenticationService, AuthenticationService>();
         
         return Task.CompletedTask;
     }
@@ -54,6 +55,7 @@ public sealed class Program : CommonProgram
     {
         // Add Map Grpc Service
         app.MapGrpcService<UserService>();
+        app.MapGrpcService<AuthenticationService>();
         return Task.CompletedTask;
     }
 }
