@@ -1,3 +1,4 @@
+using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
 using CommonDb.DbResults;
 using CommonDb.DbResults.Grpc;
@@ -6,7 +7,6 @@ using CommonWebApplication.Services;
 using DbFactory;
 using HandleFlow.ResultConverters;
 using IAccountService;
-using ObjectHandlerFlow.AlgObjs.CtrlObjs;
 
 namespace AccountService.Services;
 
@@ -15,6 +15,55 @@ public class UserService(
     ILogger<CommonService> logger
 ) : CommonService(logger), IUserService
 {
+    public async Task<CommonResponse<BaseAccountExecFuncJsonObject?>> GetAccountInfos()
+    {
+        
+        return await CommonProcess<BaseAccountExecFuncJsonObject?>(async (response) =>
+        {
+            
+            string funcName = "sp_dyn_patient_rank_search_cccccccccccccccccccccc";
+
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
+                funcName,
+                new Dictionary<string, object>
+                {
+                    [""] =
+                        @"{
+                      ""full_name"": """",
+                      ""username"": """",
+                      ""from_date"": ""2025-11-07T00:00:00"",
+                      ""to_date"": ""2025-11-14T23:59:59"",
+                      ""mobile_phone"": """",
+                      ""gender"": """",
+                      ""province_rcd"": """",
+                      ""district_rcd"": """",
+                      ""commune_rcd"": """",
+                      ""standard_account_id"": ""12fbd6a7-978b-4e7f-98bc-43c21684b371"",
+                      ""master_account_id"": null,
+                      ""province_account_rcd"": """",
+                      ""rank_type"": null,
+                      ""page"": 1,
+                      ""pageSize"": 1
+                    }"
+                }, true, isUseOutputJsonAsName: funcName
+            );
+
+            if (!(resultOfQuery is INpOnTableWrapper tableWrapper))
+            {
+                response.SetFail(["Incorrect data type"]);
+                return;
+            }
+
+            List<BaseAccountExecFuncJsonObject>? accountObjects = resultOfQuery
+                .GenericConverterForJson(typeof(BaseAccountExecFuncJsonObject), jsonColumnName: funcName)?
+                .Cast<BaseAccountExecFuncJsonObject>()
+                .ToList();
+            accountObjects?.ForEach(x=>x.ToObject<BaseAccountExecFuncJsonObject>());
+            response.Data = accountObjects?.FirstOrDefault();
+            response.SetSuccess();
+        });
+    }
+
     public async Task<CommonResponse<AccountInfoAliasTestObject>> GetAccountInfo()
     {
         return await CommonProcess<AccountInfoAliasTestObject>(async (response) =>

@@ -7,7 +7,7 @@ namespace AccountServiceObject;
 [ProtoContract]
 [ProtoInclude(100, typeof(AccountLoginInfoObject))]
 [ProtoInclude(200, typeof(AccountInfoAliasTestObject))]
-
+[ProtoInclude(300, typeof(AccountInfoAliasTestObject22222))]
 public abstract class BaseAccountObject : BaseCtrl
 {
     #region Field Config

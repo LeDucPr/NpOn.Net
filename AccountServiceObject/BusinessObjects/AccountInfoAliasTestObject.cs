@@ -24,3 +24,25 @@ public class AccountInfoAliasTestObject : BaseAccountObject
         base.FieldMapper();
     }
 }
+
+[ProtoContract]
+[TableLoader("patient")]
+public class AccountInfoAliasTestObject22222 : BaseAccountObject
+{
+    [ProtoMember(1)] public required string PatientId { get; set; }
+    [ProtoMember(2)] public string? FullName { get; set; }
+    [ProtoMember(3)] public DateTime? DateOfBirth { get; set; }
+    [ProtoMember(4)] public string? Email { get; set; }
+    [ProtoMember(5)] public string? LuUserId { get; set; }
+
+    protected override void FieldMapper()
+    {
+        FieldMap ??= [];
+        FieldMap.Add(nameof(PatientId), "patient_id");
+        FieldMap.Add(nameof(FullName), "full_name");
+        FieldMap.Add(nameof(DateOfBirth), "date_of_birth");
+        FieldMap.Add(nameof(Email), "email");
+        FieldMap.Add(nameof(LuUserId), "lu_user_id");
+        base.FieldMapper();
+    }
+}
