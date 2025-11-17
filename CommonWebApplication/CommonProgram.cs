@@ -215,7 +215,8 @@ public abstract class CommonProgram
                 {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                })
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
                 {
                     options.Cookie.HttpOnly = true;
                     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
@@ -246,6 +247,21 @@ public abstract class CommonProgram
                         return Task.FromResult(0);
                     };
 #endif
+                })
+                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    // Cấu hình các tham số xác thực token ở đây
+                    // Ví dụ:
+                    // options.TokenValidationParameters = new TokenValidationParameters
+                    // {
+                    //     ValidateIssuer = true,
+                    //     ValidateAudience = true,
+                    //     ValidateLifetime = true,
+                    //     ValidateIssuerSigningKey = true,
+                    //     ValidIssuer = "your_issuer",
+                    //     ValidAudience = "your_audience",
+                    //     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_super_secret_key"))
+                    // };
                 })
                 .AddPolicyScheme("JwtBearer", "Cookie", options =>
                 {

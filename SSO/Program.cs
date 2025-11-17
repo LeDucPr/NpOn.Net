@@ -3,6 +3,7 @@ using CommonObject;
 using CommonWebApplication;
 using CommonWebApplication.Middlewares;
 using Enums;
+using SSO.Controllers;
 using SSO.Middlewares;
 
 namespace SSO;
@@ -21,8 +22,12 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        // services.AddTransient<SSO.Middlewares.AuthenFilterHandlerMiddleware>();
-        services.AddControllers();
+        services.AddTransient<SSO.Middlewares.AuthenFilterHandlerMiddleware>();
+        services.AddHostedService<HostingApp>();
+        // services.AddControllers(); 
+        services.AddControllers()
+            .AddApplicationPart(typeof(CommonProgram).Assembly); // Thêm dòng này để đăng ký controller từ project CommonWebApplication
+
         return Task.CompletedTask;
     }
 
@@ -45,7 +50,7 @@ public sealed class Program : CommonProgram
             app.UseRequestResponseLogging();
         }
 
-        // app.UseAuthenFilterHandlerMiddleware();
+        app.UseAuthenFilterHandlerMiddleware();
         return Task.CompletedTask;
     }
 }
