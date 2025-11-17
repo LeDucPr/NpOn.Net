@@ -1,5 +1,6 @@
 using System.Net;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
 using CommonMode;
 using CommonObject;
@@ -18,6 +19,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using RabbitMqBroker;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
@@ -195,101 +197,107 @@ public abstract class CommonProgram
                     services.AddHostedService<RabbitMqBusStarter>();
                 }
             }
+        }
 
-            ////// Controller
-            // authorization 
-            services.AddAuthorization();
-            // authorization policy
-            services.AddAuthorization(options =>
+        ////// Controller
+        // authorization 
+        services.AddAuthorization();
+        // authorization policy
+        services.AddAuthorization(options =>
+        {
+            var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+                JwtBearerDefaults.AuthenticationScheme,
+                CookieAuthenticationDefaults.AuthenticationScheme);
+            defaultAuthorizationPolicyBuilder =
+                defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+            options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+        });
+
+        // authentication
+        services.AddAuthentication(options =>
             {
-                var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
-                    JwtBearerDefaults.AuthenticationScheme,
-                    CookieAuthenticationDefaults.AuthenticationScheme);
-                defaultAuthorizationPolicyBuilder =
-                    defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
-                options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
-            });
-
-            // authentication
-            services.AddAuthentication(options =>
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Unspecified;
+                options.Cookie.Name =
+                    EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
+                options.LoginPath = string.Empty;
+                options.LogoutPath = string.Empty;
+                options.AccessDeniedPath = string.Empty;
+                string cookieDomain =
+                    EApplicationConfiguration.CookieDomain.GetAppSettingConfig().AsDefaultString();
+                if (cookieDomain.Length > 0)
                 {
-                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                    options.Cookie.Domain = cookieDomain;
+                }
+#if DEBUG
+                options.Events.OnRedirectToLogin = context =>
                 {
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Unspecified;
-                    options.Cookie.Name =
-                        EApplicationConfiguration.CookieAuthenName.GetAppSettingConfig().AsDefaultString();
-                    options.LoginPath = string.Empty;
-                    options.LogoutPath = string.Empty;
-                    options.AccessDeniedPath = string.Empty;
-                    string cookieDomain =
-                        EApplicationConfiguration.CookieDomain.GetAppSettingConfig().AsDefaultString();
-                    if (cookieDomain.Length > 0)
+                    if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
                     {
-                        options.Cookie.Domain = cookieDomain;
+                        if (context.Request.Path.StartsWithSegments("/api") &&
+                            context.Response.StatusCode == (int)HttpStatusCode.OK)
+                            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        else
+                            context.Response.Redirect(context.RedirectUri);
                     }
-#if DEBUG
-                    options.Events.OnRedirectToLogin = context =>
-                    {
-                        if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
-                        {
-                            if (context.Request.Path.StartsWithSegments("/api") &&
-                                context.Response.StatusCode == (int)HttpStatusCode.OK)
-                                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                            else
-                                context.Response.Redirect(context.RedirectUri);
-                        }
 
-                        return Task.FromResult(0);
-                    };
+                    return Task.FromResult(0);
+                };
 #endif
-                })
-                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-                {
-                    // Cấu hình các tham số xác thực token ở đây
-                    // Ví dụ:
-                    // options.TokenValidationParameters = new TokenValidationParameters
-                    // {
-                    //     ValidateIssuer = true,
-                    //     ValidateAudience = true,
-                    //     ValidateLifetime = true,
-                    //     ValidateIssuerSigningKey = true,
-                    //     ValidIssuer = "your_issuer",
-                    //     ValidAudience = "your_audience",
-                    //     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_super_secret_key"))
-                    // };
-                })
-                .AddPolicyScheme("JwtBearer", "Cookie", options =>
-                {
-                    options.ForwardDefaultSelector = context =>
-                    {
-                        string? authorization = context.Request.Headers[HeaderNames.Authorization];
-                        if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
-                            return JwtBearerDefaults.AuthenticationScheme;
-                        return CookieAuthenticationDefaults.AuthenticationScheme;
-                    };
-                });
-#if DEBUG
-            if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
-                IdentityModelEventSource.ShowPII = true;
-#endif
-            IDataProtectionBuilder dataProtectionBuilder = services
-                .AddDataProtection()
-                .UseCustomCryptographicAlgorithms(
-                    new ManagedAuthenticatedEncryptorConfiguration()
-                    {
-                        EncryptionAlgorithmType = typeof(Aes),
-                        EncryptionAlgorithmKeySize = 256,
-                        ValidationAlgorithmType = typeof(HMACSHA512)
-                    });
-            if (!EApplicationConfiguration.AccountManagerAutomaticKeyGeneration.GetAppSettingConfig().AsDefaultBool())
+            })
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
-                dataProtectionBuilder.DisableAutomaticKeyGeneration();
-            }
+                var jwtKey = EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig().AsDefaultString();
+                var key = Encoding.ASCII.GetBytes(jwtKey);
+                options.RequireHttpsMetadata = false; // Chỉ dùng false trong môi trường dev
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false, // Tùy chỉnh nếu bạn có issuer cụ thể
+                    ValidateAudience = false // Tùy chỉnh nếu bạn có audience cụ thể
+                    // ValidateIssuer = true,
+                    // ValidateAudience = true,
+                    // ValidateLifetime = true,
+                    // ValidateIssuerSigningKey = true,
+                    // ValidIssuer = "your_issuer",
+                    // ValidAudience = "your_audience",
+                    // IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_super_secret_key"))
+                };
+            })
+            .AddPolicyScheme("BearerOrCookie", "Bearer or Cookie", options =>
+            {
+                options.ForwardDefaultSelector = context =>
+                {
+                    string? authorization = context.Request.Headers[HeaderNames.Authorization];
+                    if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
+                        return JwtBearerDefaults.AuthenticationScheme;
+                    return CookieAuthenticationDefaults.AuthenticationScheme;
+                };
+            });
+#if DEBUG
+        if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool()) // debug
+            IdentityModelEventSource.ShowPII = true;
+#endif
+        IDataProtectionBuilder dataProtectionBuilder = services
+            .AddDataProtection()
+            .UseCustomCryptographicAlgorithms(
+                new ManagedAuthenticatedEncryptorConfiguration()
+                {
+                    EncryptionAlgorithmType = typeof(Aes),
+                    EncryptionAlgorithmKeySize = 256,
+                    ValidationAlgorithmType = typeof(HMACSHA512)
+                });
+        if (!EApplicationConfiguration.AccountManagerAutomaticKeyGeneration.GetAppSettingConfig().AsDefaultBool())
+        {
+            dataProtectionBuilder.DisableAutomaticKeyGeneration();
         }
     }
 
@@ -303,11 +311,22 @@ public abstract class CommonProgram
     /// </summary>
     protected virtual void ConfigureBasePipeline(WebApplication app)
     {
-        app.MapGet("/",
-            () =>
-                "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-        if (this.GetType() == typeof(CommonProgram))
-            throw new Exception($"{nameof(CommonProgram.ConfigureBasePipeline)} need override.");
+        app.UseHttpsRedirection();
+        app.UseRouting();
+
+        // Activate the CORS policy that was configured in ConfigureBaseServices
+        string corsPolicy = EApplicationConfiguration.CorsPolicy.GetAppSettingConfig().AsDefaultString();
+        if (!string.IsNullOrWhiteSpace(corsPolicy))
+        {
+            app.UseCors(corsPolicy);
+        }
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapControllers();
+
+        string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
+        app.MapGet("/", () => appName);
     }
 
     /// <summary>

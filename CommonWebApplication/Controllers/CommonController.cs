@@ -11,10 +11,10 @@ using Grpc.Core;
 
 namespace CommonWebApplication.Controllers;
 
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-[EnableCors(Constant.CorsPolicy)]
-[Produces("application/json")]
-[Route("api/[controller]/[action]")]
+// [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+// [EnableCors(Constant.CorsPolicy)]
+// [Produces("application/json")]
+// [Route("api/[controller]/[action]")]
 public class CommonController(
     ILogger<CommonController> logger,
     ContextService contextService) : ControllerBase

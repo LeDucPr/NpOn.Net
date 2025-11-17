@@ -15,7 +15,7 @@ public class AccountController(
     ILogger<AccountController> logger,
     ContextService contextService,
     IAuthenticationService authenticationService
-) : CommonController(logger, contextService)
+) : BaseSsoController(logger, contextService)
 {
     [AllowAnonymous]
     [HttpPost]

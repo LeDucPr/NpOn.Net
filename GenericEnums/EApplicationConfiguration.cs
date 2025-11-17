@@ -46,7 +46,7 @@ public enum EApplicationConfiguration
     
     
     #region Authen + Token
-    [Display(Name = "Jwt key for Tokens")]JwtTokensKey, // - string
+    [Display(Name = "JwtTokensKey")] JwtTokensKey, // - string
     [Display(Name = "CookieAuthenName")] CookieAuthenName, // - string
     [Display(Name = "CookieDomain")] CookieDomain, // - string
     [Display(Name = "AccountManagerAutomaticKeyGeneration")] AccountManagerAutomaticKeyGeneration, // - bool
@@ -64,8 +64,8 @@ public enum EApplicationConfiguration
     
     
     #region Exception
-    [Display(Name = "Exception Url")] ExceptionUrl, // - string
-    [Display(Name = "Unauthenticated Account Url")] UnauthenticatedAccountUrl, // - string
+    [Display(Name = "ExceptionUrl")] ExceptionUrl, // - string
+    [Display(Name = "UnauthenticatedAccountUrl")] UnauthenticatedAccountUrl, // - string
     #endregion Exception 
     
     

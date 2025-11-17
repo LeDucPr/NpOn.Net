@@ -22,26 +22,20 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        services.AddTransient<SSO.Middlewares.AuthenFilterHandlerMiddleware>();
+        // services.AddTransient<AuthenFilterHandlerMiddleware>();
         services.AddHostedService<HostingApp>();
-        // services.AddControllers(); 
+        services.AddControllers(); 
         services.AddControllers()
-            .AddApplicationPart(typeof(CommonProgram).Assembly); // Thêm dòng này để đăng ký controller từ project CommonWebApplication
+            .AddApplicationPart(typeof(CommonProgram).Assembly); // CommonWebApplication
 
         return Task.CompletedTask;
     }
 
-    protected override void ConfigureBasePipeline(WebApplication app)
-    {
-        app.UseHttpsRedirection();
-        app.UseRouting();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapControllers();
-        string appName = EApplicationConfiguration.AppName.GetAppSettingConfig().AsDefaultString();
-        app.MapGet("/", () => appName);
-        // base.ConfigureBasePipeline(app);
-    }
+    // protected override void ConfigureBasePipeline(WebApplication app)
+    // {
+    //     base.ConfigureBasePipeline(app);
+    // }
+    
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
@@ -50,7 +44,7 @@ public sealed class Program : CommonProgram
             app.UseRequestResponseLogging();
         }
 
-        app.UseAuthenFilterHandlerMiddleware();
+        // app.UseMiddleware<AuthenFilterHandlerMiddleware>();
         return Task.CompletedTask;
     }
 }

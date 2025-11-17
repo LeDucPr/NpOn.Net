@@ -18,14 +18,15 @@ public class AuthenFilterHandlerMiddleware(
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         try
-        {
+        {            
             var endpoint = context.GetEndpoint();
-            if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() == null)
+            if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
             {
                 await next(context);
                 return;
             }
-
+            
+            // Logic xác thực chỉ chạy cho các endpoint cần bảo vệ
             var userLogin = contextService.UserInfo();
             if (userLogin == null)
             {
@@ -44,6 +45,7 @@ public class AuthenFilterHandlerMiddleware(
                     // userLogin = userInfo;
                 }
             }
+            await next(context);
         }
         catch (InvalidDataException ex)
         {
