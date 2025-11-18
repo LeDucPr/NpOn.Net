@@ -13,6 +13,7 @@
     <ItemGroup>
       <ProjectReference Include="..\CommonWebApplication\CommonWebApplication.csproj" />
       <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
+      <ProjectReference Include="..\HandleFlow\HandleFlow.csproj" />
     </ItemGroup>
 
 </Project>

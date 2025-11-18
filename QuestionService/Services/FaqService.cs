@@ -2,6 +2,7 @@ using CommonDb.DbResults;
 using CommonGrpcObject;
 using CommonWebApplication.Services;
 using DbFactory;
+using HandleFlow.ResultConverters;
 using IQuestionService;
 using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.QueryObjects;
@@ -17,27 +18,23 @@ public class FaqService(
     {
         return await CommonProcess<FaqObject>(async (response) =>
         {
-            
-            string? email = query.Email; // --------
-            
-            string pgQuery = "SELECT * FROM patient";
+            string pgQuery = "SELECT * FROM patient limit 1";
 
             INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
-            // List<FaqObject>? patientObjs = resultOfQuery?
-            //     .GenericConverter(typeof(FaqObject))?
-            //     .Cast<FaqObject>()
-            //     .ToList();
+            List<FaqObject>? patientObjs = resultOfQuery?
+                .GenericConverter(typeof(FaqObject))?
+                .Cast<FaqObject>()
+                .ToList();
 
-            // if (patientObjs is not { Count: > 0 })
-            // {
-            //     response.SetFail("Incorrect data type of 'IEnumerable<AccountInfoAliasTestObject>'");
-            //     return;
-            // }
-            //
-            // FaqObject accountObject = patientObjs.First();
+            if (patientObjs is not { Count: > 0 })
+            {
+                response.SetFail("Incorrect data type of 'IEnumerable<FaqObject>'");
+                return;
+            }
+            
+            FaqObject accountObject = patientObjs.First();
             response.Data = null;
             response.SetSuccess();
-            
         });
     }
 }
