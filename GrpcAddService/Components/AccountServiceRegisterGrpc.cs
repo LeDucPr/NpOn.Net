@@ -5,7 +5,6 @@ using IAccountService;
 
 namespace GrpcAddService.Components;
 
-
 public static partial class ServiceRegisterGrpc
 {
     public static IServiceCollection AccountServiceRegisterGrpc(this IServiceCollection services)

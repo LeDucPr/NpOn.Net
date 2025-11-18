@@ -22,7 +22,7 @@
         <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
         <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
         <ProjectReference Include="..\IAccountService\IAccountService.csproj" />
+        <ProjectReference Include="..\IQuestionService\IQuestionService.csproj" />
         <ProjectReference Include="..\ITZoneCallTestService\ITZoneCallTestService.csproj" />
-        <ProjectReference Include="..\ITZoneService\ITZoneService.csproj" />
     </ItemGroup>
 </Project>

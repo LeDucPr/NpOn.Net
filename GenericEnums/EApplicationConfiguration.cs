@@ -70,8 +70,7 @@ public enum EApplicationConfiguration
     
     
     #region UrlZone
-    TZoneCallTestServiceUrl, // - string
-    TZoneServiceUrl, // - string
     AccountServiceUrl, // - string
+    QuestionServiceUrl, // - string
     #endregion UrlZone
 }
