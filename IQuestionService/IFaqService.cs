@@ -9,5 +9,5 @@ namespace IQuestionService;
 public interface IFaqService
 {
     [OperationContract]
-    Task<CommonResponse<FaqObject>> Login(FaqQuery query);
+    Task<CommonResponse<FaqObject>> GetAll(FaqQuery query);
 }

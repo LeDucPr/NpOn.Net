@@ -10,11 +10,10 @@
 
     <ItemGroup>
         <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
         <PackageReference Include="protobuf-net.Grpc" Version="1.2.2"/>
         <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2"/>
         <PackageReference Include="protobuf-net.Grpc.ClientFactory" Version="1.2.2"/>
-
     </ItemGroup>
 
     <ItemGroup>
@@ -23,6 +22,5 @@
         <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
         <ProjectReference Include="..\IAccountService\IAccountService.csproj" />
         <ProjectReference Include="..\IQuestionService\IQuestionService.csproj" />
-        <ProjectReference Include="..\ITZoneCallTestService\ITZoneCallTestService.csproj" />
     </ItemGroup>
 </Project>
