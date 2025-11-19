@@ -8,7 +8,7 @@ namespace QuestionServiceObject;
 [ProtoContract]
 [ProtoInclude(10, typeof(FaqObject))]
 [ProtoInclude(100, typeof(QuestionObject))]
-[ProtoInclude(200, typeof(SurveysObject))]
+[ProtoInclude(200, typeof(QuesSrvDiseaseObject))]
 [ProtoInclude(300, typeof(AnswerOptionsObject))]
 [ProtoInclude(400, typeof(ResultCategoriesObject))]
 [ProtoInclude(500, typeof(UsersObject))]

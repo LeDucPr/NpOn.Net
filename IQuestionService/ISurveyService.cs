@@ -10,19 +10,19 @@ public interface ISurveyService
     /// Lấy danh sách tất cả surveys
     /// </summary>
     [OperationContract]
-    Task<CommonResponse<List<SurveysObject>>> GetAllSurveys();
+    Task<CommonResponse<List<QuesSrvDiseaseObject>>> GetAllSurveys();
 
     /// <summary>
     /// Lấy thông tin chi tiết survey theo ID
     /// </summary>
     [OperationContract]
-    Task<CommonResponse<SurveysObject>> GetSurveyById(Guid surveyId);
+    Task<CommonResponse<QuesSrvDiseaseObject>> GetSurveyById(Guid surveyId);
 
     /// <summary>
     /// Lấy survey với đầy đủ questions và options
     /// </summary>
     [OperationContract]
-    Task<CommonResponse<SurveyFullObject>> GetSurveyWithQuestions(Guid surveyId);
+    Task<CommonResponse<QuesSrvDiseaseFullObject>> GetSurveyWithQuestions(Guid surveyId);
 
     /// <summary>
     /// Lấy danh sách questions của survey

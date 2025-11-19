@@ -16,9 +16,9 @@ public class SurveyService(
     /// <summary>
     /// Lấy danh sách tất cả surveys
     /// </summary>
-    public async Task<CommonResponse<List<SurveysObject>>> GetAllSurveys()
+    public async Task<CommonResponse<List<QuesSrvDiseaseObject>>> GetAllSurveys()
     {
-        return await CommonProcess<List<SurveysObject>>(async (response) =>
+        return await CommonProcess<List<QuesSrvDiseaseObject>>(async (response) =>
         {
             string pgQuery = @"
                     SELECT 
@@ -35,9 +35,9 @@ public class SurveyService(
 
             INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
 
-            List<SurveysObject>? surveyObjects = resultOfQuery?
-                .GenericConverter(typeof(SurveysObject))?
-                .Cast<SurveysObject>()
+            List<QuesSrvDiseaseObject>? surveyObjects = resultOfQuery?
+                .GenericConverter(typeof(QuesSrvDiseaseObject))?
+                .Cast<QuesSrvDiseaseObject>()
                 .ToList();
 
             if (surveyObjects is not { Count: > 0 })
@@ -54,9 +54,9 @@ public class SurveyService(
     /// <summary>
     /// Lấy thông tin chi tiết survey theo ID
     /// </summary>
-    public async Task<CommonResponse<SurveysObject>> GetSurveyById(Guid surveyId)
+    public async Task<CommonResponse<QuesSrvDiseaseObject>> GetSurveyById(Guid surveyId)
     {
-        return await CommonProcess<SurveysObject>(async (response) =>
+        return await CommonProcess<QuesSrvDiseaseObject>(async (response) =>
         {
             string pgQuery = @"
                     SELECT 
@@ -82,18 +82,18 @@ public class SurveyService(
             //    ["survey_id"] = surveyId
             //}
 
-            List<SurveyDetailObject>? surveyObjects = resultOfQuery?
-                .GenericConverter(typeof(SurveyDetailObject))?
-                .Cast<SurveyDetailObject>()
+            List<QuesSrvDiseaseObjectDetailObject>? qSDObjects = resultOfQuery?
+                .GenericConverter(typeof(QuesSrvDiseaseObjectDetailObject))?
+                .Cast<QuesSrvDiseaseObjectDetailObject>()
                 .ToList();
 
-            if (surveyObjects is not { Count: > 0 })
+            if (qSDObjects is not { Count: > 0 })
             {
                 response.SetFail("Không tìm thấy survey");
                 return;
             }
 
-            response.Data = surveyObjects.First();
+            response.Data = qSDObjects.First();
             response.SetSuccess();
         });
     }
@@ -101,9 +101,9 @@ public class SurveyService(
     /// <summary>
     /// Lấy survey với đầy đủ questions và options
     /// </summary>
-    public async Task<CommonResponse<SurveyFullObject>> GetSurveyWithQuestions(Guid surveyId)
+    public async Task<CommonResponse<QuesSrvDiseaseFullObject>> GetSurveyWithQuestions(Guid surveyId)
     {
-        return await CommonProcess<SurveyFullObject>(async (response) =>
+        return await CommonProcess<QuesSrvDiseaseFullObject>(async (response) =>
         {
             // 1. Lấy thông tin survey
             string surveySql = @"
@@ -121,9 +121,9 @@ public class SurveyService(
             INpOnWrapperResult? surveyResult = await dbFactoryWrapper.QueryAsync(surveySql);
                 //new Dictionary<string, object> { ["survey_id"] = surveyId }
             
-            List<SurveysObject>? surveyObjects = surveyResult?
-                .GenericConverter(typeof(SurveysObject))?
-                .Cast<SurveysObject>()
+            List<QuesSrvDiseaseObject>? surveyObjects = surveyResult?
+                .GenericConverter(typeof(QuesSrvDiseaseObject))?
+                .Cast<QuesSrvDiseaseObject>()
                 .ToList();
 
             if (surveyObjects is not { Count: > 0 })
@@ -132,7 +132,7 @@ public class SurveyService(
                 return;
             }
 
-            SurveysObject survey = surveyObjects.First();
+            QuesSrvDiseaseObject survey = surveyObjects.First();
 
             // 2. Lấy questions
             string questionsSql = @"
@@ -226,13 +226,11 @@ public class SurveyService(
                 .ToList();
 
             // 5. Tạo SurveyFullObject
-            var fullSurvey = new SurveyFullObject
+            var fullSurvey = new QuesSrvDiseaseFullObject
             {
                 //Id = survey.Id,
                 Title = survey.Title,
                 Description = survey.Description,
-                MaxTotalScore = survey.MaxTotalScore,
-                IsPublished = survey.IsPublished,
                 CreatedAt = survey.CreatedAt,
                 UpdatedAt = survey.UpdatedAt,
                 Questions = questionsWithOptions,
