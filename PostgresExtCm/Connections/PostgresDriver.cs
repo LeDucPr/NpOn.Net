@@ -5,10 +5,13 @@ using CommonDb.DbCommands;
 using Npgsql; // Quan trọng: Sử dụng thư viện Npgsql
 using System.Data;
 using CommonDb.DbResults;
+using CommonMode;
+using CommonObject;
 using Enums;
 using PostgresExtCm.Results;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq; // Cần thiết cho JsonConvert.SerializeObject và Formatting.None
+using Newtonsoft.Json.Linq;
+using Npgsql.Replication.PgOutput.Messages; // Cần thiết cho JsonConvert.SerializeObject và Formatting.None
 using NpgsqlTypes;
 
 namespace PostgresExtCm.Connections;
@@ -62,10 +65,47 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(EDbError.Command);
         try
         {
-            await using var pgCommand = _connection.CreateCommand();
-            pgCommand.CommandText = command.CommandText;
-            await using var reader = await pgCommand.ExecuteReaderAsync();
-            return new PostgresResultSetWrapper(reader);
+            if (command.Parameters is not { Count : > 0 })
+            {
+                await using var pgCommand = _connection.CreateCommand();
+                pgCommand.CommandText = command.CommandText;
+                await using var readerCm = await pgCommand.ExecuteReaderAsync();
+                return new PostgresResultSetWrapper(readerCm);
+            }
+
+            using (var pgCommandParam = new NpgsqlCommand(command.CommandText, _connection))
+            {
+                foreach (var prm in command.Parameters)
+                {
+                    if (prm is not NpOnDbCommandParam<NpgsqlDbType> npgsqlParam)
+                    {
+                        return new PostgresResultSetWrapper().SetFail(EDbError.CommandParam);
+                    }
+
+                    string newKey = npgsqlParam.ParamName.AsDefaultString();
+                    object? paramValue = prm.ParamValue;
+
+                    if (paramValue == null)
+                    {
+                        pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, DBNull.Value);
+                        continue;
+                    }
+
+                    if (prm.ParamValue is string stringValue && Guid.TryParse(stringValue, out Guid guidValue))
+                        paramValue = guidValue;
+                    try
+                    {
+                        pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, paramValue);
+                    }
+                    catch (Exception ex)
+                    {
+                        return new PostgresResultSetWrapper().SetFail(EDbError.CommandParam);
+                    }
+                }
+
+                await using var readerCmPrm = await pgCommandParam.ExecuteReaderAsync();
+                return new PostgresResultSetWrapper(readerCmPrm);
+            }
         }
         catch (Exception ex)
         {

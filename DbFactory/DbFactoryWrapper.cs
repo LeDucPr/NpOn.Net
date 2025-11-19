@@ -67,6 +67,25 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         }
     }
 
+    public async Task<INpOnWrapperResult?> QueryAsync(string queryString, List<NpOnDbCommandParam> parameters)
+    {
+        if (_factory == null) return null;
+        if (_factory.FirstValidConnection == null)
+            await _factory.OpenConnections();
+        if (_factory.FirstValidConnection == null)
+            return null;
+        try
+        {
+            INpOnDbCommand command = new NpOnDbCommand(_dbType, queryString, parameters);
+            INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Query(command).GetAwaiter().GetResult();
+            return result;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     public async Task<INpOnWrapperResult?> ExecuteFunc(string funcName, Dictionary<string, object> parameters,
         bool isUseInputJson = false, string? isUseOutputJsonAsName = null)
     {
@@ -77,7 +96,8 @@ public class DbFactoryWrapper : IDbFactoryWrapper
             return null;
         try
         {
-            INpOnDbExecCommand execCommand = new NpOnDbExecCommand(_dbType, funcName, parameters, isUseOutputJsonAsName);
+            INpOnDbExecCommand execCommand =
+                new NpOnDbExecCommand(_dbType, funcName, parameters, isUseOutputJsonAsName);
             if (isUseInputJson)
                 execCommand = execCommand.AsFullJsonBlock();
             INpOnWrapperResult result = await _factory.FirstValidConnection.Driver.ExecuteFunc(execCommand);
