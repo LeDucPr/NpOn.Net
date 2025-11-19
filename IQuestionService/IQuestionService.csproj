@@ -7,13 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="System.ServiceModel.Primitives">
-        <HintPath>..\SSO\bin\Debug\net10.0\System.ServiceModel.Primitives.dll</HintPath>
-      </Reference>
+      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+      <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj" />
+      <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
+      <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj"/>
+      <ProjectReference Include="..\CommonObject\CommonObject.csproj"/>
       <ProjectReference Include="..\QuestionServiceObject\QuestionServiceObject.csproj" />
     </ItemGroup>
 
