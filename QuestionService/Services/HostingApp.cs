@@ -13,7 +13,12 @@ public class HostingApp(
     {
         logger.LogInformation("AccountService AppHostedService is starting");
         //var aaaa = (await faqService.GetAll(new FaqQuery()
-        var test = (await surveyService.GetAllSurveys()).Data;
+        // var test = (await surveyService.GetAllSurveys()).Data;
+        // var test = (await surveyService.GetQuestionsBySurvey(
+        //     new SurveyGetAllQuery()
+        //     {
+        //         SurveyIdAsString = "'58555125-3746-4f94-9330-f84480094327'"
+        //     })).Data;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

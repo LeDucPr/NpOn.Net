@@ -5,12 +5,12 @@ namespace QuestionServiceObject.BusinessObjects;
 
 [ProtoContract]
 [TableLoader("questions")]
-[ProtoInclude(250, typeof(QuestionWithOptionsObject))]
+[ProtoInclude(150, typeof(QuestionWithOptionsObject))]
 public class QuestionObject : BaseQuestionObject
 {
     [ProtoMember(1)] public Guid SurveyId { get; set; }
-    [ProtoMember(2)] public string QuestionText { get; set; }
-    [ProtoMember(3)] public string QuestionType { get; set; }
+    [ProtoMember(2)] public string? QuestionText { get; set; }
+    [ProtoMember(3)] public string? QuestionType { get; set; }
     [ProtoMember(4)] public int QuestionOrder { get; set; }
     [ProtoMember(5)] public bool IsRequired { get; set; }
     [ProtoMember(6)] public int MaxScore { get; set; }
@@ -32,10 +32,11 @@ public class QuestionObject : BaseQuestionObject
 [ProtoContract]
 public class QuestionWithOptionsObject : QuestionObject
 {
-    [ProtoMember(7)] public List<AnswerOptionsObject> Options { get; set; }
-
-    public QuestionWithOptionsObject()
+    [ProtoMember(1)] public List<AnswerOptionsObject> Options { get; set; } = new();
+    protected override void FieldMapper()
     {
-        Options = new List<AnswerOptionsObject>();
+        FieldMap ??= new Dictionary<string, string>();
+        FieldMap.Add(nameof(Options), "options");
+        base.FieldMapper();
     }
 }

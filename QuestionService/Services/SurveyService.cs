@@ -5,6 +5,7 @@ using DbFactory;
 using HandleFlow.ResultConverters;
 using IQuestionService;
 using QuestionServiceObject.BusinessObjects;
+using QuestionServiceObject.QueryObjects;
 
 namespace QuestionService.Services;
 
@@ -82,18 +83,18 @@ public class SurveyService(
             //    ["survey_id"] = surveyId
             //}
 
-            List<QuesSrvDiseaseObjectDetailObject>? qSDObjects = resultOfQuery?
+            List<QuesSrvDiseaseObjectDetailObject>? qSdObjects = resultOfQuery?
                 .GenericConverter(typeof(QuesSrvDiseaseObjectDetailObject))?
                 .Cast<QuesSrvDiseaseObjectDetailObject>()
                 .ToList();
 
-            if (qSDObjects is not { Count: > 0 })
+            if (qSdObjects is not { Count: > 0 })
             {
                 response.SetFail("Không tìm thấy survey");
                 return;
             }
 
-            response.Data = qSDObjects.First();
+            response.Data = qSdObjects.First();
             response.SetSuccess();
         });
     }
@@ -119,8 +120,8 @@ public class SurveyService(
                     WHERE id = @survey_id";
 
             INpOnWrapperResult? surveyResult = await dbFactoryWrapper.QueryAsync(surveySql);
-                //new Dictionary<string, object> { ["survey_id"] = surveyId }
-            
+            //new Dictionary<string, object> { ["survey_id"] = surveyId }
+
             List<QuesSrvDiseaseObject>? surveyObjects = surveyResult?
                 .GenericConverter(typeof(QuesSrvDiseaseObject))?
                 .Cast<QuesSrvDiseaseObject>()
@@ -150,7 +151,7 @@ public class SurveyService(
                     ORDER BY question_order";
 
             INpOnWrapperResult? questionsResult = await dbFactoryWrapper.QueryAsync(questionsSql);
-                //new Dictionary<string, object> { ["survey_id"] = surveyId }
+            //new Dictionary<string, object> { ["survey_id"] = surveyId }
 
             List<QuestionObject>? questionObjects = questionsResult?
                 .GenericConverter(typeof(QuestionObject))?
@@ -177,7 +178,7 @@ public class SurveyService(
                             ORDER BY option_order";
 
                     INpOnWrapperResult? optionsResult = await dbFactoryWrapper.QueryAsync(optionsSql);
-                        //new Dictionary<string, object> { ["question_id"] = question.Id }
+                    //new Dictionary<string, object> { ["question_id"] = question.Id }
 
                     List<AnswerOptionsObject>? optionObjects = optionsResult?
                         .GenericConverter(typeof(AnswerOptionsObject))?
@@ -245,28 +246,20 @@ public class SurveyService(
     /// <summary>
     /// Lấy danh sách questions của survey
     /// </summary>
-    public async Task<CommonResponse<List<QuestionObject>>> GetQuestionsBySurvey(Guid surveyId)
+    public async Task<CommonResponse<List<QuestionObject>>> GetQuestionsBySurvey(SurveyGetAllQuery query)
     {
-        return await CommonProcess<List<QuestionObject>>( async (response) =>
+        return await CommonProcess<List<QuestionObject>>(async (response) =>
         {
-            string query = @"
-                    SELECT
-                        id,
-                        survey_id,
-                        question_text,
-                        question_type,
-                        question_order,
-                        is_required,
-                        max_score,
-                        created_at
-                    FROM questions
-                    WHERE survey_id = @survey_id
-                    ORDER BY question_order";
+            string queryString = @$"
+                    SELECT * FROM ques_srv_question
+                        WHERE ques_srv_survey_id = {query.SurveyIdAsString}
+                        ORDER BY question_order
+                    ";
 
-            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(query);
+            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryString);
 
             List<QuestionObject>? questionObjects = wrapperResult?
-                .GenericConverter(typeof (QuestionObject))?
+                .GenericConverter(typeof(QuestionObject))?
                 .Cast<QuestionObject>()
                 .ToList();
 

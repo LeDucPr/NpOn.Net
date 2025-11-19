@@ -15,6 +15,7 @@ public static partial class ServiceRegisterGrpc
         if (string.IsNullOrWhiteSpace(questionServiceUrl))
             return services;
         services.RegisterGrpcClientLoadBalancing<IFaqService>(questionServiceUrl);
+        services.RegisterGrpcClientLoadBalancing<ISurveyService>(questionServiceUrl);
         return services;
     }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using ObjectHandlerFlow.AlgObjs.CtrlObjs;
+﻿using ObjectHandlerFlow.AlgObjs.CtrlObjs;
 using ProtoBuf;
 using QuestionServiceObject.BusinessObjects;
 
@@ -13,6 +12,7 @@ namespace QuestionServiceObject;
 [ProtoInclude(400, typeof(ResultCategoriesObject))]
 [ProtoInclude(500, typeof(UsersObject))]
 [ProtoInclude(600, typeof(SubmissionAnswersObject))]
+[ProtoInclude(700, typeof(SurveySubmissionsObject))]
 public abstract class BaseQuestionObject : BaseCtrl
 {
     #region Field Config

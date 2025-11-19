@@ -8,13 +8,13 @@ namespace QuestionServiceObject.BusinessObjects;
 public class ResultCategoriesObject : BaseQuestionObject
 {
     [ProtoMember(1)] public Guid SurveyId { get; set; }
-    [ProtoMember(2)] public string CategoryName { get; set; }
-    [ProtoMember(3)] public string Description { get; set; }
+    [ProtoMember(2)] public string? CategoryName { get; set; }
+    [ProtoMember(3)] public string? Description { get; set; }
     [ProtoMember(4)] public int MinScore { get; set; }
     [ProtoMember(5)] public int MaxScore { get; set; }
-    [ProtoMember(6)] public string Recommendation { get; set; }
-    [ProtoMember(7)] public string SeverityLevel { get; set; }
-    [ProtoMember(8)] public string ColorHex { get; set; }
+    [ProtoMember(6)] public string? Recommendation { get; set; }
+    [ProtoMember(7)] public string? SeverityLevel { get; set; }
+    [ProtoMember(8)] public string? ColorHex { get; set; }
     [ProtoMember(9)] public int DisplayOrder { get; set; }
 
     protected override void FieldMapper()

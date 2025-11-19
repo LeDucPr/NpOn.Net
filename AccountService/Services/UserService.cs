@@ -20,10 +20,8 @@ public class UserService(
 {
     public async Task<CommonResponse<BaseAccountExecFuncJsonObject?>> GetAccountInfos()
     {
-        
         return await CommonProcess<BaseAccountExecFuncJsonObject?>(async (response) =>
         {
-            
             string funcName = "sp_dyn_patient_rank_search_cccccccccccccccccccccc";
 
             INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
@@ -58,10 +56,10 @@ public class UserService(
             }
 
             List<BaseAccountExecFuncJsonObject>? accountObjects = resultOfQuery
-                .GenericConverterForJson(typeof(BaseAccountExecFuncJsonObject), jsonColumnName: funcName)?
+                .GenericConverterForBaseAccountJson(typeof(BaseAccountExecFuncJsonObject), jsonColumnName: funcName)?
                 .Cast<BaseAccountExecFuncJsonObject>()
                 .ToList();
-            accountObjects?.ForEach(x=>x.ToObject<BaseAccountExecFuncJsonObject>());
+            accountObjects?.ForEach(x => x.ToObject<BaseAccountExecFuncJsonObject>());
             response.Data = accountObjects?.FirstOrDefault();
             response.SetSuccess();
         });
@@ -85,7 +83,7 @@ public class UserService(
             INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery, param);
             List<AccountInfoAliasTestObject>? accountObjects = resultOfQuery?
                 .GenericConverter(typeof(AccountInfoAliasTestObject))?
-                .Cast<AccountInfoAliasTestObject>() 
+                .Cast<AccountInfoAliasTestObject>()
                 .ToList();
 
             if (accountObjects is not { Count: > 0 })

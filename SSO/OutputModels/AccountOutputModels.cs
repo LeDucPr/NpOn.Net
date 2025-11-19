@@ -1,6 +1,6 @@
 ﻿namespace SSO.OutputModels;
 
-public class AccountModels
+public class AccountOutputModels
 {
     
 }

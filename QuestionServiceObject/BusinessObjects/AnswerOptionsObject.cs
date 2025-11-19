@@ -8,7 +8,7 @@ namespace QuestionServiceObject.BusinessObjects;
 public class AnswerOptionsObject : BaseQuestionObject
 {
     [ProtoMember(1)] public Guid QuestionId { get; set; }
-    [ProtoMember(2)] public string OptionText { get; set; }
+    [ProtoMember(2)] public string? OptionText { get; set; }
     [ProtoMember(3)] public int OptionOrder { get; set; }
     [ProtoMember(4)] public int ScoreValue { get; set; }
 

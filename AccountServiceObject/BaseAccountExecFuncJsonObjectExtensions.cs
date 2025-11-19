@@ -6,7 +6,7 @@ namespace AccountServiceObject;
 
 public static class BaseAccountExecFuncJsonObjectExtensions
 {
-    public static IEnumerable<BaseCtrl>? GenericConverterForJson(this INpOnWrapperResult result, Type ctrlType, string? jsonColumnName=null)
+    public static IEnumerable<BaseCtrl>? GenericConverterForBaseAccountJson(this INpOnWrapperResult result, Type ctrlType, string? jsonColumnName=null)
     {
         if (!ctrlType.IsSubclassOf(typeof(BaseAccountExecFuncJsonObject)) && ctrlType != typeof(BaseAccountExecFuncJsonObject))
             return null; 
