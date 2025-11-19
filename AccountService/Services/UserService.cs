@@ -1,5 +1,6 @@
 using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
+using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
@@ -8,6 +9,7 @@ using DbFactory;
 using HandleFlow.ResultConverters;
 using IAccountService;
 using QuestionServiceObject;
+using NpgsqlTypes;
 
 namespace AccountService.Services;
 
@@ -69,9 +71,18 @@ public class UserService(
     {
         return await CommonProcess<AccountInfoAliasTestObject>(async (response) =>
         {
-            string pgQuery = "SELECT * FROM server_ctrl";
-        
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
+            string pgQuery = "SELECT * FROM patient where patient_id = @patient_id";
+
+            List<NpOnDbCommandParam> param =
+            [
+                new NpOnDbCommandParam<NpgsqlDbType>()
+                {
+                    ParamName = "patient_id",
+                    ParamValue = "15132bb5-81cf-4567-992b-59e80f6f316d",
+                    ParamType = NpgsqlDbType.Uuid,
+                }
+            ];
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery, param);
             List<AccountInfoAliasTestObject>? accountObjects = resultOfQuery?
                 .GenericConverter(typeof(AccountInfoAliasTestObject))?
                 .Cast<AccountInfoAliasTestObject>() 

@@ -10,6 +10,7 @@ public interface INpOnDbCommand
     bool IsValidCommandText { get; }
     EDb DataBaseType { get; }
     EDbLanguage? DatabaseLanguage { get; }
+    List<NpOnDbCommandParam> Parameters { get; }
 }
 
 public class NpOnDbCommand : INpOnDbCommand
@@ -18,6 +19,7 @@ public class NpOnDbCommand : INpOnDbCommand
     private readonly string? _commandText;
     private readonly EDbLanguage? _dbLanguage;
     private readonly ILogger<NpOnDbCommand> _logger = new Logger<NpOnDbCommand>(new NullLoggerFactory());
+    private List<NpOnDbCommandParam>? _parameters;
 
     public NpOnDbCommand(EDb eDb, string? commandText)
     {
@@ -34,6 +36,24 @@ public class NpOnDbCommand : INpOnDbCommand
         }
     }
 
+
+    public NpOnDbCommand(EDb eDb, string? commandText, List<NpOnDbCommandParam>? parameters)
+    {
+        _commandText = commandText ?? string.Empty;
+        try
+        {
+            _eDb = eDb;
+            _dbLanguage = _eDb.ChooseLanguage();
+            _commandText = commandText;
+            _parameters = parameters;
+        }
+        catch (NotSupportedException ex)
+        {
+            _logger.LogError(ex.Message);
+        }
+    }
+
+
     protected virtual bool CheckValid()
     {
         return true; // default 
@@ -47,4 +67,6 @@ public class NpOnDbCommand : INpOnDbCommand
     public EDb DataBaseType => _eDb;
 
     public EDbLanguage? DatabaseLanguage => _dbLanguage;
+
+    public List<NpOnDbCommandParam>? Parameters => _parameters;
 }

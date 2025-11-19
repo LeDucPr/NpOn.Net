@@ -78,6 +78,26 @@ public static class EnumMode
         return displayAttribute?.ShortName ?? enumValue.ToString();
     }
 
+    /// <summary>
+    /// Chuyển đôi chỉ sử dụng với tên của Enum và giá trị của Enum
+    /// </summary>
+    /// <param name="enumString"></param>
+    /// <typeparam name="TEnum"></typeparam>
+    /// <returns></returns>
+    public static TEnum? ConvertStringToEnum<TEnum>(string enumString) where TEnum : struct, Enum
+    {
+        if (string.IsNullOrWhiteSpace(enumString))
+            return null;
+        string memberName = enumString;
+        int lastDotIndex = enumString.LastIndexOf('.');
+        if (lastDotIndex >= 0)
+            memberName = enumString.Substring(lastDotIndex + 1);
+        if (Enum.TryParse<TEnum>(memberName, true, out TEnum result))
+            return result;
+        else
+            return null;
+    }
+    
     #endregion
 
 

@@ -5,9 +5,13 @@ namespace Enums;
 public enum EDbError
 {
     [Display(Name = "Unknown Error")] Unknown,
-    [Display(Name = "Connect option not found")] ConnectOption,
+
+    [Display(Name = "Connect option not found")]
+    ConnectOption,
     [Display(Name = "Field not found")] FieldNotFound,
-    [Display(Name = "Join type not supported")] JoinTypeNotSupported,
+
+    [Display(Name = "Join type not supported")]
+    JoinTypeNotSupported,
 
     #region Connection
 
@@ -29,16 +33,21 @@ public enum EDbError
 
     #region Query/Command
 
-    [Display(Name = "Command Execution Error")] Command,
+    [Display(Name = "Command Execution Error")]
+    Command,
 
-    [Display(Name = "Execution Function Error")] ExecFuncName,
-    
+    [Display(Name = "Command Parameter Type Error ")]
+    CommandParam,
+
+    [Display(Name = "Execution Function Error")]
+    ExecFuncName,
+
     [Display(Name = "CommandText Invalid")]
     CommandText,
 
     [Display(Name = "CommandText Syntax Invalid")]
     CommandTextSyntax,
-    
+
     [Display(Name = "Redis Command Invalid")]
     CommandNotSupported,
 
@@ -67,9 +76,9 @@ public enum EDbError
 
     [Display(Name = "MongoDb BsonDocument (Result is null)")]
     MongoDbBsonDocumentNull,
-    
+
     [Display(Name = "Redis Value (Result is null)")]
     RedisValueIsNull,
-    
+
     #endregion Result
 }
