@@ -5,21 +5,18 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
+    
     <ItemGroup>
         <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-rc.1.25451.107"/>
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Npgsql" Version="8.0.3" />
-        <PackageReference Include="protobuf-net" Version="3.2.56"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
+        <ProjectReference Include="..\AccountServiceObject\AccountServiceObject.csproj"/>
+        <ProjectReference Include="..\CommonDb\CommonDb.csproj"/>
+        <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj"/>
         <ProjectReference Include="..\CommonObject\CommonObject.csproj"/>
-        <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
+        <ProjectReference Include="..\GeneralServiceObject\GeneralServiceObject.csproj" />
     </ItemGroup>
 
 </Project>

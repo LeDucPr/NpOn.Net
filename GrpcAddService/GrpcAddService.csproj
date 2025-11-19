@@ -21,6 +21,7 @@
         <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
         <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
         <ProjectReference Include="..\IAccountService\IAccountService.csproj" />
+        <ProjectReference Include="..\IGeneralService\IGeneralService.csproj" />
         <ProjectReference Include="..\IQuestionService\IQuestionService.csproj" />
     </ItemGroup>
 </Project>

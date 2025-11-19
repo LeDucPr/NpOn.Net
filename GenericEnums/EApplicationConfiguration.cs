@@ -71,6 +71,7 @@ public enum EApplicationConfiguration
     
     #region UrlZone
     AccountServiceUrl, // - string
+    GeneralServiceUrl, // - string
     QuestionServiceUrl, // - string
     #endregion UrlZone
 }
