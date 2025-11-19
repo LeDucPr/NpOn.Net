@@ -21,10 +21,9 @@ public class SurveyController(
     [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> QuestionGetBySurvey([FromBody] QuestionGetBySurveyIdRequest? request)
-    {
+    {   
         return await ProcessRequest<object>(async (response) =>
         {
-            // await Logout();
             if (request == null)
             {
                 response.SetFail(EErrorCode.NullRequestExceptions);
@@ -42,14 +41,14 @@ public class SurveyController(
                 return;
             }
 
-            List<QuestionsBySurveyModel>? questionModels = questions?.Select(x => new QuestionsBySurveyModel()
-            {
-                QuestionText = x.QuestionText,
-                QuestionType = x.QuestionType,
-                QuestionOrder = x.QuestionOrder,
-                IsRequired = x.IsRequired,
-                MaxScore = x.MaxScore,
-            }).ToList();
+            // List<QuestionsBySurveyModel>? questionModels = questions?.Select(x => new QuestionsBySurveyModel()
+            // {
+            //     QuestionText = x.QuestionText,
+            //     QuestionType = x.QuestionType,
+            //     QuestionOrder = x.QuestionOrder,
+            //     IsRequired = x.IsRequired,
+            //     MaxScore = x.MaxScore,
+            // }).ToList();
             
             response.Data = new
             {
