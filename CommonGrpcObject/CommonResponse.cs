@@ -14,12 +14,12 @@ namespace CommonGrpcObject;
 [ProtoInclude(500, typeof(CommonResponse<NpOnGrpcTable>))]
 public class CommonResponse
 {
-    [ProtoMember(1)] public bool Status { get; set; }
-    [ProtoMember(2)] public EErrorCode? ErrorCode { get; set; }
-    [ProtoMember(3)] public List<string>? ErrorMessages { get; set; }
-    [ProtoMember(4)] public int Version { get; set; }
-    [ProtoMember(5)] public DateTime ServerTime { get; set; } = DateTime.UtcNow;
-    [ProtoMember(6)] public int? TotalRow { get; set; }
+    [ProtoMember(1)] public virtual bool Status { get; set; }
+    [ProtoMember(2)] public virtual EErrorCode? ErrorCode { get; set; }
+    [ProtoMember(3)] public virtual List<string>? ErrorMessages { get; set; }
+    [ProtoMember(4)] public virtual int Version { get; set; }
+    [ProtoMember(5)] public virtual DateTime ServerTime { get; set; } = DateTime.UtcNow;
+    [ProtoMember(6)] public virtual int? TotalRow { get; set; }
     
     public void SetSuccess()
     {
@@ -82,5 +82,12 @@ public class CommonResponse
 
 [ProtoContract]
 public class CommonResponse<T> : CommonResponse{
+    
+    [ProtoMember(1)] public override bool Status { get; set; }
+    [ProtoMember(2)] public override EErrorCode? ErrorCode { get; set; }
+    [ProtoMember(3)] public override List<string>? ErrorMessages { get; set; }
+    [ProtoMember(4)] public override int Version { get; set; }
+    [ProtoMember(5)] public override DateTime ServerTime { get; set; } = DateTime.UtcNow;
+    [ProtoMember(6)] public override int? TotalRow { get; set; }
     [ProtoMember(7)] public T? Data { get; set; }
 }
