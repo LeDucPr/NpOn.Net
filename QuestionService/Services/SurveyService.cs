@@ -1,9 +1,11 @@
-﻿using CommonDb.DbResults;
+﻿using CommonDb.DbCommands;
+using CommonDb.DbResults;
 using CommonGrpcObject;
 using CommonWebApplication.Services;
 using DbFactory;
 using HandleFlow.ResultConverters;
 using IQuestionService;
+using NpgsqlTypes;
 using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.QueryObjects;
 
@@ -250,13 +252,19 @@ public class SurveyService(
     {
         return await CommonProcess<List<QuestionObject>>(async (response) =>
         {
-            string queryString = @$"
+            string queryString = @"
                     SELECT * FROM ques_srv_question
-                        WHERE ques_srv_survey_id = {query.SurveyIdAsString}
+                        WHERE ques_srv_survey_id = @ques_srv_survey_id
                         ORDER BY question_order
                     ";
 
-            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryString);
+            NpOnDbCommandParam param = new NpOnDbCommandParam<NpgsqlDbType>
+            {
+                ParamName = "ques_srv_survey_id",
+                ParamValue = query.SurveyId,
+                ParamType = NpgsqlDbType.Uuid,
+            };
+            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryString, [param]);
 
             List<QuestionObject>? questionObjects = wrapperResult?
                 .GenericConverter(typeof(QuestionObject))?

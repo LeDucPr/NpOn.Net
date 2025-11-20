@@ -84,7 +84,7 @@ public static class EnumMode
     /// <param name="enumString"></param>
     /// <typeparam name="TEnum"></typeparam>
     /// <returns></returns>
-    public static TEnum? ConvertStringToEnum<TEnum>(string enumString) where TEnum : struct, Enum
+    public static TEnum? ConvertStringToEnum<TEnum>(this string enumString) where TEnum : struct, Enum
     {
         if (string.IsNullOrWhiteSpace(enumString))
             return null;
