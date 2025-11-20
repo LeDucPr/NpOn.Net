@@ -35,11 +35,11 @@ public class SurveyController(
                 SurveyIdAsString = request.SurveyId,
             });
             List<QuestionObject>? questions = questionsBySurvey.Data;
-            if (!questionsBySurvey.Status)
-            {
-                response.SetFail(questionsBySurvey.ErrorMessages);
-                return;
-            }
+            // if (!questionsBySurvey.Status)
+            // {
+            //     response.SetFail(questionsBySurvey.ErrorMessages);
+            //     return;
+            // }
 
             List<OutputModels.SurveyModel>? questionModels = questions?.Select(x => new OutputModels.SurveyModel()
             {
