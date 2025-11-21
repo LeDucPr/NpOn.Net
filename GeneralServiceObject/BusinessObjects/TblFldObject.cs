@@ -8,15 +8,16 @@ namespace GeneralServiceObject.BusinessObjects;
 [ProtoContract]
 public class TblFldObject : BaseGeneralObject
 {
-    [ProtoMember(1)] public string? TblMaterId { get; set; }
+    [ProtoMember(1)] public Guid? TblMaterId { get; set; }
     [ProtoMember(2)] public string? TblMaterCode { get; set; }
     [ProtoMember(3)] public string? QueryDesc { get; set; }
     [ProtoMember(4)] public string? ExecFunc { get; set; }
     [ProtoMember(5)] public string? Query { get; set; }
-    [ProtoMember(6)] public string? FldMasterId { get; set; }
+    [ProtoMember(6)] public Guid? FldMasterId { get; set; }
     [ProtoMember(7)] public string? FieldName { get; set; }
-    [ProtoMember(8)] public string? FieldType { get; set; }
-    public NpgsqlDbType? FieldDbType => FieldType?.ConvertStringToEnum<NpgsqlDbType>();
+    [ProtoMember(8)] public string? FieldTypeString { get; set; }
+    [ProtoMember(9)] public NpgsqlDbType? FieldType { get; set; }
+    public NpgsqlDbType? FieldDbType => FieldTypeString?.ConvertStringToEnum<NpgsqlDbType>();
 
     protected override void FieldMapper()
     {
@@ -29,6 +30,7 @@ public class TblFldObject : BaseGeneralObject
         FieldMap.Add(nameof(FldMasterId), "fld_id");
         FieldMap.Add(nameof(FieldName), "field_name");
         FieldMap.Add(nameof(FieldType), "field_type");
-        base.FieldMapper();
+        FieldMap.Add(nameof(FieldTypeString), "field_type_string");
+        // base.FieldMapper();
     }
 }

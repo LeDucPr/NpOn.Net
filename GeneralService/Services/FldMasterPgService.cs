@@ -1,12 +1,15 @@
-﻿using CommonDb.DbResults;
+﻿using CommonDb.DbCommands;
+using CommonDb.DbResults;
 using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
+using CommonObject;
 using CommonWebApplication.Services;
 using DbFactory;
 using GeneralServiceObject.BusinessObjects;
 using GeneralServiceObject.QueryObjects;
 using HandleFlow.ResultConverters;
 using IGeneralService;
+using NpgsqlTypes;
 using ProjectEntry;
 
 namespace GeneralService.Services;
@@ -26,16 +29,41 @@ public class FldMasterPgService(
                 return;
             }
 
+            List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
             var queryBuilder = new TblFldMasterQueryBuilder();
             if (query.Code != null)
+            {
                 queryBuilder = queryBuilder.WhereCode(query.Code);
+                parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
+                {
+                    ParamName = nameof(query.Code),
+                    ParamValue = query.Code,
+                    ParamType = NpgsqlDbType.Varchar
+                });
+            }
             else if (query.TblMaterId != null)
+            {
                 queryBuilder = queryBuilder.WhereTblMasterId(query.TblMaterId);
+                parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
+                {
+                    ParamName = nameof(query.TblMaterId),
+                    ParamValue = query.Code,
+                    ParamType = NpgsqlDbType.Uuid
+                });
+            }
             else if (query.ExecFunc != null)
+            {
                 queryBuilder = queryBuilder.WhereExecFunc(query.ExecFunc);
+                parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
+                {
+                    ParamName = nameof(query.ExecFunc),
+                    ParamValue = query.Code,
+                    ParamType = NpgsqlDbType.Varchar
+                });
+            }
             var (queryBuilderString, _) = queryBuilder.Build();
 
-            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryBuilderString);
+            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryBuilderString, parameters);
             if (wrapperResult == null)
             {
                 response.SetFail("FldMaster not found");
@@ -58,65 +86,96 @@ public class FldMasterPgService(
         });
     }
 
-    // public async Task<CommonResponse<INpOnGrpcObject>> Query(TblFldQuery query)
-    // {
-    //     return await CommonProcess<INpOnGrpcObject>(async (response) =>
-    //     {
-    //         List<TblFldObject>? tblFldObjects = (await GetQuery(query)).Data;
-    //         if (tblFldObjects is not { Count: > 0 })
-    //         {
-    //             response.SetFail("FldMasterObject not found");
-    //             return;
-    //         }
-    //
-    //         TblFldObject tblFldObjectFirst = tblFldObjects.First();
-    //         INpOnWrapperResult? resultOfQuery;
-    //         if (tblFldObjectFirst.ExecFunc != null)
-    //         {
-    //             string funcName = tblFldObjectFirst.ExecFunc;
-    //             Dictionary<string, object> parameters = new Dictionary<string, object>();
-    //             foreach (var param in tblFldObjects)
-    //             {
-    //                 parameters.Add(param);
-    //             }
-    //             
-    //             resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
-    //                 funcName,
-    //                 new Dictionary<string, object>
-    //                 {
-    //                     [""] =
-    //                         @"{
-    //                   ""full_name"": """",
-    //                   ""username"": """",
-    //                   ""from_date"": ""2025-11-07T00:00:00"",
-    //                   ""to_date"": ""2025-11-14T23:59:59"",
-    //                   ""mobile_phone"": """",
-    //                   ""gender"": """",
-    //                   ""province_rcd"": """",
-    //                   ""district_rcd"": """",
-    //                   ""commune_rcd"": """",
-    //                   ""standard_account_id"": ""12fbd6a7-978b-4e7f-98bc-43c21684b371"",
-    //                   ""master_account_id"": null,
-    //                   ""province_account_rcd"": """",
-    //                   ""rank_type"": null,
-    //                   ""page"": 1,
-    //                   ""pageSize"": 1
-    //                 }"
-    //                 }, true, isUseOutputJsonAsName: funcName
-    //             
-    //             
-    //             response.SetFail("Invalid query");
-    //             return;
-    //         }
-    //
-    //         INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryBuilderString);
-    //         if (wrapperResult == null)
-    //         {
-    //             response.SetFail("FldMaster not found");
-    //             return;
-    //         }
-    //
-    //         response.SetSuccess();
-    //     });
-    // }
+    public async Task<CommonResponse<INpOnGrpcObject>> Query(TblFldQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            List<TblFldObject>? tblFldObjects = (await GetQuery(query)).Data;
+            if (tblFldObjects is not { Count: > 0 })
+            {
+                response.SetFail("FldMasterObject not found");
+                return;
+            }
+
+            TblFldObject tblFldObjectFirst = tblFldObjects.First();
+            INpOnWrapperResult? wrapperResult = null;
+            if (tblFldObjectFirst.ExecFunc != null)
+            {
+                string funcName = tblFldObjectFirst.ExecFunc;
+                List<INpOnDbCommandParam<NpgsqlDbType>> parameters = [];
+                
+                foreach (var paramObj in tblFldObjects)
+                {
+                    if (string.IsNullOrEmpty(paramObj.FieldName))
+                        break;
+                    string? stringValue = query.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                    NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
+                    {
+                        ParamName = paramObj.FieldName,
+                        ParamValue = stringValue.AsDefaultString(),
+                        ParamType = paramObj.FieldDbType ?? NpgsqlDbType.Unknown,
+                    };
+                    parameters.Add(commandParam);
+                }
+
+                try
+                {
+                    wrapperResult = await dbFactoryWrapper.ExecuteFuncParams(
+                        funcName, parameters);
+                }
+                catch (Exception)
+                {
+                    response.SetFail("Execute Error!");
+                    return;
+                }
+            }
+            else if (tblFldObjectFirst.Query != null)
+            {
+                string queryString = tblFldObjectFirst.Query;
+                List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
+                foreach (var paramObj in tblFldObjects)
+                {
+                    if (string.IsNullOrEmpty(paramObj.FieldName))
+                        break;
+                    string? stringValue = query.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                    NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
+                    {
+                        ParamName = paramObj.FieldName,
+                        ParamValue = stringValue.AsDefaultString(),
+                        ParamType = paramObj.FieldType ?? paramObj.FieldDbType ?? NpgsqlDbType.Unknown,
+                    };
+                    parameters.Add(commandParam);
+                }
+
+                try
+                {
+                    if (parameters is { Count: > 0 })
+                        wrapperResult = await dbFactoryWrapper.QueryAsync(queryString, parameters);
+                    else
+                        wrapperResult = await dbFactoryWrapper.QueryAsync(queryString);
+                }
+                catch (Exception)
+                {
+                    response.SetFail("Query Error!");
+                    return;
+                }
+            }
+
+            if (wrapperResult == null)
+            {
+                response.SetFail("FldMaster not found");
+                return;
+            }
+
+            if (wrapperResult is not INpOnTableWrapper tableWrapperResult)
+            {
+                response.SetFail("ValueFormat not found");
+                return;
+            }
+
+            INpOnGrpcObject grpcObject = tableWrapperResult.ToGrpcTable();
+            response.Data = grpcObject;
+            response.SetSuccess();
+        });
+    }
 }

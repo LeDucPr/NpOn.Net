@@ -18,11 +18,11 @@ public class TblFldMasterQueryBuilder
             tbl.Query AS query, 
             fld.id as fld_id, 
             fld.field_name as field_name, 
-            fld.field_type as field_type
-        FROM 
-            fld_query_master fld
-        JOIN 
-            tblmaster tbl ON fld.tblmaster_id = tbl.id ";
+            fld.field_type as field_type, 
+            fld.field_type_string as field_type_string
+        FROM tblmaster tbl
+        LEFT JOIN fld_query_master fld 
+	        ON fld.tblmaster_id = tbl.id ";
 
     /// <summary>
     /// Thêm điều kiện lọc theo ExecFunc.
