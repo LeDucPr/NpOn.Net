@@ -47,34 +47,19 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/general-service:latest
 
       - name: Redeploy SSO Controller on Rancher
-        uses: jessicatarra/rancher-redeploy-workload@v1.3
-        with:
-          rancher-url: ${{ secrets.RANCHER_URL }}
-          rancher-access-key: ${{ secrets.RANCHER_ACCESS_KEY }}
-          rancher-secret-key: ${{ secrets.RANCHER_SECRET_KEY }}
-          rancher-cluster-id: ${{ secrets.RANCHER_CLUSTER_ID }}
-          rancher-project-id: ${{ secrets.RANCHER_PROJECT_ID }}
-          rancher-namespace: ${{ secrets.RANCHER_NAMESPACE }}
-          rancher-workload: sso-controller
+        run: |
+          curl -u "${{ secrets.RANCHER_ACCESS_KEY }}:${{ secrets.RANCHER_SECRET_KEY }}" \
+          -X POST \
+          "${{ secrets.RANCHER_URL }}/v3/project/${{ secrets.RANCHER_PROJECT_ID }}/workloads/deployment:${{ secrets.RANCHER_NAMESPACE }}:sso-controller?action=redeploy"
 
       - name: Redeploy Service Account on Rancher
-        uses: jessicatarra/rancher-redeploy-workload@v1.3
-        with:
-          rancher-url: ${{ secrets.RANCHER_URL }}
-          rancher-access-key: ${{ secrets.RANCHER_ACCESS_KEY }}
-          rancher-secret-key: ${{ secrets.RANCHER_SECRET_KEY }}
-          rancher-cluster-id: ${{ secrets.RANCHER_CLUSTER_ID }}
-          rancher-project-id: ${{ secrets.RANCHER_PROJECT_ID }}
-          rancher-namespace: ${{ secrets.RANCHER_NAMESPACE }}
-          rancher-workload: service-account
+        run: |
+          curl -u "${{ secrets.RANCHER_ACCESS_KEY }}:${{ secrets.RANCHER_SECRET_KEY }}" \
+          -X POST \
+          "${{ secrets.RANCHER_URL }}/v3/project/${{ secrets.RANCHER_PROJECT_ID }}/workloads/deployment:${{ secrets.RANCHER_NAMESPACE }}:service-account?action=redeploy"
 
       - name: Redeploy General Service on Rancher
-        uses: jessicatarra/rancher-redeploy-workload@v1.3
-        with:
-          rancher-url: ${{ secrets.RANCHER_URL }}
-          rancher-access-key: ${{ secrets.RANCHER_ACCESS_KEY }}
-          rancher-secret-key: ${{ secrets.RANCHER_SECRET_KEY }}
-          rancher-cluster-id: ${{ secrets.RANCHER_CLUSTER_ID }}
-          rancher-project-id: ${{ secrets.RANCHER_PROJECT_ID }}
-          rancher-namespace: ${{ secrets.RANCHER_NAMESPACE }}
-          rancher-workload: general-service
+        run: |
+          curl -u "${{ secrets.RANCHER_ACCESS_KEY }}:${{ secrets.RANCHER_SECRET_KEY }}" \
+          -X POST \
+          "${{ secrets.RANCHER_URL }}/v3/project/${{ secrets.RANCHER_PROJECT_ID }}/workloads/deployment:${{ secrets.RANCHER_NAMESPACE }}:general-service?action=redeploy"
