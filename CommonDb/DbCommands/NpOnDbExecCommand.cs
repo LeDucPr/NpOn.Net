@@ -11,7 +11,6 @@ public interface INpOnDbExecCommand
     string FuncName { get; }
 
     Dictionary<string, object> Params { get; }
-
     // for output
     string AliasForSingleColumnOutput { get; }
     bool IsValidCommandText { get; }

@@ -1,5 +1,6 @@
 ﻿﻿using System.Data;
 using NpgsqlTypes;
+using ProtoBuf.WellKnownTypes;
 
 namespace PostgresExtCm.Results;
 
@@ -26,6 +27,7 @@ public static class PostgresUtils
         [typeof(decimal)] = DbType.Decimal,
         // Date & Time
         [typeof(DateTime)] = DbType.DateTime,
+        [typeof(Timestamp)] = DbType.DateTime,
         [typeof(DateTimeOffset)] = DbType.DateTimeOffset,
         [typeof(TimeSpan)] = DbType.Time,
         [typeof(DateOnly)] = DbType.Date,

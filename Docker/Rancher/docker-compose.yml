@@ -1,0 +1,33 @@
+version: '3.8'
+
+networks:
+  rancher-net:
+    driver: bridge
+
+services:
+  # Rancher Management Server
+  rancher:
+    image: rancher/rancher:latest
+    container_name: rancher_server
+    networks:
+      - rancher-net
+    ports:
+      # Ánh xạ 80/HTTP và 443/HTTPS từ Host vào Container
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Volume để lưu trữ dữ liệu của Rancher Server (PostgreSQL, cấu hình...)
+      - rancher_data:/var/lib/rancher
+    environment:
+      # Mật khẩu quản trị mặc định cho lần đầu tiên.
+      - CATTLE_BOOTSTRAP_PASSWORD=admin123
+      # Quan trọng: Thiết lập URL ngoại vi (External URL) để Rancher tạo chứng chỉ đúng
+      # Nếu bạn dùng IP, thay 'localhost' bằng IP của máy chủ Docker Host.
+      - CATTLE_SERVER_URL=https://localhost
+    restart: always
+    # Quyền 'privileged' là cần thiết để Rancher chạy các thành phần Kubernetes nội bộ
+    privileged: true 
+
+volumes:
+  rancher_data:
+    driver: local

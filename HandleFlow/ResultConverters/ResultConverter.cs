@@ -45,7 +45,11 @@ public static class ResultConverter
                     var actualType = Nullable.GetUnderlyingType(curType) ?? curType;
                     if (actualType.IsEnum)
                     {
-                        var enumValue = Enum.ToObject(actualType, convertedValue);
+                        // var enumValue = Enum.ToObject(actualType, convertedValue);
+                        // kvProp.Value.SetValue(newCtrl, enumValue);
+                        var underlying = Enum.GetUnderlyingType(actualType);
+                        var numeric = Convert.ChangeType(convertedValue, underlying); 
+                        var enumValue = Enum.ToObject(actualType, numeric);
                         kvProp.Value.SetValue(newCtrl, enumValue);
                     }
                     else

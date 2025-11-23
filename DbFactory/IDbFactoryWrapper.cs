@@ -14,4 +14,7 @@ public interface IDbFactoryWrapper
     Task<INpOnWrapperResult?> ExecuteFunc(string funcName, Dictionary<string, object> parameters,
         bool isUseInputJson = false,
         string? isUseOutputJsonAsName = null);
+
+    Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
+        List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum;
 }

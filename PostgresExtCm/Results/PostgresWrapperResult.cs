@@ -34,7 +34,7 @@ public class PostgresRowWrapper : NpOnWrapperResult<DataRow, IReadOnlyDictionary
 
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
-                cellValue,
+                cellValue, 
                 columnType.ToDbType(),
                 schemaInfo.ProviderDataTypeName // THÔNG TIN CHÍNH XÁC SCHEMA
             )!;
@@ -81,7 +81,7 @@ public class PostgresColumnWrapper : NpOnWrapperResult<DataTable, IReadOnlyDicti
 
             INpOnCell cell = (INpOnCell)Activator.CreateInstance(
                 genericCellType,
-                row[_columnName],
+                cellValue, 
                 columnType.ToDbType(),
                 schemaInfo.ProviderDataTypeName // SỬ DỤNG THÔNG TIN CHÍNH XÁC TỪ SCHEMA
             )!;

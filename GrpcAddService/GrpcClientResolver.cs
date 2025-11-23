@@ -16,6 +16,7 @@ public static class GrpcClientResolver
         // Register the interceptor so the DI container knows how to create it.
         services.AddTransient<LoggerInterceptor>();
         
+        services.GeneralServiceRegisterGrpc();
         services.QuestionServiceRegisterGrpc();
         services.AccountServiceRegisterGrpc();
         return services;

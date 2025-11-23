@@ -2,6 +2,7 @@
 using CommonDb.DbCommands;
 using CommonDb.DbCommands.Extensions;
 using CommonDb.DbResults;
+using CommonObject;
 using DbFactory.FactoryResults;
 using Enums;
 
@@ -101,6 +102,28 @@ public class DbFactoryWrapper : IDbFactoryWrapper
             if (isUseInputJson)
                 execCommand = execCommand.AsFullJsonBlock();
             INpOnWrapperResult result = await _factory.FirstValidConnection.Driver.ExecuteFunc(execCommand);
+            return result;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    public async Task<INpOnWrapperResult?> ExecuteFuncParams<TEnumDbType>(string funcName,
+        List<INpOnDbCommandParam<TEnumDbType>>? parameters) where TEnumDbType : Enum
+    {
+        if (_factory == null) return null;
+        if (_factory.FirstValidConnection == null)
+            await _factory.OpenConnections();
+        if (_factory.FirstValidConnection == null)
+            return null;
+        try
+        {
+            INpOnDbExecCommand execCommand =
+                new NpOnDbExecCommand(_dbType, funcName, parameters ?? []);
+            INpOnWrapperResult result =
+                await _factory.FirstValidConnection.Driver.ExecuteFuncParams(execCommand, parameters ?? []);
             return result;
         }
         catch (Exception)
