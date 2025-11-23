@@ -47,28 +47,34 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/general-service:latest
 
       - name: Redeploy SSO Controller on Rancher
-        uses: Taction/rancher-redeploy@v1
+        uses: jessicatarra/rancher-redeploy-workload@v1.3
         with:
-          rancher_url: ${{ secrets.RANCHER_URL }}
-          rancher_access_key: ${{ secrets.RANCHER_ACCESS_KEY }}
-          rancher_secret_key: ${{ secrets.RANCHER_SECRET_KEY }}
-          project_id: ${{ secrets.RANCHER_PROJECT_ID }}
-          workload_name: sso-controller # Tên workload trên Rancher
+          rancher-url: ${{ secrets.RANCHER_URL }}
+          rancher-access-key: ${{ secrets.RANCHER_ACCESS_KEY }}
+          rancher-secret-key: ${{ secrets.RANCHER_SECRET_KEY }}
+          rancher-cluster-id: ${{ secrets.RANCHER_CLUSTER_ID }}
+          rancher-project-id: ${{ secrets.RANCHER_PROJECT_ID }}
+          rancher-namespace: ${{ secrets.RANCHER_NAMESPACE }}
+          rancher-workload: sso-controller
 
       - name: Redeploy Service Account on Rancher
-        uses: Taction/rancher-redeploy@v1
+        uses: jessicatarra/rancher-redeploy-workload@v1.3
         with:
-          rancher_url: ${{ secrets.RANCHER_URL }}
-          rancher_access_key: ${{ secrets.RANCHER_ACCESS_KEY }}
-          rancher_secret_key: ${{ secrets.RANCHER_SECRET_KEY }}
-          project_id: ${{ secrets.RANCHER_PROJECT_ID }}
-          workload_name: service-account # Tên workload trên Rancher
+          rancher-url: ${{ secrets.RANCHER_URL }}
+          rancher-access-key: ${{ secrets.RANCHER_ACCESS_KEY }}
+          rancher-secret-key: ${{ secrets.RANCHER_SECRET_KEY }}
+          rancher-cluster-id: ${{ secrets.RANCHER_CLUSTER_ID }}
+          rancher-project-id: ${{ secrets.RANCHER_PROJECT_ID }}
+          rancher-namespace: ${{ secrets.RANCHER_NAMESPACE }}
+          rancher-workload: service-account
 
       - name: Redeploy General Service on Rancher
-        uses: Taction/rancher-redeploy@v1
+        uses: jessicatarra/rancher-redeploy-workload@v1.3
         with:
-          rancher_url: ${{ secrets.RANCHER_URL }}
-          rancher_access_key: ${{ secrets.RANCHER_ACCESS_KEY }}
-          rancher_secret_key: ${{ secrets.RANCHER_SECRET_KEY }}
-          project_id: ${{ secrets.RANCHER_PROJECT_ID }}
-          workload_name: general-service # Tên workload trên Rancher
+          rancher-url: ${{ secrets.RANCHER_URL }}
+          rancher-access-key: ${{ secrets.RANCHER_ACCESS_KEY }}
+          rancher-secret-key: ${{ secrets.RANCHER_SECRET_KEY }}
+          rancher-cluster-id: ${{ secrets.RANCHER_CLUSTER_ID }}
+          rancher-project-id: ${{ secrets.RANCHER_PROJECT_ID }}
+          rancher-namespace: ${{ secrets.RANCHER_NAMESPACE }}
+          rancher-workload: general-service
