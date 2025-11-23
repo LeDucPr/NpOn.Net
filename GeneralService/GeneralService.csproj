@@ -4,6 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,6 +25,12 @@
         <ProjectReference Include="..\IGeneralService\IGeneralService.csproj" />
         <ProjectReference Include="..\IQuestionService\IQuestionService.csproj"/>
         <ProjectReference Include="..\ProjectEntry\ProjectEntry.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
     </ItemGroup>
 
 </Project>
