@@ -30,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./sso-controller/Dockerfile
+          file: ./SSO/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.string.outputs.owner_lc }}/sso-controller:latest
 
@@ -38,7 +38,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./service-account/Dockerfile
+          file: ./AccountService/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.string.outputs.owner_lc }}/service-account:latest
 
@@ -46,7 +46,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./general-service/Dockerfile
+          file: ./GeneralService/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.string.outputs.owner_lc }}/general-service:latest
 
