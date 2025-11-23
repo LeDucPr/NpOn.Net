@@ -8,6 +8,10 @@ on:
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -34,13 +38,13 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.string.outputs.owner_lc }}/sso-controller:latest
 
-      - name: Build and push Service Account
+      - name: Build and push Account Service
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./AccountService/Dockerfile
           push: true
-          tags: ghcr.io/${{ steps.string.outputs.owner_lc }}/service-account:latest
+          tags: ghcr.io/${{ steps.string.outputs.owner_lc }}/account-service:latest
 
       - name: Build and push General Service
         uses: docker/build-push-action@v4
@@ -56,11 +60,11 @@ jobs:
           -X POST \
           "${{ secrets.RANCHER_URL }}/v3/project/${{ secrets.RANCHER_PROJECT_ID }}/workloads/deployment:${{ secrets.RANCHER_NAMESPACE }}:sso-controller?action=redeploy"
 
-      - name: Redeploy Service Account on Rancher
+      - name: Redeploy Account Service on Rancher
         run: |
           curl -u "${{ secrets.RANCHER_ACCESS_KEY }}:${{ secrets.RANCHER_SECRET_KEY }}" \
           -X POST \
-          "${{ secrets.RANCHER_URL }}/v3/project/${{ secrets.RANCHER_PROJECT_ID }}/workloads/deployment:${{ secrets.RANCHER_NAMESPACE }}:service-account?action=redeploy"
+          "${{ secrets.RANCHER_URL }}/v3/project/${{ secrets.RANCHER_PROJECT_ID }}/workloads/deployment:${{ secrets.RANCHER_NAMESPACE }}:account-service?action=redeploy"
 
       - name: Redeploy General Service on Rancher
         run: |
