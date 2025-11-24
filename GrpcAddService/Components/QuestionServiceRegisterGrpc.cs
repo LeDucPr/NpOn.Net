@@ -16,6 +16,7 @@ public static partial class ServiceRegisterGrpc
             return services;
         services.RegisterGrpcClientLoadBalancing<IFaqService>(questionServiceUrl);
         services.RegisterGrpcClientLoadBalancing<ISurveyService>(questionServiceUrl);
+        services.RegisterGrpcClientLoadBalancing<IQuestionAndAnswerService>(questionServiceUrl);
         return services;
     }
 }
