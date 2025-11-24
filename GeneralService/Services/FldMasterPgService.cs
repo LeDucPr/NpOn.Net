@@ -11,6 +11,7 @@ using HandleFlow.ResultConverters;
 using IGeneralService;
 using NpgsqlTypes;
 using ProjectEntry;
+using ProjectEnums.GeneralEnums;
 
 namespace GeneralService.Services;
 
@@ -99,7 +100,7 @@ public class FldMasterPgService(
 
             TblFldObject tblFldObjectFirst = tblFldObjects.First();
             INpOnWrapperResult? wrapperResult = null;
-            if (tblFldObjectFirst.ExecFunc != null)
+            if (tblFldObjectFirst is { ExecFunc: not null, ExecType: EExecType.ExecFunc })
             {
                 string funcName = tblFldObjectFirst.ExecFunc;
                 List<INpOnDbCommandParam<NpgsqlDbType>> parameters = [];
@@ -129,7 +130,7 @@ public class FldMasterPgService(
                     return;
                 }
             }
-            else if (tblFldObjectFirst.Query != null)
+            else if (tblFldObjectFirst is { Query: not null, ExecType: EExecType.Query })
             {
                 string queryString = tblFldObjectFirst.Query;
                 List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
