@@ -1,4 +1,4 @@
-namespace ProjectEnums;
+namespace ProjectEnums.FldMasterEnums;
 
 public static class FldMasterCodes
 {
