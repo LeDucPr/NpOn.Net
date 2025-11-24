@@ -19,11 +19,11 @@ public class HostingApp(
         //     {
         //         SurveyIdAsString = "'58555125-3746-4f94-9330-f84480094327'"
         //     })).Data;
-        var testCC = (await surveyService.GetQuestionsByUserIdAndSurveyId(new QuestionGetByUserIdAndSurveyIdQuery
-        {
-            SurveyId = string.Empty,
-            UserId = string.Empty,
-        })).Data;
+        // var testCC = (await surveyService.GetQuestionsByUserIdAndSurveyId(new QuestionGetByUserIdAndSurveyIdQuery
+        // {
+        //     SurveyId = string.Empty,
+        //     UserId = string.Empty,
+        // })).Data;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

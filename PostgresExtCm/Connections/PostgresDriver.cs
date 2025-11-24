@@ -1,17 +1,11 @@
-﻿// File: D:/@C#/NpOn/PostgresExtCm/Connections/PostgresDriver.cs
-
-using CommonDb.Connections;
+﻿using CommonDb.Connections;
 using CommonDb.DbCommands;
-using Npgsql; // Quan trọng: Sử dụng thư viện Npgsql
+using Npgsql;
 using System.Data;
 using CommonDb.DbResults;
-using CommonMode;
 using CommonObject;
 using Enums;
 using PostgresExtCm.Results;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Npgsql.Replication.PgOutput.Messages; // Cần thiết cho JsonConvert.SerializeObject và Formatting.None
 using NpgsqlTypes;
 
 namespace PostgresExtCm.Connections;
@@ -97,7 +91,7 @@ public class PostgresDriver : NpOnDbDriver
                     {
                         pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, paramValue);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         return new PostgresResultSetWrapper().SetFail(EDbError.CommandParam);
                     }
@@ -125,7 +119,7 @@ public class PostgresDriver : NpOnDbDriver
             List<object?> paramPlaceholderComponents = new List<object?>();
             foreach (var param in execCommand.Params)
             {
-                var value = param.Value ?? DBNull.Value;
+                var value = param.Value;
                 var npgsqlParam = new NpgsqlParameter
                 {
                     ParameterName = param.Key,
@@ -155,25 +149,23 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
-    
+
     public override async Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecCommand? execCommand,
         List<INpOnDbCommandParam<TEnum>> parameters)
     {
         if (typeof(TEnum) != typeof(NpgsqlDbType))
         {
-            return new PostgresResultSetWrapper().SetFail(new Exception($"{typeof(TEnum).Name} is not NpgsqlDbType")); 
+            return new PostgresResultSetWrapper().SetFail(new Exception($"{typeof(TEnum).Name} is not NpgsqlDbType"));
         }
-        
+
         if (!IsValidSession || _connection == null) // Check enabled connection 
             return new PostgresResultSetWrapper().SetFail(EDbError.Connection);
         if (execCommand == null || string.IsNullOrWhiteSpace(execCommand.FuncName))
             return new PostgresResultSetWrapper().SetFail(EDbError.ExecFuncName);
+        List<string> paramList = [];
         try
         {
             await using var pgCommand = _connection.CreateCommand();
-            pgCommand.CommandType = CommandType.StoredProcedure;
-            pgCommand.CommandText = execCommand.FuncName;
-
             foreach (var param in parameters)
             {
                 var value = param.ParamValue ?? DBNull.Value;
@@ -183,39 +175,16 @@ public class PostgresDriver : NpOnDbDriver
                     NpgsqlDbType = (NpgsqlDbType)Enum.ToObject(typeof(NpgsqlDbType), param.ParamType),
                     Value = value
                 };
-
-                // if (value != DBNull.Value)
-                // {
-                //     var valueType = value.GetType();
-                //     var npgsqlDbType = valueType.ToNpgsqlDbType(); // ?? ưu tiên 
-                //     if (npgsqlDbType.HasValue)
-                //         npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
-                //     switch (npgsqlDbType)
-                //     {
-                //         case NpgsqlDbType.Json when value is JToken jTokenValue:
-                //             npgsqlParam.Value = jTokenValue.ToString(Formatting.None);
-                //             break;
-                //         case NpgsqlDbType.Json:
-                //         {
-                //             if (value is System.Text.Json.JsonDocument jsonDocumentValue)
-                //             {
-                //                 npgsqlParam.Value = jsonDocumentValue.RootElement.ToString();
-                //             }
-                //
-                //             break;
-                //         }
-                //         case null:
-                //             npgsqlParam.DbType = valueType.ToDbType();
-                //             break;
-                //     }
-                // }
                 pgCommand.Parameters.Add(npgsqlParam);
+                paramList.Add($"@{param.ParamName}");
             }
 
-            NpgsqlDataAdapter ad = new NpgsqlDataAdapter(pgCommand);
-            DataTable tb = new DataTable();
-            ad.Fill(tb);
-            return new PostgresResultSetWrapper(tb);
+            string funcName = execCommand.FuncName.Trim().AsDefaultString();
+            if (funcName == execCommand.FuncName)
+                funcName = $"select * from {funcName}({paramList.AsArrayJoin()})";
+            pgCommand.CommandText = funcName;
+            await using var reader = await pgCommand.ExecuteReaderAsync();
+            return new PostgresResultSetWrapper(reader);
         }
         catch (Exception ex)
         {
