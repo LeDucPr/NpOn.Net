@@ -27,7 +27,18 @@ public sealed class Program : CommonProgram
         services.AddControllers(); 
         services.AddControllers()
             .AddApplicationPart(typeof(CommonProgram).Assembly); // CommonWebApplication
-
+        if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool())
+        {
+            // debug
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder => builder.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
+            });
+        }
+        
         return Task.CompletedTask;
     }
 
@@ -44,6 +55,11 @@ public sealed class Program : CommonProgram
             app.UseRequestResponseLogging();
         }
 
+        if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool())
+        {
+            app.UseCors("AllowAll");
+        }
+        
         // app.UseMiddleware<AuthenFilterHandlerMiddleware>();
         return Task.CompletedTask;
     }
