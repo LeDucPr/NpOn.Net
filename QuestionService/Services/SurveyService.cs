@@ -16,43 +16,58 @@ public class SurveyService(
     ILogger<CommonService> logger
 ) : CommonService(logger), ISurveyService
 {
-    public async Task<CommonResponse<string>> AddSurvey(SurveyAddCommand command)
+    public async Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand orUpdateCommand)
     {
         return await CommonProcess<string>(async (response) =>
         {
+            List<TblFldExecutionParam> queryParams =
+            [
+                new TblFldExecutionParam()
+                {
+                    ParamName = "title",
+                    StringValue = orUpdateCommand.Title
+                },
+                new TblFldExecutionParam()
+                {
+                    ParamName = "description",
+                    StringValue = orUpdateCommand.Description
+                },
+                new TblFldExecutionParam()
+                {
+                    ParamName = "is_published",
+                    StringValue = orUpdateCommand.IsPublished.AsDefaultString()
+                },
+                new TblFldExecutionParam()
+                {
+                    ParamName = "expired_at",
+                    StringValue = orUpdateCommand.ExpiredAt.AsDefaultString()
+                },
+            ];
+            
+            if (orUpdateCommand.Id != null)
+            {
+                queryParams.Add(new TblFldExecutionParam()
+                {
+                    ParamName = "id",
+                    StringValue = orUpdateCommand.Id
+                });
+            }
+
             var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = "user_answer_add",
-                QueryParams =
-                [
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "title",
-                        StringValue = command.Title
-                    },
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "description",
-                        StringValue = command.Description
-                    },
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "is_published",
-                        StringValue = command.IsPublished.AsDefaultString()
-                    },
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "expired_at",
-                        StringValue = command.ExpiredAt.AsDefaultString()
-                    },
-                ],
+                Code = orUpdateCommand.Id == null
+                    ? QuestionServiceQueryCode.UserAnswerAdd
+                    : QuestionServiceQueryCode.UserAnswerUpdate,
+                QueryParams = queryParams.ToArray(),
             });
+
             if (!addNewSurveyResponse.Status)
             {
                 response.SetFail(addNewSurveyResponse.ErrorMessages);
                 return;
             }
-            response.Data = "Add new survey success";
+
+            response.Data = orUpdateCommand.Id == null ? "Add new survey success" : "Update survey success";
             response.SetSuccess();
         });
     }

@@ -27,8 +27,9 @@ public class HostingApp(
         //     UserId = string.Empty,
         // })).Data;
         
-        // var testSurveyAdd = (await surveyService.AddSurvey(new SurveyAddCommand()
+        // var testSurveyAdd = (await surveyService.AddOrUpdateSurvey(new SurveyAddOrUpdateCommand()
         // {
+        //     Id = "5a5a6caf-db94-4d31-bb34-6fa2c9fcef73",
         //     Title = "Khảo sát mức độ hài lòng về dịch vụ khách hàng",
         //     Description = "Đây là một khảo sát ngắn nhằm thu thập ý kiến của khách hàng về chất lượng và trải nghiệm dịch vụ của chúng tôi trong quý 4 năm 2025.",
         //     IsPublished = true,

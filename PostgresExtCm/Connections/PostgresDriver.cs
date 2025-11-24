@@ -84,6 +84,7 @@ public class PostgresDriver : NpOnDbDriver
                         pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, DBNull.Value);
                         continue;
                     }
+
                     pgCommandParam.Parameters.Add(npgsqlParam.CreateNpgsqlParameter());
                 }
 
@@ -96,8 +97,6 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
-
-    
 
 
     public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
