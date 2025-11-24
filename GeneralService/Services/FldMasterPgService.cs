@@ -133,7 +133,7 @@ public class FldMasterPgService(
             }
             else if (tblFldObjectFirst is { Query: not null, ExecType: EExecType.Query })
             {
-                string queryString = tblFldObjectFirst.Query;
+                string execString = tblFldObjectFirst.Query;
                 List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
                 foreach (var paramObj in tblFldObjects)
                 {
@@ -152,9 +152,9 @@ public class FldMasterPgService(
                 try
                 {
                     if (parameters is { Count: > 0 })
-                        wrapperResult = await dbFactoryWrapper.ExecuteAsync(queryString, parameters);
+                        wrapperResult = await dbFactoryWrapper.ExecuteAsync(execString, parameters);
                     else
-                        wrapperResult = await dbFactoryWrapper.ExecuteAsync(queryString);
+                        wrapperResult = await dbFactoryWrapper.ExecuteAsync(execString);
                 }
                 catch (Exception)
                 {
