@@ -16,6 +16,7 @@ public class TblFldMasterQueryBuilder
             tbl.description AS query_desc,
             tbl.ExecFunc AS exec_func,
             tbl.Query AS query, 
+            tbl.exectype as exec_type,
             fld.id as fld_id, 
             fld.field_name as field_name, 
             fld.field_type as field_type, 

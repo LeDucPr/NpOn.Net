@@ -9,6 +9,7 @@
     <ItemGroup>
       <ProjectReference Include="..\CommonGrpcObject\CommonGrpcObject.csproj" />
       <ProjectReference Include="..\ObjectHandleFlow\ObjectHandleFlow.csproj" />
+      <ProjectReference Include="..\ProjectEnums\ProjectEnums.csproj" />
     </ItemGroup>
 
     <ItemGroup>

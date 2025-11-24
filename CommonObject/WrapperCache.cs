@@ -7,7 +7,7 @@ public class WrapperCache<TValue>
     public TValue Value { get; }
     private DateTime Expiration { get; }
 
-    private const int ExpiresInSecond = 60;
+    private const int ExpiresInSecond = 5;
 
     public WrapperCache(TValue value, TimeSpan? expiresIn = null)
     {

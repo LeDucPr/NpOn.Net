@@ -2,11 +2,9 @@
 using CommonGrpcObject;
 using CommonWebApplication.Services;
 using Enums;
-using IGeneralService;
 using IQuestionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.QueryObjects;
 using SSO.Mappings.Survey;
 using SSO.OutputModels;
