@@ -23,7 +23,7 @@ public class AuthenticationService(
             
             string pgQuery = "SELECT * FROM server_ctrl";
 
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteAsync(pgQuery);
             List<AccountInfoAliasTestObject>? accountObjects = resultOfQuery?
                 .GenericConverter(typeof(AccountInfoAliasTestObject))?
                 .Cast<AccountInfoAliasTestObject>()

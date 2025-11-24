@@ -1,6 +1,7 @@
 ﻿using CommonGrpcObject;
 using Enums;
 using ProtoBuf;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
 namespace QuestionServiceObject;
@@ -9,6 +10,7 @@ namespace QuestionServiceObject;
 [ProtoInclude(100, typeof(FaqQuery))]
 [ProtoInclude(200, typeof(QuestionGetBySurveyIdQuery))]
 [ProtoInclude(300, typeof(QuestionGetByUserIdAndSurveyIdQuery))]
+[ProtoInclude(400, typeof(SurveyAddCommand))]
 public abstract class BaseQuestionQuery : CommonAbsQuery
 {
     [ProtoMember(1)] public override bool Status { get; set; }

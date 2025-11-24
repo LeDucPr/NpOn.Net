@@ -76,7 +76,7 @@ public class CassandraDriver : NpOnDbDriver
         _mapper = null;
     }
 
-    public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         // 1. Guard Clauses: Kiểm tra trạng thái hợp lệ và đầu vào
         if (!IsValidSession || _session == null)

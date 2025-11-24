@@ -1,4 +1,5 @@
 using IQuestionService;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
 namespace QuestionService.Services;
@@ -19,10 +20,19 @@ public class HostingApp(
         //     {
         //         SurveyIdAsString = "'58555125-3746-4f94-9330-f84480094327'"
         //     })).Data;
+        
         // var testCC = (await surveyService.GetQuestionsByUserIdAndSurveyId(new QuestionGetByUserIdAndSurveyIdQuery
         // {
         //     SurveyId = string.Empty,
         //     UserId = string.Empty,
+        // })).Data;
+        
+        // var testSurveyAdd = (await surveyService.AddSurvey(new SurveyAddCommand()
+        // {
+        //     Title = "Khảo sát mức độ hài lòng về dịch vụ khách hàng",
+        //     Description = "Đây là một khảo sát ngắn nhằm thu thập ý kiến của khách hàng về chất lượng và trải nghiệm dịch vụ của chúng tôi trong quý 4 năm 2025.",
+        //     IsPublished = true,
+        //     ExpiredAt = DateTime.Now.AddDays(30),
         // })).Data;
     }
 

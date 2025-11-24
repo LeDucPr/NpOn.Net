@@ -50,7 +50,7 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         // Kiểm tra trạng thái kết nối hợp lệ.
         if (!IsValidSession || _connection == null)
@@ -84,17 +84,7 @@ public class PostgresDriver : NpOnDbDriver
                         pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, DBNull.Value);
                         continue;
                     }
-
-                    if (prm.ParamValue is string stringValue && Guid.TryParse(stringValue, out Guid guidValue))
-                        paramValue = guidValue;
-                    try
-                    {
-                        pgCommandParam.Parameters.AddWithValue(newKey, npgsqlParam.ParamType, paramValue);
-                    }
-                    catch (Exception)
-                    {
-                        return new PostgresResultSetWrapper().SetFail(EDbError.CommandParam);
-                    }
+                    pgCommandParam.Parameters.Add(npgsqlParam.CreateNpgsqlParameter());
                 }
 
                 await using var readerCmPrm = await pgCommandParam.ExecuteReaderAsync();
@@ -106,6 +96,9 @@ public class PostgresDriver : NpOnDbDriver
             return new PostgresResultSetWrapper().SetFail(ex);
         }
     }
+
+    
+
 
     public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
     {

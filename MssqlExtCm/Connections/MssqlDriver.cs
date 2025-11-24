@@ -50,7 +50,7 @@ public class MssqlDriver : NpOnDbDriver
         }
     }
 
-    public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         // Check for a valid connection state.
         if (!IsValidSession || _connection == null)

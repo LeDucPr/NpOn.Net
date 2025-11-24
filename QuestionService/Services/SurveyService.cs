@@ -1,10 +1,12 @@
 ﻿using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
+using CommonObject;
 using CommonWebApplication.Services;
 using GeneralServiceObject.QueryObjects;
 using IGeneralService;
 using IQuestionService;
 using ProjectEntry.QuestionEntries;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
 namespace QuestionService.Services;
@@ -14,16 +16,57 @@ public class SurveyService(
     ILogger<CommonService> logger
 ) : CommonService(logger), ISurveyService
 {
+    public async Task<CommonResponse<string>> AddSurvey(SurveyAddCommand command)
+    {
+        return await CommonProcess<string>(async (response) =>
+        {
+            var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
+            {
+                Code = "user_answer_add",
+                QueryParams =
+                [
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "title",
+                        StringValue = command.Title
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "description",
+                        StringValue = command.Description
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "is_published",
+                        StringValue = command.IsPublished.AsDefaultString()
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "expired_at",
+                        StringValue = command.ExpiredAt.AsDefaultString()
+                    },
+                ],
+            });
+            if (!addNewSurveyResponse.Status)
+            {
+                response.SetFail(addNewSurveyResponse.ErrorMessages);
+                return;
+            }
+            response.Data = "Add new survey success";
+            response.SetSuccess();
+        });
+    }
+
     public async Task<CommonResponse<INpOnGrpcObject>> GetQuestionsBySurveyId(QuestionGetBySurveyIdQuery query)
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            var surveyGetBy = await fldMasterPgService.Query(new TblFldQuery()
+            var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
                 Code = QuestionServiceQueryCode.QuestionsBySurveyId,
                 QueryParams =
                 [
-                    new TblFldQueryParam()
+                    new TblFldExecutionParam()
                     {
                         ParamName = "survey_id",
                         StringValue = query.SurveyId
@@ -31,10 +74,10 @@ public class SurveyService(
                 ],
             });
 
-            INpOnGrpcObject? questionGrpTable = surveyGetBy.Data;
-            if (!surveyGetBy.Status)
+            INpOnGrpcObject? questionGrpTable = questionGetBySurveyIdResponse.Data;
+            if (!questionGetBySurveyIdResponse.Status)
             {
-                response.SetFail(surveyGetBy.ErrorMessages);
+                response.SetFail(questionGetBySurveyIdResponse.ErrorMessages);
                 return;
             }
 
@@ -48,12 +91,12 @@ public class SurveyService(
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            var surveyGetBy = await fldMasterPgService.Query(new TblFldQuery()
+            var surveyGetBy = await fldMasterPgService.Execute(new TblFldExecution()
             {
                 Code = "sp_dyn_patient_rank_search",
                 QueryParams =
                 [
-                    new TblFldQueryParam()
+                    new TblFldExecutionParam()
                     {
                         ParamName = "json_object_data",
                         // StringValue = query.SurveyId
