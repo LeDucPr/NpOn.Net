@@ -21,6 +21,7 @@
       <ProjectReference Include="..\DbFactory\DbFactory.csproj" />
       <ProjectReference Include="..\HandleFlow\HandleFlow.csproj" />
       <ProjectReference Include="..\IQuestionService\IQuestionService.csproj" />
+      <ProjectReference Include="..\ProjectEntry\ProjectEntry.csproj" />
     </ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@ using CommonWebApplication.Services;
 using GeneralServiceObject.QueryObjects;
 using IGeneralService;
 using IQuestionService;
+using ProjectEntry.QuestionEntries;
 using QuestionServiceObject.QueryObjects;
 
 namespace QuestionService.Services;
@@ -19,7 +20,7 @@ public class SurveyService(
         {
             var surveyGetBy = await fldMasterPgService.Query(new TblFldQuery()
             {
-                Code = "questions_by_survey_id",
+                Code = QuestionServiceQueryCode.QuestionsBySurveyId,
                 QueryParams =
                 [
                     new TblFldQueryParam()
@@ -39,6 +40,14 @@ public class SurveyService(
 
             response.Data = questionGrpTable;
             response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(SurveyGetAllQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            
         });
     }
 }
