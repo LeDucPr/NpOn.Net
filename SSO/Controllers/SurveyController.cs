@@ -1,7 +1,9 @@
-﻿using AccountServiceObject.QueryObjects;
+﻿using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
 using CommonWebApplication.Services;
 using Enums;
+using GeneralServiceObject.QueryObjects;
+using IGeneralService;
 using IQuestionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +11,16 @@ using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.QueryObjects;
 using SSO.OutputModels;
 using SSO.Requests;
+using SSO.ServiceModels;
+using SSO.ServiceModels.Survey;
 
 namespace SSO.Controllers;
 
 public class SurveyController(
     ILogger<AccountController> logger,
     ContextService contextService,
-    ISurveyService surveyService
+    ISurveyService surveyService, 
+    IFldMasterPgService fldMasterPgService
 ) : BaseSsoController(logger, contextService)
 {
     [AllowAnonymous]
@@ -41,7 +46,7 @@ public class SurveyController(
                 return;
             }
 
-            List<OutputModels.SurveyModel>? questionModels = questions?.Select(x => new OutputModels.SurveyModel()
+            List<SurveyModel>? questionModels = questions?.Select(_ => new SurveyModel()
             {
                 SurveyId = "20000001-1001-1001-1001-100000000001",
                 Title = "Đánh giá nguy cơ phụ thuộc thuốc cắt cơn",
@@ -69,14 +74,14 @@ public class SurveyController(
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow
                         },
-                        Answers = new[]
-                        {
+                        Answers =
+                        [
                             new AnswerModel { AnswerId = "a1-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Hoàn toàn không đồng ý", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
                             new AnswerModel { AnswerId = "a2-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Không đồng ý", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
                             new AnswerModel { AnswerId = "a3-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Không chắc", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
                             new AnswerModel { AnswerId = "a4-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Đồng ý", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
                             new AnswerModel { AnswerId = "a5-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Hoàn toàn đồng ý", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
+                        ]
                     },
 
                     // CÂU 2
@@ -224,6 +229,48 @@ public class SurveyController(
             response.Data = new
             {
                 Models = questionModels,
+            };
+            response.SetSuccess();
+        });
+    }
+    
+    
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> QuestionGetBySurvey222([FromBody] QuestionGetBySurveyIdRequest? request)
+    {   
+        return await ProcessRequest<object>(async (response) =>
+        {
+            if (request == null)
+            {
+                response.SetFail(EErrorCode.NullRequestExceptions);
+                return;
+            }
+
+            var surveyGetBy = await fldMasterPgService.Query(new TblFldQuery()
+            {
+                Code = "questions_by_survey_id", 
+                QueryParams = [
+                    new TblFldQueryParam()
+                    {
+                        ParamName = "survey_id", 
+                        StringValue =  request.SurveyId
+                    }
+                ],
+            });
+            
+            INpOnGrpcObject? questions = surveyGetBy.Data;
+            if (!surveyGetBy.Status)
+            {
+                response.SetFail(surveyGetBy.ErrorMessages);
+                return;
+            }
+
+            var cc = questions?.ConverterToChildOfSsoModel(typeof(QuestionGetBySurveyModel));
+
+            response.Data = new
+            {
+                Models = "ccccccccccc", ////////// ????????????????
             };
             response.SetSuccess();
         });
