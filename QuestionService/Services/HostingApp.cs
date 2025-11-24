@@ -1,4 +1,5 @@
 using IQuestionService;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
 namespace QuestionService.Services;
@@ -6,7 +7,7 @@ namespace QuestionService.Services;
 public class HostingApp(
     ILogger<HostingApp> logger,
     IFaqService faqService,
-    IQuestionService.ISurveyService surveyService
+    ISurveyService surveyService
 ) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -19,6 +20,21 @@ public class HostingApp(
         //     {
         //         SurveyIdAsString = "'58555125-3746-4f94-9330-f84480094327'"
         //     })).Data;
+        
+        // var testCC = (await surveyService.GetQuestionsByUserIdAndSurveyId(new QuestionGetByUserIdAndSurveyIdQuery
+        // {
+        //     SurveyId = string.Empty,
+        //     UserId = string.Empty,
+        // })).Data;
+        
+        // var testSurveyAdd = (await surveyService.AddOrUpdateSurvey(new SurveyAddOrUpdateCommand()
+        // {
+        //     Id = "5a5a6caf-db94-4d31-bb34-6fa2c9fcef73",
+        //     Title = "Khảo sát mức độ hài lòng về dịch vụ khách hàng",
+        //     Description = "Đây là một khảo sát ngắn nhằm thu thập ý kiến của khách hàng về chất lượng và trải nghiệm dịch vụ của chúng tôi trong quý 4 năm 2025.",
+        //     IsPublished = true,
+        //     ExpiredAt = DateTime.Now.AddDays(30),
+        // })).Data;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

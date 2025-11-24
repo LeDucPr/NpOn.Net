@@ -49,7 +49,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
 
     public string? FactoryOptionCode => _factory?.DriverOptionKey;
 
-    public async Task<INpOnWrapperResult?> QueryAsync(string queryString)
+    public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString)
     {
         if (_factory == null) return null;
         if (_factory.FirstValidConnection == null)
@@ -59,7 +59,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         try
         {
             INpOnDbCommand command = new NpOnDbCommand(_dbType, queryString);
-            INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Query(command).GetAwaiter().GetResult();
+            INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Execute(command).GetAwaiter().GetResult();
             return result;
         }
         catch (Exception)
@@ -68,7 +68,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         }
     }
 
-    public async Task<INpOnWrapperResult?> QueryAsync(string queryString, List<NpOnDbCommandParam> parameters)
+    public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters)
     {
         if (_factory == null) return null;
         if (_factory.FirstValidConnection == null)
@@ -78,7 +78,7 @@ public class DbFactoryWrapper : IDbFactoryWrapper
         try
         {
             INpOnDbCommand command = new NpOnDbCommand(_dbType, queryString, parameters);
-            INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Query(command).GetAwaiter().GetResult();
+            INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Execute(command).GetAwaiter().GetResult();
             return result;
         }
         catch (Exception)

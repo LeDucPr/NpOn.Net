@@ -6,7 +6,7 @@ using ProtoBuf;
 namespace GeneralServiceObject;
 
 [ProtoContract]
-[ProtoInclude(100, typeof(TblFldQuery))]
+[ProtoInclude(100, typeof(TblFldExecution))]
 public abstract class BaseGeneralQuery : CommonAbsQuery
 {
     [ProtoMember(1)] public override bool Status { get; set; }

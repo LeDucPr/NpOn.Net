@@ -1,6 +1,7 @@
 ﻿using CommonGrpcObject;
 using System.ServiceModel;
 using CommonDb.DbResults.Grpc;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
 namespace IQuestionService;
@@ -9,5 +10,11 @@ namespace IQuestionService;
 public interface ISurveyService
 {
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> GetQuestionsBySurveyId(SurveyGetAllQuery query);
+    Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand orUpdateCommand);
+    
+    [OperationContract]
+    Task<CommonResponse<INpOnGrpcObject>> GetQuestionsBySurveyId(QuestionGetBySurveyIdQuery query);
+
+    [OperationContract]
+    Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(QuestionGetByUserIdAndSurveyIdQuery query);
 }

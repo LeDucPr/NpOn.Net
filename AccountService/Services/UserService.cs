@@ -79,7 +79,7 @@ public class UserService(
                     ParamType = NpgsqlDbType.Uuid,
                 }
             ];
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery, param);
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteAsync(pgQuery, param);
             List<AccountInfoAliasTestObject>? accountObjects = resultOfQuery?
                 .GenericConverter(typeof(AccountInfoAliasTestObject))?
                 .Cast<AccountInfoAliasTestObject>()
@@ -103,7 +103,7 @@ public class UserService(
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
             string pgQuery = "Select * from server_ctrl";
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteAsync(pgQuery);
             var ctrl = resultOfQuery?.GenericConverter(typeof(AccountLoginInfoObject));
 
             if (!(resultOfQuery is INpOnTableWrapper tableWrapper))

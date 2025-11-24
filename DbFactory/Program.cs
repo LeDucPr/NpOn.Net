@@ -54,7 +54,7 @@ class Program
             // INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT name, database_id, create_date FROM sys.databases;");
             INpOnDbCommand command = new NpOnDbCommand(EDb.Mssql, "SELECT * FROM dealer where id = '04010'");
             Console.WriteLine($"Executing query: {command.CommandText}\n");
-            var result = await driver.Query(command);
+            var result = await driver.Execute(command);
 
             PrintMssqlTable(result);
             Console.WriteLine($"Time query(ms): {result.QueryTimeMilliseconds}");
@@ -156,7 +156,7 @@ class Program
 
             INpOnDbCommand command = new NpOnDbCommand(EDb.Postgres, "select * from connection_ctrl;");
             Console.WriteLine($"Executing query: {command.CommandText}\n");
-            var result = await driver.Query(command);
+            var result = await driver.Execute(command);
 
             PrintPostgresTable(result);
         }
@@ -280,7 +280,7 @@ class Program
 
         INpOnDbCommand command = MongoCommand.Create("{ }");
         Console.WriteLine($"Executing query: {command.CommandText}\n");
-        var result = await driver.Query(command);
+        var result = await driver.Execute(command);
 
         if (result is MongoResultSetWrapper mongoResult)
         {
@@ -369,7 +369,7 @@ class Program
             CancellationToken newToken = CancellationToken.None;
             await firstConnection?.Driver.ConnectAsync(newToken)!;
             INpOnDbCommand availableCommand = new NpOnDbCommand(EDb.Cassandra, "select * from SEMAST limit 10");
-            var availableResult = await firstConnection.Driver.Query(availableCommand);
+            var availableResult = await firstConnection.Driver.Execute(availableCommand);
             var af = availableResult.Status;
             if (af)
             {
@@ -419,7 +419,7 @@ class Program
 
             INpOnDbCommand command = new NpOnDbCommand(EDb.Cassandra, "select * from SEMAST limit 10");
 
-            var a = await connection.Driver.Query(command);
+            var a = await connection.Driver.Execute(command);
         }
     }
 

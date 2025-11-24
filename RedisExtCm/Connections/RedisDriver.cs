@@ -48,7 +48,7 @@ public class RedisDriver : NpOnDbDriver
         }
     }
 
-    public override Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    public override Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         return Task.FromResult<INpOnWrapperResult>(
             new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.CommandNotSupported));

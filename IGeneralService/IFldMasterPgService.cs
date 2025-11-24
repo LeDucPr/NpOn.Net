@@ -10,8 +10,8 @@ namespace IGeneralService;
 public interface IFldMasterPgService
 {
     [OperationContract]
-    Task<CommonResponse<List<TblFldObject>>> GetQuery(TblFldQuery query);
+    Task<CommonResponse<List<TblFldObject>>> GetExecution(TblFldExecution execution);
 
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> Query(TblFldQuery query);
+    Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecution execution);
 }

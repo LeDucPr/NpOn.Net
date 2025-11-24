@@ -15,6 +15,8 @@ public class TblFldMasterQueryBuilder
             tbl.ExecFunc AS exec_func,
             tbl.Query AS query, 
             tbl.exectype as exec_type,
+            tbl.service_name as service_name,
+            tbl.db_type as db_type,
             fld.id as fld_id, 
             fld.field_name as field_name, 
             fld.field_type as field_type, 
