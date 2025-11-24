@@ -184,31 +184,31 @@ public class PostgresDriver : NpOnDbDriver
                     Value = value
                 };
 
-                if (value != DBNull.Value)
-                {
-                    var valueType = value.GetType();
-                    var npgsqlDbType = valueType.ToNpgsqlDbType(); // ?? ưu tiên 
-                    if (npgsqlDbType.HasValue)
-                        npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
-                    switch (npgsqlDbType)
-                    {
-                        case NpgsqlDbType.Json when value is JToken jTokenValue:
-                            npgsqlParam.Value = jTokenValue.ToString(Formatting.None);
-                            break;
-                        case NpgsqlDbType.Json:
-                        {
-                            if (value is System.Text.Json.JsonDocument jsonDocumentValue)
-                            {
-                                npgsqlParam.Value = jsonDocumentValue.RootElement.ToString();
-                            }
-
-                            break;
-                        }
-                        case null:
-                            npgsqlParam.DbType = valueType.ToDbType();
-                            break;
-                    }
-                }
+                // if (value != DBNull.Value)
+                // {
+                //     var valueType = value.GetType();
+                //     var npgsqlDbType = valueType.ToNpgsqlDbType(); // ?? ưu tiên 
+                //     if (npgsqlDbType.HasValue)
+                //         npgsqlParam.NpgsqlDbType = npgsqlDbType.Value;
+                //     switch (npgsqlDbType)
+                //     {
+                //         case NpgsqlDbType.Json when value is JToken jTokenValue:
+                //             npgsqlParam.Value = jTokenValue.ToString(Formatting.None);
+                //             break;
+                //         case NpgsqlDbType.Json:
+                //         {
+                //             if (value is System.Text.Json.JsonDocument jsonDocumentValue)
+                //             {
+                //                 npgsqlParam.Value = jsonDocumentValue.RootElement.ToString();
+                //             }
+                //
+                //             break;
+                //         }
+                //         case null:
+                //             npgsqlParam.DbType = valueType.ToDbType();
+                //             break;
+                //     }
+                // }
                 pgCommand.Parameters.Add(npgsqlParam);
             }
 

@@ -33,9 +33,9 @@ public class SurveyController(
                 return;
             }
 
-            var surveyGetBy = await surveyService.GetQuestionsBySurveyId(new SurveyGetAllQuery()
+            var surveyGetBy = await surveyService.GetQuestionsBySurveyId(new QuestionGetBySurveyIdQuery()
             {
-                SurveyIdAsString = request.SurveyId
+                SurveyId = request.SurveyId
             });
 
             INpOnGrpcObject? questions = surveyGetBy.Data;
