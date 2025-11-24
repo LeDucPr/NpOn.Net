@@ -42,4 +42,12 @@ public class SurveyService(
             response.SetSuccess();
         });
     }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(SurveyGetAllQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            
+        });
+    }
 }
