@@ -8,63 +8,61 @@ public static class SurveyModelMapping
 {
     public static SurveyModel? ToSurveyModel(this List<QuestionGetBySurveyModel>? flatData)
     {
-        if (flatData == null || flatData.Count == 0)
+        if (flatData == null || !flatData.Any())
         {
             return null;
         }
 
-        // 1. Lấy thông tin Survey từ dòng đầu tiên
         var firstRow = flatData.First();
 
-        // 2. Group dữ liệu theo Question (vì Answer lặp lại Question)
-        var groupedByQuestion = flatData
+        var questions = flatData
             .GroupBy(row => row.QuestionId)
-            .ToList();
-
-        // 3. Xây dựng các Question Model
-        var questions = groupedByQuestion.Select(questionGroup =>
-        {
-            var questionRow = questionGroup.First(); // Lấy thông tin Question từ dòng đầu tiên của nhóm
-
-            return new QuestionSimpleModel
+            .Select(questionGroup =>
             {
-                QuestionId = questionRow.QuestionId.AsDefaultString(),
-                QuestionText = questionRow.QuestionQuestionText,
-                QuestionOrder = questionRow.QuestionQuestionOrder.GetValueOrDefault(),
-                IsRequired = questionRow.QuestionIsRequired.GetValueOrDefault(),
-                CreatedAt = questionRow.QuestionCreatedAt.GetValueOrDefault(),
-                UpdatedAt = questionRow.QuestionUpdatedAt.GetValueOrDefault(),
+                var questionRow = questionGroup.First();
 
-                // Options = new QuestionOptionModel
-                // {
-                //     QuestionOptionId = Guid.Empty // Placeholder
-                // },
+                return new QuestionSimpleModel
+                {
+                    QuestionId = questionRow.QuestionId.AsDefaultString(),
+                    SurveyId = firstRow.SurveyId.AsDefaultString(),
+                    QuestionText = questionRow.QuestionQuestionText,
+                    QuestionOrder = questionRow.QuestionQuestionOrder.GetValueOrDefault(),
+                    IsRequired = questionRow.QuestionIsRequired.GetValueOrDefault(),
+                    CreatedAt = questionRow.QuestionCreatedAt.GetValueOrDefault(),
+                    UpdatedAt = questionRow.QuestionUpdatedAt.GetValueOrDefault(),
 
-                // Xây dựng Answer Model từ các dòng trong nhóm Question
-                Answers = questionGroup
-                    .Where(a => a.AnswerId.HasValue) // Lọc những dòng có Answer (không phải câu hỏi dạng text)
-                    .Select(answerRow => new AnswerModel
+                    Options = new QuestionOptionModel
                     {
-                        AnswerId = answerRow.AnswerId.AsDefaultString(),
-                        Description = answerRow.AnswerDescription,
-                        OrderSort = answerRow.AnswerOrderSort.GetValueOrDefault(),
-                        Score = answerRow.AnswerScore.GetValueOrDefault(),
-                        CreatedAt = answerRow.AnswerCreatedAt.GetValueOrDefault(),
-                        QuestionId = questionRow.QuestionId.AsDefaultString(),
-                    })
-                    .ToArray(),
-                SurveyId = firstRow.SurveyId.AsDefaultString(),
-                Options = null,
-            };
-        }).ToArray();
+                        QuestionOptionId = questionRow.QuestionOptionId.AsDefaultString(),
+                        Code = questionRow.QuestionOptionCode,
+                        Description = questionRow.QuestionOptionDescription,
+                        CreatedAt = default, 
+                        UpdatedAt = default
+                    },
 
-        // 4. Xây dựng Survey Model cuối cùng
+                    Answers = questionGroup
+                        .Where(a => a.AnswerId.HasValue)
+                        .Select(answerRow => new AnswerModel
+                        {
+                            AnswerId = answerRow.AnswerId.AsDefaultString(),
+                            QuestionId = questionRow.QuestionId.AsDefaultString(),
+                            Description = answerRow.AnswerDescription,
+                            OrderSort = answerRow.AnswerOrderSort.GetValueOrDefault(),
+                            Score = answerRow.AnswerScore.GetValueOrDefault(),
+                            CreatedAt = answerRow.AnswerCreatedAt.GetValueOrDefault(),
+                        })
+                        .DistinctBy(a => a.AnswerId)
+                        .ToArray(),
+                };
+            })
+            .OrderBy(q => q.QuestionOrder)
+            .ToArray();
+
         return new SurveyModel
         {
             SurveyId = firstRow.SurveyId.AsDefaultString(),
             Title = firstRow.SurveyTitle,
             Description = firstRow.SurveyDescription,
-            // IsPublished = firstRow.SurveyIsPublished.AsDefaultBool(),
             CreatedAt = firstRow.SurveyCreatedAt.GetValueOrDefault(),
             ExpiredAt = firstRow.SurveyExpiredAt.GetValueOrDefault(),
             UpdatedAt = firstRow.SurveyUpdatedAt.GetValueOrDefault(),

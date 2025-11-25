@@ -6,200 +6,191 @@ using IQuestionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using QuestionServiceObject.BusinessObjects;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 using SSO.Mappings.Survey;
-using SSO.OutputModels;
 using SSO.Requests;
 using SSO.ServiceModels;
 using SSO.ServiceModels.Survey;
+using Newtonsoft.Json;
 
 namespace SSO.Controllers;
 
 public class SurveyController(
     ILogger<AccountController> logger,
     ContextService contextService,
-    ISurveyService surveyService
-) : BaseSsoController(logger, contextService)
+    ISurveyService surveyService)
+    : BaseSsoController(logger, contextService)
 {
+    private readonly ContextService _contextService = contextService;
+
     /// <summary>
     /// API 1: Lấy toàn bộ survey với full question và answer
     /// </summary>
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> QuestionGetBySurvey(
-        [FromBody] QuestionGetBySurveyIdRequest? request)
+    public async Task<CommonApiResponse<object>> GetSurveyDetail([FromBody] QuestionGetBySurveyIdRequest? request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
-            var httpRequest = this.HttpContext.Request;
-
-            // // --- Lấy các thông tin cơ bản của Request ---
-            // var method = httpRequest.Method; // Ví dụ: "POST"
-            // var path = httpRequest.Path; // Ví dụ: "/api/Question/QuestionGetBySurvey"
-            // var queryString = httpRequest.QueryString.ToString(); // Ví dụ: "?id=123"
-            //
-            // // --- Lấy thông tin Header ---
-            // // Log tất cả headers
-            // var headers = string.Join(", ", httpRequest.Headers.Select(h => $"{h.Key}: {h.Value}"));
-            //
-            // // Log thông tin đã lấy được
-            // Console.WriteLine($"\n--- Request Details ---");
-            // Console.WriteLine($"Method: {method}");
-            // Console.WriteLine($"Path: {path}");
-            // Console.WriteLine($"Query String: {queryString}");
-            // Console.WriteLine($"Headers: {headers}");
-            // Console.WriteLine($"Body (đã deserialize): {System.Text.Json.JsonSerializer.Serialize(request)}"); 
-            // // ...
-            
             if (request == null)
             {
-                response.SetFail(EErrorCode.NullRequestExceptions);
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
                 return;
             }
 
-            var surveyGetBy = await surveyService.GetQuestionsBySurveyId(new QuestionGetBySurveyIdQuery()
+            var surveyGetResponse = await surveyService.GetQuestionsBySurveyId(new QuestionGetBySurveyIdQuery()
             {
                 SurveyId = request.SurveyId
             });
 
-            INpOnGrpcObject? questions = surveyGetBy.Data;
-            if (!surveyGetBy.Status)
+            if (!surveyGetResponse.Status)
             {
-                response.SetFail(surveyGetBy.ErrorMessages);
+                response.SetFail(surveyGetResponse.ErrorMessages);
                 return;
             }
 
-            List<QuestionGetBySurveyModel>? questionGetBySurveyModels = questions
+            List<QuestionGetBySurveyModel>? models = surveyGetResponse.Data
                 ?.ConverterToChildOfSsoModel(typeof(QuestionGetBySurveyModel))?
-                .Cast<QuestionGetBySurveyModel>()
+                .OfType<QuestionGetBySurveyModel>()
                 .ToList();
 
-
-            SurveyModel? outputModel = questionGetBySurveyModels.ToSurveyModel();
-
-            response.Data = new
-            {
-                Models = outputModel,
-            };
+            response.Data = new { Models = models.ToSurveyModel() };
             response.SetSuccess();
         });
     }
 
     /// <summary>
-    /// API 2: Submit survey responses sau khi user lựa chọn
+    /// API 2: User gửi các câu trả lời của một bài khảo sát
     /// </summary>
     [Authorize]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> SubmitSurveyResponse(
-        [FromBody] SubmitSurveyRequest? request)
+    public async Task<CommonApiResponse<object>> SubmitAnswers([FromBody] SubmitSurveyRequest? request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
             if (request == null)
             {
-                response.SetFail(EErrorCode.NullRequestExceptions);
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
                 return;
             }
 
-            // Get user info if available
-            var userInfo = contextService.UserInfo();
-            var userId = request.UserId ?? userInfo?.Id.ToString();
-
-            // Calculate total score first
-            var calculateScoreQuery = new CalculateSurveyScoreQuery
+            var userId = _contextService.GetSessionKey();
+            if (string.IsNullOrEmpty(userId))
             {
+                response.SetFail("User is not authenticated or session key is missing.", EErrorCode.UserNotFound);
+                return;
+            }
+
+            var command = new SubmitSurveyCommand
+            {
+                UserId = userId,
                 SurveyId = request.SurveyId,
-                Answers = request.Answers.Select(a => new SubmitAnswerQuery
+                Answers = request.Answers.Select(a => new SubmissionAnswer
                 {
                     QuestionId = a.QuestionId,
-                    SelectedOptionIds = a.SelectedOptionIds ?? []
+                    AnswerIds = a.SelectedOptionIds ?? new List<string>(),
+                    TextAnswer = a.TextAnswer
                 }).ToList()
             };
 
-            var scoreResult = await surveyService.CalculateSurveyScore(calculateScoreQuery);
-            if (!scoreResult.Status)
-            {
-                response.SetFail(scoreResult.ErrorMessages);
-                return;
-            }
+            var submitResult = await surveyService.SubmitAnswers(command);
 
-            // Submit survey with calculated score
-            var submitCommand = new QuestionServiceObject.CommandObjects.SubmitSurveyCommand
-            {
-                SurveyId = request.SurveyId,
-                UserId = userId,
-                Answers = request.Answers.Select((a, index) => new QuestionServiceObject.CommandObjects.SubmitAnswerCommand
-                {
-                    QuestionId = a.QuestionId,
-                    TextAnswer = a.TextAnswer,
-                    SelectedOptionIds = a.SelectedOptionIds ?? [],
-                    ScoreEarned = scoreResult.Data?.QuestionScores[index].ScoreEarned ?? 0
-                }).ToList(),
-                TotalScore = scoreResult.Data?.TotalScore ?? 0,
-                SubmittedAt = DateTime.UtcNow
-            };
-
-            var submitResult = await surveyService.SubmitSurvey(submitCommand);
             if (!submitResult.Status)
             {
                 response.SetFail(submitResult.ErrorMessages);
                 return;
             }
 
-            response.Data = new
-            {
-                Message = submitResult.Data,
-                Score = scoreResult.Data?.TotalScore,
-                ResultCategory = scoreResult.Data?.ResultCategory
-            };
+            response.Data = new { Message = submitResult.Data };
             response.SetSuccess();
         });
     }
 
     /// <summary>
-    /// API 3: Tính điểm sau khi user lựa chọn
+    /// API 3: Tính điểm và lấy kết quả cuối cùng của một bài khảo sát cho user
     /// </summary>
-    [AllowAnonymous]
+    [Authorize]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> CalculateSurveyScore(
-        [FromBody] CalculateSurveyScoreRequest? request)
+    public async Task<CommonApiResponse<object>> GetSurveyOutcome([FromBody] GetSurveyOutcomeRequest? request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
             if (request == null)
             {
-                response.SetFail(EErrorCode.NullRequestExceptions);
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
+                return;
+            }
+            
+            var userId = _contextService.GetSessionKey();
+            if (string.IsNullOrEmpty(userId))
+            {
+                response.SetFail("User is not authenticated or session key is missing.", EErrorCode.UserNotFound);
                 return;
             }
 
-            var calculateQuery = new CalculateSurveyScoreQuery
+            // Step 1: Calculate score
+            var scoreQuery = new CalculateSurveyScoreQuery
             {
-                SurveyId = request.SurveyId,
-                Answers = request.Answers.Select(a => new SubmitAnswerQuery
-                {
-                    QuestionId = a.QuestionId,
-                    SelectedOptionIds = a.SelectedOptionIds ?? []
-                }).ToList()
+                UserId = userId,
+                SurveyId = request.SurveyId
             };
+            var scoreResponse = await surveyService.CalculateScore(scoreQuery);
 
-            var scoreResult = await surveyService.CalculateSurveyScore(calculateQuery);
-            if (!scoreResult.Status)
+            if (!scoreResponse.Status)
             {
-                response.SetFail(scoreResult.ErrorMessages);
+                response.SetFail(scoreResponse.ErrorMessages);
                 return;
             }
+            var totalScore = scoreResponse.Data;
 
-            response.Data = new
+            // Step 2: Get possible outcomes as raw data
+            if (request.SurveyId != null)
             {
-                TotalScore = scoreResult.Data?.TotalScore,
-                ResultCategory = scoreResult.Data?.ResultCategory,
-                QuestionScores = scoreResult.Data?.QuestionScores?.Select(qs => new
+                var outcomesResponse = await surveyService.GetSurveyOutcomes(request.SurveyId);
+                if (!outcomesResponse.Status)
                 {
-                    QuestionId = qs.QuestionId,
-                    ScoreEarned = qs.ScoreEarned,
-                    MaxScore = qs.MaxScore
-                }).ToList()
-            };
+                    response.SetFail(outcomesResponse.ErrorMessages);
+                    return;
+                }
+
+                // Step 3: Manually convert the raw INpOnGrpcObject to a list of SurveyOutcomeObject
+                var outcomes = new List<SurveyOutcomeObject>();
+                if (outcomesResponse.Data is NpOnGrpcTable { Rows: not null } table)
+                {
+                    foreach (var row in table.Rows.Values)
+                    {
+                        // Convert row cells to a dictionary
+                        var rowDict = row.Cells.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetValue<object>());
+                        // Serialize dictionary to JSON, then deserialize to the target object
+                        var json = JsonConvert.SerializeObject(rowDict);
+                        var outcome = JsonConvert.DeserializeObject<SurveyOutcomeObject>(json);
+                        if (outcome != null)
+                        {
+                            outcomes.Add(outcome);
+                        }
+                    }
+                }
+
+                if (!outcomes.Any())
+                {
+                    response.SetFail("No outcomes configured for this survey.", EErrorCode.NotFound);
+                    return;
+                }
+
+                // Step 4: Find the matching outcome in the controller
+                SurveyOutcomeObject? finalOutcome = outcomes
+                    .FirstOrDefault(o => totalScore >= o.MinScore && (o.MaxScore == null || totalScore <= o.MaxScore));
+
+                if (finalOutcome == null)
+                {
+                    response.SetFail("No matching outcome found for the calculated score.", EErrorCode.NotFound);
+                    return;
+                }
+
+                response.Data = finalOutcome;
+            }
+
             response.SetSuccess();
         });
     }

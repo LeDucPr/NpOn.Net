@@ -1,14 +1,14 @@
-﻿using CommonDb.DbResults.Grpc;
-using CommonGrpcObject;
-using CommonObject;
+﻿using CommonGrpcObject;
 using CommonWebApplication.Services;
-using GeneralServiceObject.QueryObjects;
 using IGeneralService;
 using IQuestionService;
-using ProjectEntry.QuestionEntries;
-using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.CommandObjects;
+using GeneralServiceObject.QueryObjects;
+using Enums;
 using QuestionServiceObject.QueryObjects;
+using CommonDb.DbResults.Grpc;
+using ProjectEnums.FldMasterEnums;
+using CommonObject;
 
 namespace QuestionService.Services;
 
@@ -23,42 +23,21 @@ public class SurveyService(
         {
             List<TblFldExecutionParam> queryParams =
             [
-                new TblFldExecutionParam()
-                {
-                    ParamName = "title",
-                    StringValue = addOrUpdateCommand.Title
-                },
-                new TblFldExecutionParam()
-                {
-                    ParamName = "description",
-                    StringValue = addOrUpdateCommand.Description
-                },
-                new TblFldExecutionParam()
-                {
-                    ParamName = "is_published",
-                    StringValue = addOrUpdateCommand.IsPublished.AsDefaultString()
-                },
-                new TblFldExecutionParam()
-                {
-                    ParamName = "expired_at",
-                    StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString()
-                },
+                new TblFldExecutionParam() { ParamName = "title", StringValue = addOrUpdateCommand.Title },
+                new TblFldExecutionParam() { ParamName = "description", StringValue = addOrUpdateCommand.Description },
+                new TblFldExecutionParam() { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
+                new TblFldExecutionParam() { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
             ];
             
             if (addOrUpdateCommand.Id != null)
             {
-                queryParams.Add(new TblFldExecutionParam()
-                {
-                    ParamName = "id",
-                    StringValue = addOrUpdateCommand.Id
-                });
+                queryParams.Add(new TblFldExecutionParam() { ParamName = "id", StringValue = addOrUpdateCommand.Id });
             }
 
+            // This call is correct as it executes an INSERT/UPDATE
             var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = addOrUpdateCommand.Id == null
-                    ? QuestionServiceQueryCode.UserAnswerAdd
-                    : QuestionServiceQueryCode.UserAnswerUpdate,
+                Code = addOrUpdateCommand.Id == null ? FldMasterCodes.SurveyAdd : FldMasterCodes.SurveyUpdate,
                 QueryParams = queryParams.ToArray(),
             });
 
@@ -77,235 +56,135 @@ public class SurveyService(
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
+            // This call should execute the query to get data
             var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = QuestionServiceQueryCode.QuestionsBySurveyId,
-                QueryParams =
-                [
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "survey_id",
-                        StringValue = query.SurveyId
-                    }
-                ],
+                Code = FldMasterCodes.QuestionsBySurveyId,
+                QueryParams = [ new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId } ],
             });
 
-            INpOnGrpcObject? questionGrpTable = questionGetBySurveyIdResponse.Data;
             if (!questionGetBySurveyIdResponse.Status)
             {
                 response.SetFail(questionGetBySurveyIdResponse.ErrorMessages);
                 return;
             }
 
-            response.Data = questionGrpTable;
+            response.Data = questionGetBySurveyIdResponse.Data;
             response.SetSuccess();
         });
     }
-
-    public async Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(
-        QuestionGetByUserIdAndSurveyIdQuery query)
-    {
-        return await CommonProcess<INpOnGrpcObject>(async (response) =>
-        {
-            var surveyGetBy = await fldMasterPgService.Execute(new TblFldExecution()
-            {
-                Code = "sp_dyn_patient_rank_search",
-                QueryParams =
-                [
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "json_object_data",
-                        // StringValue = query.SurveyId
-                        StringValue = @"{
-                              ""full_name"": """",
-                              ""username"": """",
-                              ""from_date"": ""2025-11-07T00:00:00"",
-                              ""to_date"": ""2025-11-14T23:59:59"",
-                              ""mobile_phone"": """",
-                              ""gender"": """",
-                              ""province_rcd"": """",
-                              ""district_rcd"": """",
-                              ""commune_rcd"": """",
-                              ""standard_account_id"": ""12fbd6a7-978b-4e7f-98bc-43c21684b371"",
-                              ""master_account_id"": null,
-                              ""province_account_rcd"": """",
-                              ""rank_type"": null,
-                              ""page"": 1,
-                              ""pageSize"": 1
-                            }"
-                    }
-                ],
-            });
-
-            INpOnGrpcObject? questionGrpTable = surveyGetBy.Data;
-            if (!surveyGetBy.Status)
-            {
-                response.SetFail(surveyGetBy.ErrorMessages);
-                return;
-            }
-
-            response.Data = questionGrpTable;
-            response.SetSuccess();
-        });
-    }
-
-    public async Task<CommonResponse<string>> SubmitSurvey(SubmitSurveyCommand command)
+    
+    public async Task<CommonResponse<string>> SubmitAnswers(SubmitSurveyCommand command)
     {
         return await CommonProcess<string>(async (response) =>
         {
-            // Validate request
-            if (string.IsNullOrEmpty(command.SurveyId) || command.Answers.Count == 0)
+            foreach (var answer in command.Answers)
             {
-                response.SetFail("Survey ID and answers are required");
-                return;
-            }
-
-            try
-            {
-                // Create submission record
-                List<TblFldExecutionParam> queryParams =
-                [
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "survey_id",
-                        StringValue = command.SurveyId
-                    },
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "user_id",
-                        StringValue = command.UserId ?? Guid.NewGuid().ToString()
-                    },
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "total_score",
-                        StringValue = command.TotalScore.ToString()
-                    },
-                    new TblFldExecutionParam()
-                    {
-                        ParamName = "submitted_at",
-                        StringValue = command.SubmittedAt.ToString("O")
-                    }
-                ];
-
-                var submitResponse = await fldMasterPgService.Execute(new TblFldExecution()
+                var queryParams = new List<TblFldExecutionParam>
                 {
-                    Code = QuestionServiceQueryCode.SubmitSurvey,
-                    QueryParams = queryParams.ToArray(),
-                });
-
-                if (!submitResponse.Status)
-                {
-                    response.SetFail(submitResponse.ErrorMessages);
-                    return;
-                }
-
-                response.Data = "Survey submitted successfully";
-                response.SetSuccess();
-            }
-            catch (Exception ex)
-            {
-                response.SetFail(new[] { $"Error submitting survey: {ex.Message}" });
-            }
-        });
-    }
-
-    public async Task<CommonResponse<CalculateSurveyScoreObject>> CalculateSurveyScore(CalculateSurveyScoreQuery query)
-    {
-        return await CommonProcess<CalculateSurveyScoreObject>(async (response) =>
-        {
-            // Validate request
-            if (string.IsNullOrEmpty(query.SurveyId) || query.Answers.Count == 0)
-            {
-                response.SetFail("Survey ID and answers are required");
-                return;
-            }
-
-            try
-            {
-                // Get all answer options for the survey to calculate scores
-                var optionsResponse = await fldMasterPgService.Execute(new TblFldExecution()
-                {
-                    Code = QuestionServiceQueryCode.GetAnswerOptions,
-                    QueryParams =
-                    [
-                        new TblFldExecutionParam()
-                        {
-                            ParamName = "survey_id",
-                            StringValue = query.SurveyId
-                        }
-                    ],
-                });
-
-                if (!optionsResponse.Status)
-                {
-                    response.SetFail(optionsResponse.ErrorMessages);
-                    return;
-                }
-
-                // Calculate total score
-                int totalScore = 0;
-                var questionScores = new List<QuestionScoreObject>();
-
-                // Parse answer options from response
-                INpOnGrpcObject? answersData = optionsResponse.Data;
-                if (answersData == null)
-                {
-                    response.SetFail("Failed to retrieve answer options");
-                    return;
-                }
-
-                // Assuming the response contains answer options in grpc format
-                // Convert to AnswerOptionsObject list
-                // var selectedOptionIds = query.Answers
-                //     .SelectMany(a => a.SelectedOptionIds)
-                //     .ToHashSet();
-
-                // For this implementation, we'll calculate scores based on a simplified approach
-                // In production, you'd need to convert the grpc data properly
-                foreach (var submittedAnswer in query.Answers)
-                {
-                    int questionScore = 0;
-                    
-                    // Find selected options and sum their scores
-                    if (submittedAnswer.SelectedOptionIds.Count > 0)
-                    {
-                        questionScore = submittedAnswer.SelectedOptionIds.Count;
-                    }
-
-                    totalScore += questionScore;
-                    questionScores.Add(new QuestionScoreObject
-                    {
-                        QuestionId = submittedAnswer.QuestionId,
-                        ScoreEarned = questionScore,
-                        MaxScore = 100 // Default max score per question
-                    });
-                }
-
-                // Create response object
-                var scoreResult = new CalculateSurveyScoreObject
-                {
-                    TotalScore = totalScore,
-                    QuestionScores = questionScores,
-                    ResultCategory = DetermineResultCategory(totalScore)
+                    new() { ParamName = "user_id", StringValue = command.UserId },
+                    new() { ParamName = "question_id", StringValue = answer.QuestionId },
+                    new() { ParamName = "answer_ids", StringValue = $"{{ {string.Join(",", answer.AnswerIds)} }}" },
+                    new() { ParamName = "text_answer", StringValue = answer.TextAnswer }
                 };
 
-                response.Data = scoreResult;
-                response.SetSuccess();
+                // This call is correct as it executes an INSERT
+                var result = await fldMasterPgService.Execute(new TblFldExecution
+                {
+                    Code = FldMasterCodes.SurveyInsertAns,
+                    QueryParams = queryParams.ToArray()
+                });
+
+                if (!result.Status)
+                {
+                    response.Status = false;
+                    response.ErrorCode = result.ErrorCode;
+                    response.Data = $"Failed to submit answer for question {answer.QuestionId}.";
+                    return;
+                }
             }
-            catch (Exception ex)
-            {
-                response.SetFail(new[] { $"Error calculating survey score: {ex.Message}" });
-            }
+            response.Status = true;
+            response.Data = "All answers submitted successfully.";
         });
     }
 
-    private string DetermineResultCategory(int totalScore)
+    public async Task<CommonResponse<int>> CalculateScore(CalculateSurveyScoreQuery query)
     {
-        // Define result categories based on score ranges
-        if (totalScore >= 90) return "Excellent";
-        if (totalScore >= 70) return "Good";
-        if (totalScore >= 50) return "Average";
-        if (totalScore >= 30) return "Below Average";
-        return "Poor";
+        return await CommonProcess<int>(async (response) =>
+        {
+            var scoreExecution = new TblFldExecution
+            {
+                Code = FldMasterCodes.SurveyCalcScore,
+                QueryParams =
+                [
+                    new TblFldExecutionParam { ParamName = "user_id", StringValue = query.UserId },
+                    new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
+                ]
+            };
+
+            // CORRECTED: Using Execute to run the stored procedure and get the score
+            var scoreResult = await fldMasterPgService.Execute(scoreExecution);
+
+            if (!scoreResult.Status || scoreResult.Data == null)
+            {
+                response.SetFail("Could not calculate score.", scoreResult.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            if (scoreResult.Data is not NpOnGrpcTable table || table.Rows == null || !table.Rows.Any())
+            {
+                response.SetFail("Score calculation returned no data.", EErrorCode.NotFound);
+                return;
+            }
+
+            var firstRow = table.Rows.Values.FirstOrDefault();
+            var firstCell = firstRow?.Cells.Values.FirstOrDefault();
+
+            if (firstCell == null)
+            {
+                response.SetFail("Score calculation returned empty cell.", EErrorCode.DataProcessingError);
+                return;
+            }
+            
+            var totalScore = firstCell.GetValue<long>();
+
+            response.Data = (int)totalScore;
+            response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(string surveyId)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var outcomeExecution = new TblFldExecution
+            {
+                Code = FldMasterCodes.GetSurveyOutcomesBySurveyId,
+                QueryParams = 
+                    [
+                        new TblFldExecutionParam
+                        {
+                            ParamName = "ques_srv_survey_id", 
+                            StringValue = surveyId
+                        }]
+            };
+            
+            // CORRECTED: Using Execute to run the query and get the outcome list
+            var outcomesResult = await fldMasterPgService.Execute(outcomeExecution);
+
+            if (!outcomesResult.Status)
+            {
+                response.SetFail("Could not retrieve survey outcomes.", outcomesResult.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            response.Data = outcomesResult.Data;
+            response.SetSuccess();
+        });
+    }
+
+    public Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(QuestionGetByUserIdAndSurveyIdQuery query)
+    {
+        throw new NotImplementedException();
     }
 }

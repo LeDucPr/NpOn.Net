@@ -9,12 +9,20 @@ public class QuestionGetBySurveyModel : BaseSsoNpOnGrpcModel
     public DateTime? SurveyCreatedAt { get; set; }
     public DateTime? SurveyExpiredAt { get; set; }
     public DateTime? SurveyUpdatedAt { get; set; }
+    
     public Guid? QuestionId { get; set; }
     public string? QuestionQuestionText { get; set; }
     public int? QuestionQuestionOrder { get; set; }
     public bool? QuestionIsRequired { get; set; }
     public DateTime? QuestionCreatedAt { get; set; }
     public DateTime? QuestionUpdatedAt { get; set; }
+    
+    // Added fields for Question Options
+    public Guid? QuestionOptionId { get; set; }
+    public string? QuestionOptionCode { get; set; }
+    public string? QuestionOptionDescription { get; set; }
+    public int? QuestionOptionType { get; set; }
+
     public Guid? AnswerId { get; set; }
     public string? AnswerDescription { get; set; }
     public int? AnswerOrderSort { get; set; }
@@ -37,6 +45,12 @@ public class QuestionGetBySurveyModel : BaseSsoNpOnGrpcModel
         FieldMap?.Add(nameof(QuestionIsRequired), "question_is_required");
         FieldMap?.Add(nameof(QuestionCreatedAt), "question_created_at");
         FieldMap?.Add(nameof(QuestionUpdatedAt), "question_updated_at");
+
+        // Added mappings for Question Options
+        FieldMap?.Add(nameof(QuestionOptionId), "question_option_id");
+        FieldMap?.Add(nameof(QuestionOptionCode), "question_option_code");
+        FieldMap?.Add(nameof(QuestionOptionDescription), "question_option_description");
+        FieldMap?.Add(nameof(QuestionOptionType), "question_option_type");
 
         FieldMap?.Add(nameof(AnswerId), "answer_id");
         FieldMap?.Add(nameof(AnswerDescription), "answer_description");
