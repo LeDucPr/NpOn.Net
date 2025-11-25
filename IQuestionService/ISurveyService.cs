@@ -12,7 +12,7 @@ namespace IQuestionService;
 public interface ISurveyService
 {
     [OperationContract]
-    Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand orUpdateCommand);
+    Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand addOrUpdateCommand);
     
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> GetQuestionsBySurveyId(QuestionGetBySurveyIdQuery query);

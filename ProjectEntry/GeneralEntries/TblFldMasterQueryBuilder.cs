@@ -18,6 +18,7 @@ public class TblFldMasterQueryBuilder
             tbl.service_name as service_name,
             tbl.db_type as db_type,
             fld.id as fld_id, 
+            fld.order_sort as order_sort,
             fld.field_name as field_name, 
             fld.field_type as field_type, 
             fld.field_type_string as field_type_string
@@ -57,6 +58,7 @@ public class TblFldMasterQueryBuilder
             queryBuilder.Append(" WHERE ");
             queryBuilder.Append(string.Join(" AND ", _conditions));
         }
+        queryBuilder.Append(" ORDER BY fld.order_sort ");
         return (queryBuilder.ToString(), _parameters);
     }
 }

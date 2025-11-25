@@ -17,7 +17,7 @@ public class SurveyService(
     ILogger<CommonService> logger
 ) : CommonService(logger), ISurveyService
 {
-    public async Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand orUpdateCommand)
+    public async Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand addOrUpdateCommand)
     {
         return await CommonProcess<string>(async (response) =>
         {
@@ -26,37 +26,37 @@ public class SurveyService(
                 new TblFldExecutionParam()
                 {
                     ParamName = "title",
-                    StringValue = orUpdateCommand.Title
+                    StringValue = addOrUpdateCommand.Title
                 },
                 new TblFldExecutionParam()
                 {
                     ParamName = "description",
-                    StringValue = orUpdateCommand.Description
+                    StringValue = addOrUpdateCommand.Description
                 },
                 new TblFldExecutionParam()
                 {
                     ParamName = "is_published",
-                    StringValue = orUpdateCommand.IsPublished.AsDefaultString()
+                    StringValue = addOrUpdateCommand.IsPublished.AsDefaultString()
                 },
                 new TblFldExecutionParam()
                 {
                     ParamName = "expired_at",
-                    StringValue = orUpdateCommand.ExpiredAt.AsDefaultString()
+                    StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString()
                 },
             ];
             
-            if (orUpdateCommand.Id != null)
+            if (addOrUpdateCommand.Id != null)
             {
                 queryParams.Add(new TblFldExecutionParam()
                 {
                     ParamName = "id",
-                    StringValue = orUpdateCommand.Id
+                    StringValue = addOrUpdateCommand.Id
                 });
             }
 
             var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = orUpdateCommand.Id == null
+                Code = addOrUpdateCommand.Id == null
                     ? QuestionServiceQueryCode.UserAnswerAdd
                     : QuestionServiceQueryCode.UserAnswerUpdate,
                 QueryParams = queryParams.ToArray(),
@@ -68,7 +68,7 @@ public class SurveyService(
                 return;
             }
 
-            response.Data = orUpdateCommand.Id == null ? "Add new survey success" : "Update survey success";
+            response.Data = addOrUpdateCommand.Id == null ? "Add new survey success" : "Update survey success";
             response.SetSuccess();
         });
     }

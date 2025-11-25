@@ -22,6 +22,7 @@ public class TblFldObject : BaseGeneralObject
     [ProtoMember(10)] public EExecType? ExecType { get; set; }  
     [ProtoMember(11)] public string? ServiceName { get; set; }  
     [ProtoMember(12)] public EDb? DataBaseType { get; set; }  
+    [ProtoMember(13)] public int? OrderSort { get; set; }  
     public NpgsqlDbType? FieldDbType => FieldTypeString?.ConvertStringToEnum<NpgsqlDbType>();
 
     protected override void FieldMapper()
@@ -34,6 +35,7 @@ public class TblFldObject : BaseGeneralObject
         FieldMap.Add(nameof(ExecType), "exec_type");
         FieldMap.Add(nameof(ServiceName), "service_name");
         FieldMap.Add(nameof(DataBaseType), "db_type");
+        FieldMap.Add(nameof(OrderSort), "order_sort");
         FieldMap.Add(nameof(Query), "query");
         FieldMap.Add(nameof(FldMasterId), "fld_id");
         FieldMap.Add(nameof(FieldName), "field_name");
