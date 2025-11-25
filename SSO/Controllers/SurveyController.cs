@@ -31,6 +31,26 @@ public class SurveyController(
     {
         return await ProcessRequest<object>(async (response) =>
         {
+            var httpRequest = this.HttpContext.Request;
+
+            // // --- Lấy các thông tin cơ bản của Request ---
+            // var method = httpRequest.Method; // Ví dụ: "POST"
+            // var path = httpRequest.Path; // Ví dụ: "/api/Question/QuestionGetBySurvey"
+            // var queryString = httpRequest.QueryString.ToString(); // Ví dụ: "?id=123"
+            //
+            // // --- Lấy thông tin Header ---
+            // // Log tất cả headers
+            // var headers = string.Join(", ", httpRequest.Headers.Select(h => $"{h.Key}: {h.Value}"));
+            //
+            // // Log thông tin đã lấy được
+            // Console.WriteLine($"\n--- Request Details ---");
+            // Console.WriteLine($"Method: {method}");
+            // Console.WriteLine($"Path: {path}");
+            // Console.WriteLine($"Query String: {queryString}");
+            // Console.WriteLine($"Headers: {headers}");
+            // Console.WriteLine($"Body (đã deserialize): {System.Text.Json.JsonSerializer.Serialize(request)}"); 
+            // // ...
+            
             if (request == null)
             {
                 response.SetFail(EErrorCode.NullRequestExceptions);
