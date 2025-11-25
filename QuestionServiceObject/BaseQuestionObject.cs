@@ -13,6 +13,7 @@ namespace QuestionServiceObject;
 [ProtoInclude(500, typeof(UsersObject))]
 [ProtoInclude(600, typeof(SubmissionAnswersObject))]
 [ProtoInclude(700, typeof(SurveySubmissionsObject))]
+[ProtoInclude(800, typeof(CalculateSurveyScoreObject))]
 public abstract class BaseQuestionObject : BaseCtrl
 {
     #region Field Config

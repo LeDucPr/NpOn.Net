@@ -1,6 +1,8 @@
 ﻿using CommonGrpcObject;
 using System.ServiceModel;
 using CommonDb.DbResults.Grpc;
+using QuestionServiceObject;
+using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
@@ -17,4 +19,10 @@ public interface ISurveyService
 
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(QuestionGetByUserIdAndSurveyIdQuery query);
+    
+    [OperationContract]
+    Task<CommonResponse<string>> SubmitSurvey(SubmitSurveyCommand command);
+    
+    [OperationContract]
+    Task<CommonResponse<CalculateSurveyScoreObject>> CalculateSurveyScore(CalculateSurveyScoreQuery query);
 }

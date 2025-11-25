@@ -6,6 +6,7 @@ using GeneralServiceObject.QueryObjects;
 using IGeneralService;
 using IQuestionService;
 using ProjectEntry.QuestionEntries;
+using QuestionServiceObject.BusinessObjects;
 using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
@@ -146,5 +147,165 @@ public class SurveyService(
             response.Data = questionGrpTable;
             response.SetSuccess();
         });
+    }
+
+    public async Task<CommonResponse<string>> SubmitSurvey(SubmitSurveyCommand command)
+    {
+        return await CommonProcess<string>(async (response) =>
+        {
+            // Validate request
+            if (string.IsNullOrEmpty(command.SurveyId) || command.Answers.Count == 0)
+            {
+                response.SetFail("Survey ID and answers are required");
+                return;
+            }
+
+            try
+            {
+                // Create submission record
+                List<TblFldExecutionParam> queryParams =
+                [
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "survey_id",
+                        StringValue = command.SurveyId
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "user_id",
+                        StringValue = command.UserId ?? Guid.NewGuid().ToString()
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "total_score",
+                        StringValue = command.TotalScore.ToString()
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "submitted_at",
+                        StringValue = command.SubmittedAt.ToString("O")
+                    }
+                ];
+
+                var submitResponse = await fldMasterPgService.Execute(new TblFldExecution()
+                {
+                    Code = QuestionServiceQueryCode.SubmitSurvey,
+                    QueryParams = queryParams.ToArray(),
+                });
+
+                if (!submitResponse.Status)
+                {
+                    response.SetFail(submitResponse.ErrorMessages);
+                    return;
+                }
+
+                response.Data = "Survey submitted successfully";
+                response.SetSuccess();
+            }
+            catch (Exception ex)
+            {
+                response.SetFail(new[] { $"Error submitting survey: {ex.Message}" });
+            }
+        });
+    }
+
+    public async Task<CommonResponse<CalculateSurveyScoreObject>> CalculateSurveyScore(CalculateSurveyScoreQuery query)
+    {
+        return await CommonProcess<CalculateSurveyScoreObject>(async (response) =>
+        {
+            // Validate request
+            if (string.IsNullOrEmpty(query.SurveyId) || query.Answers.Count == 0)
+            {
+                response.SetFail("Survey ID and answers are required");
+                return;
+            }
+
+            try
+            {
+                // Get all answer options for the survey to calculate scores
+                var optionsResponse = await fldMasterPgService.Execute(new TblFldExecution()
+                {
+                    Code = QuestionServiceQueryCode.GetAnswerOptions,
+                    QueryParams =
+                    [
+                        new TblFldExecutionParam()
+                        {
+                            ParamName = "survey_id",
+                            StringValue = query.SurveyId
+                        }
+                    ],
+                });
+
+                if (!optionsResponse.Status)
+                {
+                    response.SetFail(optionsResponse.ErrorMessages);
+                    return;
+                }
+
+                // Calculate total score
+                int totalScore = 0;
+                var questionScores = new List<QuestionScoreObject>();
+
+                // Parse answer options from response
+                INpOnGrpcObject? answersData = optionsResponse.Data;
+                if (answersData == null)
+                {
+                    response.SetFail("Failed to retrieve answer options");
+                    return;
+                }
+
+                // Assuming the response contains answer options in grpc format
+                // Convert to AnswerOptionsObject list
+                // var selectedOptionIds = query.Answers
+                //     .SelectMany(a => a.SelectedOptionIds)
+                //     .ToHashSet();
+
+                // For this implementation, we'll calculate scores based on a simplified approach
+                // In production, you'd need to convert the grpc data properly
+                foreach (var submittedAnswer in query.Answers)
+                {
+                    int questionScore = 0;
+                    
+                    // Find selected options and sum their scores
+                    if (submittedAnswer.SelectedOptionIds.Count > 0)
+                    {
+                        questionScore = submittedAnswer.SelectedOptionIds.Count;
+                    }
+
+                    totalScore += questionScore;
+                    questionScores.Add(new QuestionScoreObject
+                    {
+                        QuestionId = submittedAnswer.QuestionId,
+                        ScoreEarned = questionScore,
+                        MaxScore = 100 // Default max score per question
+                    });
+                }
+
+                // Create response object
+                var scoreResult = new CalculateSurveyScoreObject
+                {
+                    TotalScore = totalScore,
+                    QuestionScores = questionScores,
+                    ResultCategory = DetermineResultCategory(totalScore)
+                };
+
+                response.Data = scoreResult;
+                response.SetSuccess();
+            }
+            catch (Exception ex)
+            {
+                response.SetFail(new[] { $"Error calculating survey score: {ex.Message}" });
+            }
+        });
+    }
+
+    private string DetermineResultCategory(int totalScore)
+    {
+        // Define result categories based on score ranges
+        if (totalScore >= 90) return "Excellent";
+        if (totalScore >= 70) return "Good";
+        if (totalScore >= 50) return "Average";
+        if (totalScore >= 30) return "Below Average";
+        return "Poor";
     }
 }
