@@ -10,7 +10,6 @@ using GeneralServiceObject.QueryObjects;
 using HandleFlow.ResultConverters;
 using IGeneralService;
 using NpgsqlTypes;
-using ProjectEntry;
 using ProjectEntry.GeneralEntries;
 using ProjectEnums.GeneralEnums;
 

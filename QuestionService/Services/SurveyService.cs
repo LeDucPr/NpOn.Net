@@ -82,9 +82,9 @@ public class SurveyService(
             {
                 var queryParams = new List<TblFldExecutionParam>
                 {
-                    new() { ParamName = "user_id", StringValue = command.UserId },
-                    new() { ParamName = "question_id", StringValue = answer.QuestionId },
-                    new() { ParamName = "answer_ids", StringValue = $"{{ {string.Join(",", answer.AnswerIds)} }}" },
+                    new() { ParamName = "user_id", StringValue = command.UserId.AsDefaultString() },
+                    new() { ParamName = "question_id", StringValue = answer.QuestionId.AsDefaultString() },
+                    new() { ParamName = "answer_ids", StringValue = answer.AnswerIds?.AsArrayJoin() },
                     new() { ParamName = "text_answer", StringValue = answer.TextAnswer }
                 };
 

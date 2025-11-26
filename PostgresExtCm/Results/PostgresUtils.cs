@@ -1,8 +1,8 @@
-﻿﻿using System.Data;
- using CommonDb.DbCommands;
- using CommonObject;
- using Npgsql;
- using NpgsqlTypes;
+﻿using System.Data;
+using CommonDb.DbCommands;
+using CommonObject;
+using Npgsql;
+using NpgsqlTypes;
 using ProtoBuf.WellKnownTypes;
 
 namespace PostgresExtCm.Results;
@@ -72,16 +72,58 @@ public static class PostgresUtils
         {
             return DbType.Int32;
         }
+
         return TypeMap.GetValueOrDefault(nonNullableType, DbType.Object);
     }
-    
-    private static object? ConvertStringValue(this string stringValue, NpgsqlDbType targetType)
+
+    private static object? ConvertArrayElement(string elementString, NpgsqlDbType elementType)
+    {
+        return elementType switch
+        {
+            NpgsqlDbType.Smallint => short.TryParse(elementString, out var s) ? s : null,
+            NpgsqlDbType.Integer => int.TryParse(elementString, out var i) ? i : null,
+            NpgsqlDbType.Bigint => long.TryParse(elementString, out var l) ? l : null,
+            NpgsqlDbType.Real => float.TryParse(elementString, out var f) ? f : null,
+            NpgsqlDbType.Double => double.TryParse(elementString, out var d) ? d : null,
+            NpgsqlDbType.Numeric => decimal.TryParse(elementString, out var dec) ? dec : null,
+            NpgsqlDbType.Boolean => bool.TryParse(elementString, out var b)
+                ? b
+                : (elementString == "1" ? true : elementString == "0" ? false : null),
+            NpgsqlDbType.Date or NpgsqlDbType.Timestamp or NpgsqlDbType.TimestampTz => DateTime.TryParse(elementString,
+                out var dt)
+                ? dt
+                : null,
+            NpgsqlDbType.Uuid => Guid.TryParse(elementString, out var g) ? g : null,
+            // Thêm các kiểu khác nếu cần (Jsonb, Text, v.v.)
+            _ => elementString
+        };
+    }
+
+    public static object? ConvertStringValue(this string stringValue, NpgsqlDbType targetType)
     {
         if (string.IsNullOrEmpty(stringValue))
         {
             return null;
         }
 
+        // --- Xử lý Kiểu Mảng ---
+        if (targetType.HasFlag(NpgsqlDbType.Array))
+        {
+            var elementType = targetType & ~NpgsqlDbType.Array;
+            var elements = stringValue.Split(',')
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToList();
+
+            if (!elements.Any()) return Array.Empty<object>();
+
+            var convertedElements = elements
+                .Select(element => ConvertArrayElement(element, elementType))
+                .ToArray();
+            return convertedElements;
+        }
+
+        // --- Xử lý Kiểu Đơn Lẻ (Scalar Types) ---
         return targetType switch
         {
             // Số nguyên
@@ -97,21 +139,29 @@ public static class PostgresUtils
             // Boolean
             NpgsqlDbType.Boolean => bool.TryParse(stringValue, out var b)
                 ? b
-                : (stringValue == "1" ? true : stringValue == "0" ? false : null),
+                : stringValue.Trim().Equals("1")
+                    ? true
+                    : stringValue.Trim().Equals("0")
+                        ? false
+                        : null,
 
             // Ngày giờ
             NpgsqlDbType.Date or NpgsqlDbType.Timestamp => DateTime.TryParse(stringValue, out var dt) ? dt : null,
+
+            // Timestamp with Timezone (GMT/UTC)
             NpgsqlDbType.TimestampTz => DateTime.TryParse(stringValue, null,
-                System.Globalization.DateTimeStyles.AdjustToUniversal, out var dtUtc)
+                System.Globalization.DateTimeStyles.AdjustToUniversal |
+                System.Globalization.DateTimeStyles.AssumeUniversal, out var dtUtc)
                 ? dtUtc
                 : null,
 
             // Guid
             NpgsqlDbType.Uuid => Guid.TryParse(stringValue, out var g) ? g : null,
+            NpgsqlDbType.Json or NpgsqlDbType.Jsonb => stringValue, // string
             _ => stringValue
         };
     }
-    
+
     public static NpgsqlParameter CreateNpgsqlParameter(this NpOnDbCommandParam<NpgsqlDbType> npgsqlParam)
     {
         var paramValue = npgsqlParam.ParamValue;

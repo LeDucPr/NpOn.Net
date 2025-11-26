@@ -35,6 +35,18 @@ public class HostingApp(
         //     IsPublished = true,
         //     ExpiredAt = DateTime.Now.AddDays(30),
         // })).Data;
+        var testSubmit = (await surveyService.SubmitAnswers(new SubmitSurveyCommand
+        {
+            UserId = "61bf3d62-cc1d-49ca-b5bc-e19634e9b0fa",
+            SurveyId = "58555125-3746-4f94-9330-f84480094327",
+            Answers = [
+                new SubmissionAnswer
+                {
+                    QuestionId = "14962e44-a23a-43dc-b58a-376ba277c1ea",
+                    AnswerIds = ["bc855526-100f-4612-b906-130886ad8a8b", "13a8b713-2b46-4c41-9148-e98f5749a850"],
+                }
+            ],
+        })).Data;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

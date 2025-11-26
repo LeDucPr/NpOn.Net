@@ -13,6 +13,7 @@ namespace QuestionServiceObject;
 [ProtoInclude(400, typeof(SurveyAddOrUpdateCommand))]
 [ProtoInclude(500, typeof(QuestionAndAnswerAddOrUpdateCommand))]
 [ProtoInclude(600, typeof(CalculateSurveyScoreQuery))]
+[ProtoInclude(700, typeof(SubmitSurveyCommand))]
 public abstract class BaseQuestionQuery : CommonAbsQuery
 {
     [ProtoMember(1)] public override bool Status { get; set; }
