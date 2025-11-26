@@ -7,7 +7,8 @@ namespace QuestionService.Services;
 public class HostingApp(
     ILogger<HostingApp> logger,
     IFaqService faqService,
-    ISurveyService surveyService
+    ISurveyService surveyService, 
+    IQuestionAndAnswerService questionAndAnswerService
 ) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -35,7 +36,7 @@ public class HostingApp(
         //     IsPublished = true,
         //     ExpiredAt = DateTime.Now.AddDays(30),
         // })).Data;
-        var testSubmit = (await surveyService.SubmitAnswers(new SubmitSurveyCommand
+        var testSubmit = (await questionAndAnswerService.SubmitAnswers(new SubmitSurveyCommand
         {
             UserId = "61bf3d62-cc1d-49ca-b5bc-e19634e9b0fa",
             SurveyId = "58555125-3746-4f94-9330-f84480094327",

@@ -19,6 +19,7 @@ namespace SSO.Controllers;
 public class SurveyController(
     ILogger<AccountController> logger,
     ContextService contextService,
+    IQuestionAndAnswerService questionAndAnswerService,
     ISurveyService surveyService)
     : BaseSsoController(logger, contextService)
 {
@@ -94,7 +95,7 @@ public class SurveyController(
                 }).ToList()
             };
 
-            var submitResult = await surveyService.SubmitAnswers(command);
+            var submitResult = await questionAndAnswerService.SubmitAnswers(command);
 
             if (!submitResult.Status)
             {
@@ -121,7 +122,7 @@ public class SurveyController(
                 response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
                 return;
             }
-            
+
             var userId = _contextService.GetSessionKey();
             if (string.IsNullOrEmpty(userId))
             {
@@ -142,6 +143,7 @@ public class SurveyController(
                 response.SetFail(scoreResponse.ErrorMessages);
                 return;
             }
+
             var totalScore = scoreResponse.Data;
 
             // Step 2: Get possible outcomes as raw data

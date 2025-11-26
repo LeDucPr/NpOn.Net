@@ -8,5 +8,5 @@ namespace IQuestionService;
 public interface IQuestionAndAnswerService
 {
     [OperationContract]
-    Task<CommonResponse<string>> AddOrUpdateQuestionAndAnswer(QuestionAndAnswerAddOrUpdateCommand addOrUpdateCommand);
+    Task<CommonResponse<string>> SubmitAnswers(SubmitSurveyCommand command);
 }
