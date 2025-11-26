@@ -31,9 +31,10 @@ public class AccountController(
             }
 
             // type 1
-            AccountLoginQuery inputQuery = new AccountLoginQuery()
+            AccountLoginQuery inputQuery = new AccountLoginQuery
             {
                 Email = request.Email,
+                ClientId = null,
             };
             var tokenResult = await authenticationService.Login(inputQuery);
             if (!tokenResult.Status)

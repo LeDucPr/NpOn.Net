@@ -4,7 +4,7 @@ using ProtoBuf;
 namespace AccountServiceObject.BusinessObjects;
 
 [ProtoContract]
-public class AccountLoginInfoObject : BaseAccountObject
+public class AccountObject
 {
     [ProtoMember(1)] public required Guid AccountId { get; set; }
     [ProtoMember(2)] public required string UserName { get; set; }
@@ -19,24 +19,8 @@ public class AccountLoginInfoObject : BaseAccountObject
     [ProtoMember(11)] public string? RefreshToken { get; set; }
     [ProtoMember(12)] public DateTime? CreatedAt { get; set; }
     [ProtoMember(13)] public DateTime? UpdatedAt { get; set; }
-    [ProtoMember(14)] public required string SessionId { get; set; }
-    [ProtoMember(14)] public int MinuteExpire { get; set; }
-
-    protected override void FieldMapper()
-    {
-        FieldMap ??= new();
-        FieldMap.Add(nameof(AccountId), "account_id");
-        FieldMap.Add(nameof(UserName), "username");
-        FieldMap.Add(nameof(Password), "password");
-        FieldMap.Add(nameof(AuthType), "auth_type");
-        FieldMap.Add(nameof(LoginType), "login_type");
-        FieldMap.Add(nameof(FullName), "full_name");
-        FieldMap.Add(nameof(PhoneNumber), "phone_number");
-        FieldMap.Add(nameof(DeviceId), "device_id");
-        FieldMap.Add(nameof(Token), "token");
-        FieldMap.Add(nameof(RefreshToken), "refresh_token");
-        FieldMap.Add(nameof(CreatedAt), "created_at");
-        FieldMap.Add(nameof(UpdatedAt), "updated_at");
-        base.FieldMapper();
-    }
+    [ProtoMember(14)] public string? AvatarUrl { get; set; }
+    [ProtoMember(15)] public DateTime? InitDate { get; set; }
+    [ProtoMember(16)] public int? MinuteExpire { get; set; }
+    [ProtoMember(17)] public EPermission? Permissions { get; set; } // Flags
 }
