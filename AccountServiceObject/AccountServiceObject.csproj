@@ -20,6 +20,7 @@
         <ProjectReference Include="..\CommonObject\CommonObject.csproj"/>
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
         <ProjectReference Include="..\ObjectHandleFlow\ObjectHandleFlow.csproj"/>
+        <ProjectReference Include="..\ProjectEnums\ProjectEnums.csproj" />
     </ItemGroup>
 
 </Project>
