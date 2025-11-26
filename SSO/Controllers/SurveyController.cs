@@ -24,9 +24,7 @@ public class SurveyController(
 {
     private readonly ContextService _contextService = contextService;
 
-    /// <summary>
-    /// API 1: Lấy toàn bộ survey với full question và answer
-    /// </summary>
+
     [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> GetSurveyDetail([FromBody] QuestionGetBySurveyIdRequest? request)
@@ -60,9 +58,7 @@ public class SurveyController(
         });
     }
 
-    /// <summary>
-    /// API 2: User gửi các câu trả lời của một bài khảo sát
-    /// </summary>
+
     [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> SubmitAnswers([FromBody] SubmitSurveyRequest? request)
@@ -74,7 +70,7 @@ public class SurveyController(
                 response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
                 return;
             }
-
+            
             var userId = _contextService.GetSessionKey();
             if (string.IsNullOrEmpty(userId))
             {
@@ -106,10 +102,8 @@ public class SurveyController(
             response.SetSuccess();
         });
     }
-
-    /// <summary>
-    /// API 3: Tính điểm và lấy kết quả cuối cùng của một bài khảo sát cho user
-    /// </summary>
+    
+    
     [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> GetSurveyOutcome([FromBody] GetSurveyOutcomeRequest? request)
@@ -129,10 +123,10 @@ public class SurveyController(
                 return;
             }
 
-            // Step 1: Calculate score
+            // Calculate score
             var scoreResponse = await surveyService.CalculateScore(new CalculateSurveyScoreQuery
             {
-                UserId = "61bf3d62-cc1d-49ca-b5bc-e19634e9b0fa",
+                UserId = userId,
                 SurveyId = request.SurveyId
             });
 
@@ -146,7 +140,7 @@ public class SurveyController(
                 ?.ConverterToChildOfSsoModel(typeof(UseSurveyScoreModel))?
                 .OfType<UseSurveyScoreModel>().FirstOrDefault();
 
-            int totalScore = scoreModel?.TotalScore?.AsDefaultInt() ?? 2;
+            int totalScore = scoreModel?.TotalScore?.AsDefaultInt() ?? 0;
 
             // compare
             var outcomesResponse = await surveyService.GetSurveyOutcomes(new SurveyOutcomeScoreQuery()
@@ -159,8 +153,7 @@ public class SurveyController(
                 response.SetFail(outcomesResponse.ErrorMessages);
                 return;
             }
-
-            // Manually convert the raw INpOnGrpcObject to a list of SurveyOutcomeObject
+            
             List<SurveyComeoutScoreModel>? outcomeModels = outcomesResponse.Data
                 ?.ConverterToChildOfSsoModel(typeof(SurveyComeoutScoreModel))?
                 .OfType<SurveyComeoutScoreModel>().ToList();
