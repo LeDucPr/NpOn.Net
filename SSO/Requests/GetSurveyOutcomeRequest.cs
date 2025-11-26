@@ -1,9 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace SSO.Requests;
+﻿namespace SSO.Requests;
 
 public class GetSurveyOutcomeRequest
 {
-    [Required]
-    public string? SurveyId { get; set; }
+    public required string SurveyId { get; set; }
 }

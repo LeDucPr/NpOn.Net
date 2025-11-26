@@ -50,11 +50,11 @@ public class HostingApp(
         //     ],
         // })).Data;
 
-        var calScoreTest = (await surveyService.CalculateScore(new CalculateSurveyScoreQuery()
-        {
-            UserId = "61bf3d62-cc1d-49ca-b5bc-e19634e9b0fa", 
-            SurveyId = "58555125-3746-4f94-9330-f84480094327",
-        })).Data;
+        // var calScoreTest = (await surveyService.CalculateScore(new CalculateSurveyScoreQuery()
+        // {
+        //     UserId = "61bf3d62-cc1d-49ca-b5bc-e19634e9b0fa", 
+        //     SurveyId = "58555125-3746-4f94-9330-f84480094327",
+        // })).Data;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

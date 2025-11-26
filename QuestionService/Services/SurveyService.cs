@@ -25,10 +25,12 @@ public class SurveyService(
             [
                 new TblFldExecutionParam() { ParamName = "title", StringValue = addOrUpdateCommand.Title },
                 new TblFldExecutionParam() { ParamName = "description", StringValue = addOrUpdateCommand.Description },
-                new TblFldExecutionParam() { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
-                new TblFldExecutionParam() { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
+                new TblFldExecutionParam()
+                    { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
+                new TblFldExecutionParam()
+                    { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
             ];
-            
+
             if (addOrUpdateCommand.Id != null)
             {
                 queryParams.Add(new TblFldExecutionParam() { ParamName = "id", StringValue = addOrUpdateCommand.Id });
@@ -60,7 +62,7 @@ public class SurveyService(
             var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
                 Code = FldMasterCodes.QuestionsBySurveyId,
-                QueryParams = [ new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId } ],
+                QueryParams = [new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId }],
             });
 
             if (!questionGetBySurveyIdResponse.Status)
@@ -73,9 +75,10 @@ public class SurveyService(
             response.SetSuccess();
         });
     }
-    public async Task<CommonResponse<int>> CalculateScore(CalculateSurveyScoreQuery query)
+
+    public async Task<CommonResponse<INpOnGrpcObject>> CalculateScore(CalculateSurveyScoreQuery query)
     {
-        return await CommonProcess<int>(async (response) =>
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
             var scoreExecution = new TblFldExecution
             {
@@ -86,60 +89,44 @@ public class SurveyService(
                     new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
                 ]
             };
-
-            // CORRECTED: Using Execute to run the stored procedure and get the score
-            var scoreResult = await fldMasterPgService.Execute(scoreExecution);
-
-            if (!scoreResult.Status || scoreResult.Data == null)
+            var scoreResponse = await fldMasterPgService.Execute(scoreExecution);
+            if (!scoreResponse.Status || scoreResponse.Data == null)
             {
-                response.SetFail("Could not calculate score.", scoreResult.ErrorCode ?? EErrorCode.NotFound);
+                response.SetFail("Could not calculate score.", scoreResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
-            if (scoreResult.Data is not NpOnGrpcTable table || table.Rows == null || !table.Rows.Any())
-            {
-                response.SetFail("Score calculation returned no data.", EErrorCode.NotFound);
-                return;
-            }
-
-            var firstRow = table.Rows.Values.FirstOrDefault();
-            var firstCell = firstRow?.Cells.Values.FirstOrDefault();
-
-            if (firstCell == null)
-            {
-                response.SetFail("Score calculation returned empty cell.", EErrorCode.DataProcessingError);
-                return;
-            }
-            
-            var totalScore = firstCell.GetValue<long>();
-
-            response.Data = (int)totalScore;
+            response.Data = scoreResponse.Data;
             response.SetSuccess();
         });
     }
 
-    public async Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(string surveyId)
+    public async Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(SurveyOutcomeScoreQuery query)
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
             var outcomeExecution = new TblFldExecution
             {
                 Code = FldMasterCodes.GetSurveyOutcomesBySurveyId,
-                QueryParams = 
-                    [
-                        new TblFldExecutionParam
-                        {
-                            ParamName = "ques_srv_survey_id", 
-                            StringValue = surveyId
-                        }]
+                QueryParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "ques_srv_survey_id",
+                        StringValue = query.SurveyId
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "total_score",
+                        StringValue = query.TotalScore.AsDefaultString(),
+                    }
+                ]
             };
-            
-            // CORRECTED: Using Execute to run the query and get the outcome list
             var outcomesResult = await fldMasterPgService.Execute(outcomeExecution);
-
             if (!outcomesResult.Status)
             {
-                response.SetFail("Could not retrieve survey outcomes.", outcomesResult.ErrorCode ?? EErrorCode.NotFound);
+                response.SetFail("Could not retrieve survey outcomes.",
+                    outcomesResult.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
@@ -148,7 +135,8 @@ public class SurveyService(
         });
     }
 
-    public Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(QuestionGetByUserIdAndSurveyIdQuery query)
+    public Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(
+        QuestionGetByUserIdAndSurveyIdQuery query)
     {
         throw new NotImplementedException();
     }

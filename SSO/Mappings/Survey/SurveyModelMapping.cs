@@ -69,4 +69,20 @@ public static class SurveyModelMapping
             Questions = questions
         };
     }
+
+    public static SurveyScoreOutcomeOutputModel ToModel(this SurveyComeoutScoreModel model)
+    {
+        SurveyScoreOutcomeOutputModel outputModel = new SurveyScoreOutcomeOutputModel()
+        {
+            Id = model.Id.AsDefaultString(),
+            SurveyId = model.QuesSrvSurveyId.AsDefaultString(),
+            MinScore = model.MinScore,
+            MaxScore = model.MaxScore,
+            ConditionLabel = model.ConditionLabel,
+            ResultTitle = model.ResultTitle,
+            ResultDescription = model.ResultDescription,
+            Recommendation = model.Recommendation,
+        };
+        return outputModel;
+    }
 }

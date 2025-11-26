@@ -43,3 +43,15 @@ public class AnswerModel
     public int Score { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+public class SurveyScoreOutcomeOutputModel
+{
+    public string? Id { get; set; }
+    public string? SurveyId { get; set; }
+    public int MinScore { get; set; }
+    public int MaxScore { get; set; }
+    public string? ConditionLabel { get; set; }
+    public string? ResultTitle { get; set; }
+    public string? ResultDescription { get; set; }
+    public string? Recommendation { get; set; }
+}

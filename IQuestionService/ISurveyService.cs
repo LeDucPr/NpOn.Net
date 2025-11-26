@@ -19,8 +19,8 @@ public interface ISurveyService
     Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(QuestionGetByUserIdAndSurveyIdQuery query);
     
     [OperationContract]
-    Task<CommonResponse<int>> CalculateScore(CalculateSurveyScoreQuery query);
+    Task<CommonResponse<INpOnGrpcObject>> CalculateScore(CalculateSurveyScoreQuery query);
 
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(string surveyId);
+    Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(SurveyOutcomeScoreQuery query);
 }
