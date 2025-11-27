@@ -5,6 +5,7 @@ using Enums;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SSO.Mappings.Account;
 using SSO.Requests;
 using SSO.Validators;
 
@@ -22,14 +23,13 @@ public class AccountController(
     {
         return await ProcessRequest<object>(async (response) =>
         {
-            // var validator = AccountLoginRequestValidator.ValidateRequest(request);
-            // if (!validator.IsValid)
-            // {
-            //     response.SetFail(validator.Errors.Select(p => p.ToString()));
-            //     return;
-            // }
+            var validator = AccountLoginRequestValidator.ValidateRequest(request);
+            if (!validator.IsValid)
+            {
+                response.SetFail(validator.Errors.Select(p => p.ToString()));
+                return;
+            }
 
-            // type 1
             AccountLoginQuery inputQuery = new AccountLoginQuery
             {
                 Email = request.Email,
@@ -38,7 +38,7 @@ public class AccountController(
                 UserName = request.UserName,
                 Password = request.Password,
                 DeviceLoginInfo = request.DeviceInfo,
-                LoginType =  request.LoginType,
+                LoginType = request.LoginType,
                 Ip = contextService.GetIp(),
                 AuthenApplicationId = request.AppId,
             };
@@ -48,17 +48,59 @@ public class AccountController(
                 response.SetFail(accountLoginResponse.ErrorMessages);
                 return;
             }
-            
+
             if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
             {
                 response.SetFail("Login invalid");
                 return;
             }
-            
+
             // response.Data = await LoginProcess(tokenResult.Data);
             response.Data = new
             {
-                Model = accountLoginResponse.Data,
+                Model = accountLoginResponse.Data.ToModel(),
+            };
+            response.SetSuccess();
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> RefreshToken([FromBody] AccountRefreshTokenRequest request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            var validator = AccountRefreshTokenValidator.ValidateRequest(request);
+            if (!validator.IsValid)
+            {
+                response.SetFail(validator.Errors.Select(p => p.ToString()));
+                return;
+            }
+
+            var aaaaa = contextService.UserInfo();
+            AccountRefreshTokenQuery inputQuery = new AccountRefreshTokenQuery
+            {
+                RefreshToken = request.RefreshToken,
+                DeviceInfo = request.DeviceInfo,
+                LoginType = request.LoginType,
+            };
+            var accountLoginResponse = await authenticationService.RefreshToken(inputQuery);
+            if (!accountLoginResponse.Status)
+            {
+                response.SetFail(accountLoginResponse.ErrorMessages);
+                return;
+            }
+
+            if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
+            {
+                response.SetFail("Login invalid");
+                return;
+            }
+
+            // response.Data = await LoginProcess(tokenResult.Data);
+            response.Data = new
+            {
+                Model = accountLoginResponse.Data.ToModel(),
             };
             response.SetSuccess();
         });

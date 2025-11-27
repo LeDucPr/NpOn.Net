@@ -25,7 +25,7 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
     protected override void FieldMapper()
     {
         FieldMap ??= new();
-        FieldMap.Add(nameof(AccountId), "account_id");
+        FieldMap.Add(nameof(AccountId), "id");
         FieldMap.Add(nameof(UserName), "username");
         FieldMap.Add(nameof(Password), "password");
         FieldMap.Add(nameof(AuthType), "auth_type");

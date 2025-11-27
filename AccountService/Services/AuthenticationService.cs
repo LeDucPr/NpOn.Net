@@ -76,9 +76,10 @@ public class AuthenticationService(
             }
 
             accountObject.SessionId = $"SESSIONID-{accountObject.UserName}-{CommonUtilityMode.GenerateGuid()}";
-            (string token, int minuteExpire) = await CreateToken(userName, accountObject, oldRefreshToken: null, expireMinutes: 0,
+            (string token, int minuteExpire) = await CreateToken(userName, accountObject, oldRefreshToken: null,
+                expireMinutes: 0,
                 loginType: query.LoginType ?? ELoginType.Default);
-            
+
             // set 
             accountObject.Token = token;
             accountObject.MinuteExpire = minuteExpire;
@@ -87,26 +88,51 @@ public class AuthenticationService(
         });
     }
 
-    public async Task<CommonResponse<AccountInfoAliasTestObject>> LoginJ(CommonJsonQuery query)
+    public async Task<CommonResponse<AccountLoginInfoObject>> RefreshToken(AccountRefreshTokenQuery query)
     {
-        return await CommonProcess<AccountInfoAliasTestObject>(async (response) =>
+        return await CommonProcess<AccountLoginInfoObject>(async (response) =>
         {
-            AccountLoginQuery? accountLogin = CommonObject.JsonConverter.FromJson<AccountLoginQuery?>(query.Json);
-            // catch Json convert failure
-            if (accountLogin == null)
+            var execution = new TblFldExecution
             {
-                response.SetFail("CommonJsonQuery -> AccountLoginQuery convert null");
+                Code = AuthenServiceQueryCode.AccountLoginInfoGetByUsernameAndPassword,
+                QueryParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "refresh_token",
+                        StringValue = query.RefreshToken
+                    },
+                ]
+            };
+            var execStringResponse = await fldMasterPgService.Execute(execution);
+            if (!execStringResponse.Status || execStringResponse.Data == null)
+            {
+                response.SetFail("Could not Find ExecString", execStringResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
-            // response.Data = (await Login(accountLogin)).Data;
+            List<AccountLoginInfoObject>? accountObjects = execStringResponse.Data?
+                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
+                .Cast<AccountLoginInfoObject>()
+                .ToList();
+            
+            if (accountObjects is not { Count: > 0 })
+            {
+                response.SetFail("Incorrect data type of 'IEnumerable<AccountInfoAliasTestObject>'");
+                return;
+            }
+
+            AccountLoginInfoObject accountObject = accountObjects.First();
+            string userName = accountObject.UserName;
+            if (userName is not { Length: > 0 })
+            {
+                response.SetFail("Invalid username");
+                return;
+            }
+            
+            response.Data = accountObject;
             response.SetSuccess();
         });
-    }
-
-    public Task<CommonResponse<INpOnGrpcObject>> RefreshToken(CommonJsonQuery query)
-    {
-        throw new NotImplementedException();
     }
 
     public Task<CommonResponse<INpOnGrpcObject>> LoginToken(CommonJsonQuery query)
@@ -114,7 +140,7 @@ public class AuthenticationService(
         throw new NotImplementedException();
     }
 
-    public Task<CommonResponse<INpOnGrpcObject>> Info()
+    public Task<CommonResponse<AccountLoginInfoObject>> Info()
     {
         throw new NotImplementedException();
     }
@@ -146,7 +172,6 @@ public class AuthenticationService(
             ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : expireMinutes;
 
-        accountLoginInfo.MinuteExpire = minuteExpire;
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig()
             .AsDefaultString());
@@ -169,6 +194,10 @@ public class AuthenticationService(
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
         string tokenValue = tokenHandler.WriteToken(token);
+
+        // set
+        accountLoginInfo.MinuteExpire = minuteExpire;
+        accountLoginInfo.RefreshToken = CommonUtilityMode.GenerateGuid();
         accountLoginInfo.Token = tokenValue;
         // await authenService.SetLoginInfo(sessionKey, accountLoginInfo, accountLoginInfo.MinuteExpire);
         return (tokenValue, minuteExpire);

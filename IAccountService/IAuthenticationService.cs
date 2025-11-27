@@ -11,18 +11,15 @@ public interface IAuthenticationService
 {
     [OperationContract]
     Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query);
-    
-    [OperationContract]
-    Task<CommonResponse<AccountInfoAliasTestObject>> LoginJ(CommonJsonQuery query);
 
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> RefreshToken(CommonJsonQuery query);
+    Task<CommonResponse<AccountLoginInfoObject>> RefreshToken(AccountRefreshTokenQuery query);
 
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> LoginToken(CommonJsonQuery query);
 
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> Info();
+    Task<CommonResponse<AccountLoginInfoObject>> Info();
 
     [OperationContract]
     Task<CommonResponse> LogOut();

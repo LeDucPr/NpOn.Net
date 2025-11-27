@@ -28,3 +28,18 @@ public class AccountLoginRequestValidator : AbstractValidator<AccountLoginReques
         return validationResult;
     }
 }
+
+
+
+public class AccountRefreshTokenValidator : AbstractValidator<AccountRefreshTokenRequest>
+{
+    private AccountRefreshTokenValidator()
+    {
+        RuleFor(x => x.RefreshToken).NotEmpty();
+    }
+    public static FluentValidation.Results.ValidationResult ValidateRequest(AccountRefreshTokenRequest request)
+    {
+        var validationResult = new AccountRefreshTokenValidator().Validate(request);
+        return validationResult;
+    }
+}
