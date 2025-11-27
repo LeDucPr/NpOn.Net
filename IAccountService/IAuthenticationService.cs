@@ -10,7 +10,7 @@ namespace IAccountService;
 public interface IAuthenticationService
 {
     [OperationContract]
-    Task<CommonResponse<AccountInfoAliasTestObject>> Login(AccountLoginQuery query);
+    Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query);
     
     [OperationContract]
     Task<CommonResponse<AccountInfoAliasTestObject>> LoginJ(CommonJsonQuery query);

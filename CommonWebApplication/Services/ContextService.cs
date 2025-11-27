@@ -159,11 +159,13 @@ public class ContextService(
         }
     }
 
-    public string CheckAndReturnHeaderFromSession()
+    private string CheckAndReturnHeaderFromSession() // clientId
     {
         var clientId = (httpContextAccessor?.HttpContext?.Request.Headers[SessionCode]).AsDefaultString();
         return clientId; // maybe null => empty string
     }
+    
+    public string ClientId =>  CheckAndReturnHeaderFromSession();
 
     public void Set404()
     {

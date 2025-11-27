@@ -1,13 +1,12 @@
-﻿using AccountServiceObject;
-using AccountServiceObject.QueryObjects;
+﻿using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
-using CommonWebApplication.Controllers;
 using CommonWebApplication.Services;
 using Enums;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using SSO.Requests;
+using SSO.Validators;
 
 namespace SSO.Controllers;
 
@@ -19,46 +18,48 @@ public class AccountController(
 {
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> Login([FromBody] LoginRequest? request)
+    public async Task<CommonApiResponse<object>> Login([FromBody] AccountLoginRequest request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
-            // await Logout();
-            if (request == null)
-            {
-                response.SetFail(EErrorCode.NullRequestExceptions);
-                return;
-            }
+            // var validator = AccountLoginRequestValidator.ValidateRequest(request);
+            // if (!validator.IsValid)
+            // {
+            //     response.SetFail(validator.Errors.Select(p => p.ToString()));
+            //     return;
+            // }
 
             // type 1
             AccountLoginQuery inputQuery = new AccountLoginQuery
             {
                 Email = request.Email,
-                ClientId = null,
+                ClientId = contextService.ClientId,
+                PhoneNumber = request.PhoneNumber,
+                UserName = request.UserName,
+                Password = request.Password,
+                DeviceLoginInfo = request.DeviceInfo,
+                LoginType =  request.LoginType,
+                Ip = contextService.GetIp(),
+                AuthenApplicationId = request.AppId,
             };
-            var tokenResult = await authenticationService.Login(inputQuery);
-            if (!tokenResult.Status)
+            var accountLoginResponse = await authenticationService.Login(inputQuery);
+            if (!accountLoginResponse.Status)
             {
-                response.SetFail(tokenResult.ErrorMessages);
+                response.SetFail(accountLoginResponse.ErrorMessages);
                 return;
             }
             
-            
-            // type 2
-            string jsonInputQuery = CommonObject.JsonConverter.ToJson(inputQuery);
-
-            var tokenResult2 = await authenticationService.LoginJ(new CommonJsonQuery
+            if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
             {
-                Json = jsonInputQuery,
-            });
-            if (!tokenResult2.Status)
-            {
-                response.SetFail(tokenResult.ErrorMessages);
+                response.SetFail("Login invalid");
                 return;
             }
-
+            
             // response.Data = await LoginProcess(tokenResult.Data);
-            response.Data = "84780rhf89h289rh2";
+            response.Data = new
+            {
+                Model = accountLoginResponse.Data,
+            };
             response.SetSuccess();
         });
     }

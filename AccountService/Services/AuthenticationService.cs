@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
 using AccountServiceObject.QueryObjects;
 using CommonDb.DbResults;
@@ -11,30 +12,53 @@ using CommonObject;
 using CommonWebApplication.Services;
 using DbFactory;
 using Enums;
+using GeneralServiceObject.QueryObjects;
 using HandleFlow.ResultConverters;
 using IAccountService;
+using IGeneralService;
 using Microsoft.IdentityModel.Tokens;
+using ProjectEntry.AccountEntries;
 using ProjectEnums.AccountEnums;
 
 namespace AccountService.Services;
 
 public class AuthenticationService(
     IDbFactoryWrapper dbFactoryWrapper,
+    IFldMasterPgService fldMasterPgService,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
-    public async Task<CommonResponse<AccountInfoAliasTestObject>> Login(AccountLoginQuery query)
+    public async Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query)
     {
-        return await CommonProcess<AccountInfoAliasTestObject>(async (response) =>
+        return await CommonProcess<AccountLoginInfoObject>(async (response) =>
         {
-            string? email = query.Email; // --------
+            var execution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountGetByUsernameAndPassword,
+                QueryParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "username",
+                        StringValue = query.UserName
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "password",
+                        StringValue = query.Password
+                    }
+                ]
+            };
+            var execStringResponse = await fldMasterPgService.Execute(execution);
+            if (!execStringResponse.Status || execStringResponse.Data == null)
+            {
+                response.SetFail("Could not Find ExecString", execStringResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
 
-            string pgQuery = "SELECT * FROM server_ctrl";
-
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteAsync(pgQuery);
-            List<AccountInfoAliasTestObject>? accountObjects = resultOfQuery?
-                .GenericConverter(typeof(AccountInfoAliasTestObject))?
-                .Cast<AccountInfoAliasTestObject>()
+            List<AccountLoginInfoObject>? accountObjects = execStringResponse.Data?
+                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
+                .Cast<AccountLoginInfoObject>()
                 .ToList();
 
             if (accountObjects is not { Count: > 0 })
@@ -43,15 +67,21 @@ public class AuthenticationService(
                 return;
             }
 
-            AccountInfoAliasTestObject accountObject = accountObjects.First();
-            string? userName = accountObject.UserName;
-
+            AccountLoginInfoObject accountObject = accountObjects.First();
+            string userName = accountObject.UserName;
             if (userName is not { Length: > 0 })
             {
                 response.SetFail("Invalid username");
                 return;
             }
 
+            accountObject.SessionId = $"SESSIONID-{accountObject.UserName}-{CommonUtilityMode.GenerateGuid()}";
+            (string token, int minuteExpire) = await CreateToken(userName, accountObject, oldRefreshToken: null, expireMinutes: 0,
+                loginType: query.LoginType ?? ELoginType.Default);
+            
+            // set 
+            accountObject.Token = token;
+            accountObject.MinuteExpire = minuteExpire;
             response.Data = accountObject;
             response.SetSuccess();
         });
@@ -69,7 +99,7 @@ public class AuthenticationService(
                 return;
             }
 
-            response.Data = (await Login(accountLogin)).Data;
+            // response.Data = (await Login(accountLogin)).Data;
             response.SetSuccess();
         });
     }
@@ -118,7 +148,8 @@ public class AuthenticationService(
 
         accountLoginInfo.MinuteExpire = minuteExpire;
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig().AsDefaultString());
+        var key = Encoding.UTF8.GetBytes(EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig()
+            .AsDefaultString());
         string uniqueNameKey = JwtRegisteredClaimNames.UniqueName;
         List<Claim> claims =
         [

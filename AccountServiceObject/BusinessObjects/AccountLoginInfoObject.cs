@@ -4,7 +4,7 @@ using ProtoBuf;
 namespace AccountServiceObject.BusinessObjects;
 
 [ProtoContract]
-public class AccountLoginInfoObject : BaseAccountObject
+public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
 {
     [ProtoMember(1)] public required Guid AccountId { get; set; }
     [ProtoMember(2)] public required string UserName { get; set; }
@@ -20,7 +20,7 @@ public class AccountLoginInfoObject : BaseAccountObject
     [ProtoMember(12)] public DateTime? CreatedAt { get; set; }
     [ProtoMember(13)] public DateTime? UpdatedAt { get; set; }
     [ProtoMember(14)] public required string SessionId { get; set; }
-    [ProtoMember(14)] public int MinuteExpire { get; set; }
+    [ProtoMember(15)] public int MinuteExpire { get; set; }
 
     protected override void FieldMapper()
     {
@@ -37,6 +37,7 @@ public class AccountLoginInfoObject : BaseAccountObject
         FieldMap.Add(nameof(RefreshToken), "refresh_token");
         FieldMap.Add(nameof(CreatedAt), "created_at");
         FieldMap.Add(nameof(UpdatedAt), "updated_at");
-        base.FieldMapper();
+        FieldMap.Add(nameof(SessionId), "session_id");
+        FieldMap.Add(nameof(MinuteExpire), "minute_expire");
     }
 }
