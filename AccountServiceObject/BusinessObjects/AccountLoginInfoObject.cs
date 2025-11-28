@@ -22,6 +22,7 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
     [ProtoMember(14)] public DateTime? UpdatedAt { get; set; }
     [ProtoMember(15)] public required string SessionId { get; set; }
     [ProtoMember(16)] public int MinuteExpire { get; set; }
+    [ProtoMember(17)] public ETokenStatus TokenStatus { get; set; } = ETokenStatus.Inactive;
 
     protected override void FieldMapper()
     {
@@ -35,6 +36,7 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
 
         FieldMap.Add(nameof(AuthType), "auth_type");
         FieldMap.Add(nameof(LoginType), "login_type");
+        FieldMap.Add(nameof(TokenStatus), "token_status");
         FieldMap.Add(nameof(Permission), "permission");
         
         FieldMap.Add(nameof(DeviceId), "device_id"); 

@@ -217,6 +217,11 @@ public class AuthenticationService(
                         ParamName = "minute_expire",
                         StringValue = accountLoginInfo.MinuteExpire.AsDefaultString()
                     },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "token_status",
+                        StringValue = accountLoginInfo.TokenStatus.EnumAsInt().AsDefaultString()
+                    },
                 ]
             };
             var execStringResponse = await fldMasterPgService.Execute(execution);
@@ -286,6 +291,7 @@ public class AuthenticationService(
                 SessionId = sessionKey,
                 MinuteExpire = minuteExpire,
                 RefreshToken = CommonUtilityMode.GenerateGuid(),
+                TokenStatus = ETokenStatus.Active,
                 Token = tokenValue,
             };
 
