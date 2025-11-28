@@ -16,11 +16,11 @@ public class HostingApp(
         logger.LogInformation("AccountService AppHostedService is starting");
         //var aaaa = (await faqService.GetAll(new FaqQuery()
         // var test = (await surveyService.GetAllSurveys()).Data;
-        var test = (await surveyService.GetQuestionsBySurveyId(
-            new QuestionGetBySurveyIdQuery()
-            {
-                SurveyId = "8e61d790-dc13-49a3-9615-a8396bd37dd6"
-            })).Data;
+        // var test = (await surveyService.GetQuestionsBySurveyId(
+        //     new QuestionGetBySurveyIdQuery()
+        //     {
+        //         SurveyId = "8e61d790-dc13-49a3-9615-a8396bd37dd6"
+        //     })).Data;
         
         // var testCC = (await surveyService.GetQuestionsByUserIdAndSurveyId(new QuestionGetByUserIdAndSurveyIdQuery
         // {
