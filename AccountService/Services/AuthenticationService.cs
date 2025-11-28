@@ -4,16 +4,14 @@ using System.Text;
 using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
 using AccountServiceObject.QueryObjects;
-using CommonDb.DbResults;
 using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication.Services;
-using DbFactory;
+// using DbFactory;
 using Enums;
 using GeneralServiceObject.QueryObjects;
-using HandleFlow.ResultConverters;
 using IAccountService;
 using IGeneralService;
 using Microsoft.IdentityModel.Tokens;
@@ -23,11 +21,14 @@ using ProjectEnums.AccountEnums;
 namespace AccountService.Services;
 
 public class AuthenticationService(
-    IDbFactoryWrapper dbFactoryWrapper,
+    // IDbFactoryWrapper dbFactoryWrapper,
     IFldMasterPgService fldMasterPgService,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
+    private const string SessionIdPrefix = "SESSIONID";
+    private const string MinuteExpirePrefix = "MinuteExpire";
+
     public async Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query)
     {
         return await CommonProcess<AccountLoginInfoObject>(async (response) =>
@@ -56,34 +57,26 @@ public class AuthenticationService(
                 return;
             }
 
-            List<AccountLoginInfoObject>? accountObjects = execStringResponse.Data?
-                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
-                .Cast<AccountLoginInfoObject>()
-                .ToList();
+            AccountObject? accountObject = execStringResponse.Data?
+                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
+                .Cast<AccountObject>().FirstOrDefault();
 
-            if (accountObjects is not { Count: > 0 })
+            if (accountObject == null)
             {
                 response.SetFail("Incorrect data type of 'IEnumerable<AccountInfoAliasTestObject>'");
                 return;
             }
 
-            AccountLoginInfoObject accountObject = accountObjects.First();
-            string userName = accountObject.UserName;
-            if (userName is not { Length: > 0 })
+            AccountLoginInfoObject accountLoginInfoObject = await CreateToken(
+                accountObject, query.AuthType /*, ELoginType.Default*/);
+
+            if (!(await SaveLogin(accountLoginInfoObject)).Status)
             {
-                response.SetFail("Invalid username");
+                response.SetFail("AccountLogin save failure");
                 return;
             }
-
-            accountObject.SessionId = $"SESSIONID-{accountObject.UserName}-{CommonUtilityMode.GenerateGuid()}";
-            (string token, int minuteExpire) = await CreateToken(userName, accountObject, oldRefreshToken: null,
-                expireMinutes: 0,
-                loginType: query.LoginType ?? ELoginType.Default);
-
             // set 
-            accountObject.Token = token;
-            accountObject.MinuteExpire = minuteExpire;
-            response.Data = accountObject;
+            response.Data = accountLoginInfoObject;
             response.SetSuccess();
         });
     }
@@ -115,7 +108,7 @@ public class AuthenticationService(
                 .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
                 .Cast<AccountLoginInfoObject>()
                 .ToList();
-            
+
             if (accountObjects is not { Count: > 0 })
             {
                 response.SetFail("Incorrect data type of 'IEnumerable<AccountInfoAliasTestObject>'");
@@ -129,7 +122,7 @@ public class AuthenticationService(
                 response.SetFail("Invalid username");
                 return;
             }
-            
+
             response.Data = accountObject;
             response.SetSuccess();
         });
@@ -150,24 +143,107 @@ public class AuthenticationService(
         throw new NotImplementedException();
     }
 
-    public string GenRefreshToken()
+    private async Task<CommonResponse> SaveLogin(AccountLoginInfoObject accountLoginInfo)
     {
-        return CommonUtilityMode.GenerateGuid();
+        return await CommonProcess(async (response) =>
+        {
+            var execution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountLoginInfoSaveLogin,
+                QueryParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "account_id",
+                        StringValue = accountLoginInfo.AccountId.AsDefaultString()
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "username",
+                        StringValue = accountLoginInfo.UserName
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "password",
+                        StringValue = accountLoginInfo.Password
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "auth_type",
+                        StringValue = accountLoginInfo.AuthType.EnumAsInt().AsDefaultString()
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "login_type",
+                        StringValue = accountLoginInfo.LoginType.EnumAsInt().AsDefaultString()
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "full_name",
+                        StringValue = accountLoginInfo.FullName
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "phone_number",
+                        StringValue = accountLoginInfo.PhoneNumber
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "device_id",
+                        StringValue = accountLoginInfo.DeviceId
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "token",
+                        StringValue = accountLoginInfo.Token
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "refresh_token",
+                        StringValue = accountLoginInfo.RefreshToken
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "session_id",
+                        StringValue = accountLoginInfo.SessionId
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "permission",
+                        StringValue = accountLoginInfo.Permission.AsDefaultString()
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "minute_expire",
+                        StringValue = accountLoginInfo.MinuteExpire.AsDefaultString()
+                    },
+                ]
+            };
+            var execStringResponse = await fldMasterPgService.Execute(execution);
+            if (!execStringResponse.Status || execStringResponse.Data == null)
+            {
+                response.SetFail($"Could not Find ExecString {AuthenServiceQueryCode.AccountLoginInfoSaveLogin}",
+                    execStringResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+            response.SetSuccess();
+        });
     }
 
-    private async Task<(string Token, int MinuteExpire)> CreateToken(
-        string userName,
-        AccountLoginInfoObject accountLoginInfo,
+    private Task<AccountLoginInfoObject> CreateToken(
+        AccountObject account,
+        EAuthentication authType,
+        ELoginType loginType = ELoginType.Default,
         string? oldRefreshToken = null,
-        int expireMinutes = 0,
-        ELoginType loginType = ELoginType.Default)
+        int expireMinutes = 0
+    )
     {
         if (!string.IsNullOrEmpty(oldRefreshToken))
         {
             // await authenService.RemoveLoginInfo(oldRefreshToken);
         }
 
-        string sessionKey = accountLoginInfo.SessionId;
+        string sessionKey = $"{SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuid()}";
         int minuteExpire = expireMinutes == 0
             ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : expireMinutes;
@@ -179,9 +255,9 @@ public class AuthenticationService(
         List<Claim> claims =
         [
             new(ContextService.SessionCode, sessionKey),
-            new("MinuteExpire", minuteExpire.ToString()),
-            new(uniqueNameKey, userName),
-            new(JwtRegisteredClaimNames.Sid, accountLoginInfo.AccountId.AsDefaultString()),
+            new($"{MinuteExpirePrefix}", minuteExpire.ToString()),
+            new(uniqueNameKey, account.UserName),
+            new(JwtRegisteredClaimNames.Sid, account.Id.AsDefaultString()),
             new Claim(JwtHeaderParameterNames.Typ, loginType.GetDisplayName())
         ];
 
@@ -196,10 +272,24 @@ public class AuthenticationService(
         string tokenValue = tokenHandler.WriteToken(token);
 
         // set
-        accountLoginInfo.MinuteExpire = minuteExpire;
-        accountLoginInfo.RefreshToken = CommonUtilityMode.GenerateGuid();
-        accountLoginInfo.Token = tokenValue;
+        AccountLoginInfoObject accountLoginInfo =
+            new AccountLoginInfoObject
+            {
+                // Id = default,
+                AccountId = account.Id,
+                UserName = account.UserName,
+                Password = account.Password,
+                FullName = account.FullName,
+                PhoneNumber = account.PhoneNumber,
+                AuthType = authType,
+                LoginType = loginType,
+                SessionId = sessionKey,
+                MinuteExpire = minuteExpire,
+                RefreshToken = CommonUtilityMode.GenerateGuid(),
+                Token = tokenValue,
+            };
+
         // await authenService.SetLoginInfo(sessionKey, accountLoginInfo, accountLoginInfo.MinuteExpire);
-        return (tokenValue, minuteExpire);
+        return Task.FromResult(accountLoginInfo);
     }
 }

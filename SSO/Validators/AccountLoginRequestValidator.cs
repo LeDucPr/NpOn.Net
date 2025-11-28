@@ -13,7 +13,7 @@ public class AccountLoginRequestValidator : AbstractValidator<AccountLoginReques
         RuleFor(x => x.Password).NotEmpty()
             .Length(8, 50)
             .Must(HasValidPassword).WithMessage("Password rule invalid");
-        ;
+        RuleFor(x => x.AuthType).NotNull();
     }
 
     private bool HasValidPassword(string pw)

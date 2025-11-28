@@ -55,6 +55,23 @@ public static class EnumMode
         return flags.Any(@enum => value.HasFlag(@enum));
     }
 
+    public static TEnum[] GetFlags<TEnum>(this TEnum value) where TEnum : struct, Enum
+    {
+        if (Convert.ToInt64(value) == 0)
+            return [];
+        return Enum.GetValues(typeof(TEnum))
+            .Cast<TEnum>()
+            .Where(e => Convert.ToInt64(e) != 0 && value.HasFlag(e))
+            .ToArray();
+    }
+    public static TEnum[] GetAllInitEnum<TEnum>() where TEnum : struct, Enum
+    {
+        return Enum.GetValues(typeof(TEnum))
+            .Cast<TEnum>()
+            .Where(e => Convert.ToInt64(e) != 0)
+            .ToArray();
+    }
+    
     #endregion
 
 

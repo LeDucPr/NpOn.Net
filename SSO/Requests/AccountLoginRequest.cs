@@ -9,7 +9,8 @@ public class AccountLoginRequest
     public string? UserName { get; set; }
     public required string Password { get; set; }
     public string? DeviceInfo { get; set; }
-    public ELoginType LoginType { get; set; }
+    public ELoginType? LoginType { get; set; }
+    public required EAuthentication AuthType { get; set; }
     public string? AppId { get; set; }
 }
 
