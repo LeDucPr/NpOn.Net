@@ -43,7 +43,6 @@ public class PostgresDriver : NpOnDbDriver
     {
         if (_connection != null)
         {
-            // Npgsql khuyến nghị gọi CloseAsync() trước khi DisposeAsync()
             await _connection.CloseAsync();
             await _connection.DisposeAsync();
             _connection = null;
@@ -96,6 +95,10 @@ public class PostgresDriver : NpOnDbDriver
         {
             return new PostgresResultSetWrapper().SetFail(ex);
         }
+        finally
+        {
+            await DisconnectAsync();
+        }
     }
 
 
@@ -140,6 +143,10 @@ public class PostgresDriver : NpOnDbDriver
         {
             return new PostgresResultSetWrapper().SetFail(ex);
         }
+        finally
+        {
+            await DisconnectAsync();
+        }
     }
 
     public override async Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecCommand? execCommand,
@@ -181,6 +188,10 @@ public class PostgresDriver : NpOnDbDriver
         catch (Exception ex)
         {
             return new PostgresResultSetWrapper().SetFail(ex);
+        }
+        finally
+        {
+            await DisconnectAsync();
         }
     }
 }

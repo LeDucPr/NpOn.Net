@@ -1,7 +1,6 @@
 ﻿using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
 using CommonWebApplication.Services;
-using Enums;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +40,7 @@ public class AccountController(
                 LoginType = request.LoginType,
                 Ip = contextService.GetIp(),
                 AuthenApplicationId = request.AppId,
+                AuthType = request.AuthType,
             };
             var accountLoginResponse = await authenticationService.Login(inputQuery);
             if (!accountLoginResponse.Status)

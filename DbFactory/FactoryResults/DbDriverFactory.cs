@@ -57,7 +57,7 @@ public class DbDriverFactory : IDbDriverFactory
     private readonly ILogger<DbDriverFactory> _logger = new Logger<DbDriverFactory>(new NullLoggerFactory());
     private List<NpOnDbConnection>? _connections;
     public int GetAliveConnectionNumbers => _connections?.Count(c => c.Driver.IsValidSession) ?? 0;
-    public int GetConnectionNumbers => _connections?.Count() ?? 0;
+    public int GetConnectionNumbers => _connections?.Count ?? 0;
 
     public List<NpOnDbConnection>? ValidConnections =>
         _connections?.Where(c => c.Driver.IsValidSession).ToList();
@@ -138,10 +138,11 @@ public class DbDriverFactory : IDbDriverFactory
                     $"no longer available connection. Full connection ({connectionNumber}/{_connectionNumber})");
             }
 
-            foreach (var invalidConnection in invalidConnections)
-            {
-                await invalidConnection.OpenAsync();
-            }
+            if (GetAliveConnectionNumbers == 0 && invalidConnections.Count > 0) // open 1 (performance with many)
+                await invalidConnections.First().OpenAsync();
+
+            // foreach (var invalidConnection in invalidConnections)
+            //     await invalidConnection.OpenAsync();
 
             if (ValidConnections is not { Count : > 0 } && isUseException)
             {
@@ -198,7 +199,7 @@ public class DbDriverFactory : IDbDriverFactory
             }
 
             _connections = new List<NpOnDbConnection>();
-            for (int i = 0; i++ < _connectionNumber; i++)
+            for (int i = 0; i < _connectionNumber; i++)
             {
                 // logger.LogInformation("Creating a database driver for {DatabaseType}", eDb);
                 NpOnDbConnection? newConnection = _eDb switch

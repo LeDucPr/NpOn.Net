@@ -68,12 +68,11 @@ public class NpOnDbConnection<T> : NpOnDbConnection where T : INpOnDbDriver
 
     public override async Task OpenAsync(CancellationToken cancellationToken)
     {
-        if (_state != ConnectionState.Closed)
-        {
-            _logger.LogWarning("Attempted to open a connection that is not closed. Current state: {State}", _state);
-            return;
-        }
-
+        // if (_state != ConnectionState.Closed)
+        // {
+        //     _logger.LogWarning("Attempted to open a connection that is not closed. Current state: {State}", _state);
+        //     return;
+        // }
         try
         {
             _state = ConnectionState.Connecting;
