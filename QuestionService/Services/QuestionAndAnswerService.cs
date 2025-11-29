@@ -4,7 +4,7 @@ using CommonWebApplication.Services;
 using GeneralServiceObject.QueryObjects;
 using IGeneralService;
 using IQuestionService;
-using ProjectEnums.FldMasterEnums;
+using ProjectEntry.QuestionEntries;
 using QuestionServiceObject.CommandObjects;
 
 namespace QuestionService.Services;
@@ -31,7 +31,7 @@ public class QuestionAndAnswerService(
                 // This call is correct as it executes an INSERT
                 var result = await fldMasterPgService.Execute(new TblFldExecution
                 {
-                    Code = FldMasterCodes.SurveyInsertAns,
+                    Code = QuestionServiceQueryCode.SurveyInsertAns,
                     QueryParams = queryParams.ToArray()
                 });
 
@@ -48,4 +48,5 @@ public class QuestionAndAnswerService(
             response.Data = "All answers submitted successfully.";
         });
     }
+    
 }

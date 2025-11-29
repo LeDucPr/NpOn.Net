@@ -7,8 +7,8 @@ using GeneralServiceObject.QueryObjects;
 using Enums;
 using QuestionServiceObject.QueryObjects;
 using CommonDb.DbResults.Grpc;
-using ProjectEnums.FldMasterEnums;
 using CommonObject;
+using ProjectEntry.QuestionEntries;
 
 namespace QuestionService.Services;
 
@@ -25,10 +25,8 @@ public class SurveyService(
             [
                 new TblFldExecutionParam() { ParamName = "title", StringValue = addOrUpdateCommand.Title },
                 new TblFldExecutionParam() { ParamName = "description", StringValue = addOrUpdateCommand.Description },
-                new TblFldExecutionParam()
-                    { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
-                new TblFldExecutionParam()
-                    { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
+                new TblFldExecutionParam() { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
+                new TblFldExecutionParam() { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
             ];
 
             if (addOrUpdateCommand.Id != null)
@@ -36,10 +34,9 @@ public class SurveyService(
                 queryParams.Add(new TblFldExecutionParam() { ParamName = "id", StringValue = addOrUpdateCommand.Id });
             }
 
-            // This call is correct as it executes an INSERT/UPDATE
             var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = addOrUpdateCommand.Id == null ? FldMasterCodes.SurveyAdd : FldMasterCodes.SurveyUpdate,
+                Code = addOrUpdateCommand.Id == null ? QuestionServiceQueryCode.SurveyAdd : QuestionServiceQueryCode.SurveyUpdate,
                 QueryParams = queryParams.ToArray(),
             });
 
@@ -61,7 +58,7 @@ public class SurveyService(
             // This call should execute the query to get data
             var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = FldMasterCodes.QuestionsBySurveyId,
+                Code = QuestionServiceQueryCode.QuestionsBySurveyId,
                 QueryParams = [new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId }],
             });
 
@@ -82,7 +79,7 @@ public class SurveyService(
         {
             var scoreExecution = new TblFldExecution
             {
-                Code = FldMasterCodes.SurveyCalcScore,
+                Code = QuestionServiceQueryCode.SurveyCalcScore,
                 QueryParams =
                 [
                     new TblFldExecutionParam { ParamName = "user_id", StringValue = query.UserId },
@@ -107,7 +104,7 @@ public class SurveyService(
         {
             var outcomeExecution = new TblFldExecution
             {
-                Code = FldMasterCodes.GetSurveyOutcomesBySurveyId,
+                Code = QuestionServiceQueryCode.GetSurveyOutcomesBySurveyId,
                 QueryParams =
                 [
                     new TblFldExecutionParam
