@@ -1,14 +1,17 @@
-﻿namespace QuestionServiceObject.QueryObjects;
+﻿using ProtoBuf;
 
+namespace QuestionServiceObject.QueryObjects;
+
+[ProtoContract]
 public class SurveyHistoryQuery
 {
-    public string? ResultId { get; set; }
+    [ProtoMember(1)] public string? ResultId { get; set; }
 
-    public string? UserId { get; set; }
+    [ProtoMember(2)] public string? UserId { get; set; }
 
-    public string? SurveyId { get; set; }
+    [ProtoMember(3)] public string? SurveyId { get; set; }
 
-    public int PageIndex { get; set; }
+    [ProtoMember(4)] public int PageIndex { get; set; }
 
-    public int PageSize { get; set; }
+    [ProtoMember(5)] public int PageSize { get; set; }
 }

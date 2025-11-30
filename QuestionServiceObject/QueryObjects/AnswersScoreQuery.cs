@@ -1,6 +1,9 @@
-﻿namespace QuestionServiceObject.QueryObjects;
+﻿using ProtoBuf;
 
+namespace QuestionServiceObject.QueryObjects;
+
+[ProtoContract]
 public class AnswersScoreQuery
 {
-    public string AnswerIds { get; set; }
+    [ProtoMember(1)] public required string AnswerIds { get; set; }
 }

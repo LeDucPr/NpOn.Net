@@ -226,7 +226,6 @@ public class SurveyController(
                 return;
             }
 
-            // Find the matching outcome in the controller
             SurveyScoreOutcomeOutputModel[] finalOutcomes = outcomeModels.Select(x => x.ToModel()).ToArray();
 
             response.Data = finalOutcomes;

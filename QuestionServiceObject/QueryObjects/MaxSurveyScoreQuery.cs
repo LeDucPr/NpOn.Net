@@ -1,6 +1,9 @@
-﻿namespace QuestionServiceObject.QueryObjects;
+﻿using ProtoBuf;
 
+namespace QuestionServiceObject.QueryObjects;
+
+[ProtoContract]
 public class MaxSurveyScoreQuery
 {
-    public string SurveyId { get; set; }
+    [ProtoMember(1)] public required string SurveyId { get; set; }
 }
