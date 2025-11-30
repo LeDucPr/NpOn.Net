@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
     <ProjectReference Include="..\ProjectEnums\ProjectEnums.csproj" />
+    <PackageReference Include="Npgsql" Version="8.0.3"/>
   </ItemGroup>
 
 </Project>
