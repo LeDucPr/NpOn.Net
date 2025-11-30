@@ -263,7 +263,7 @@ public class SurveyController(
             var historyContainer = historyResponse.Data;
             //historyContainer.ParseAndAssignData();
 
-            response.Data = historyContainer.Data;
+            response.Data = historyContainer.Json;
             response.SetSuccess();
         });
     }
