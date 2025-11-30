@@ -16,6 +16,14 @@ public abstract class FromSource
     public string Alias { get; set; }
 }
 
+public class CastRef : SelectItem
+{
+    public string TableAlias { get; set; }
+    public string ColumnName { get; set; }
+    public string Alias { get; set; }
+    public string CastType { get; set; }
+}
+
 public class TableRef : FromSource
 {
     public string Schema { get; set; } // nullable: default 'public'
@@ -27,7 +35,9 @@ public class SubqueryRef : FromSource
     public QueryNode Subquery { get; set; }
 }
 
-public abstract class SelectItem { }
+public abstract class SelectItem
+{
+}
 
 public class ColumnRef : SelectItem
 {
@@ -108,6 +118,7 @@ public class SqlParser
             if (idx >= _sql.Length || _sql[idx] != ',') break;
             idx++;
         }
+
         return ctes;
     }
 
@@ -145,6 +156,7 @@ public class SqlParser
             var sources = ParseFromSources(fromSql);
             query.FromSources = sources;
         }
+
         return query;
     }
 
@@ -160,103 +172,424 @@ public class SqlParser
     {
         var items = SplitTopLevel(selectSql, ',');
         var list = new List<SelectItem>();
+
         foreach (var raw in items)
         {
             var s = raw.Trim();
+            if (string.IsNullOrEmpty(s)) continue;
+
+            // 1. Global wildcard *
             if (s == "*")
             {
                 list.Add(new WildcardRef { TableAlias = null });
                 continue;
             }
 
-            var starIdx = s.IndexOf(".*", StringComparison.Ordinal);
-            if (starIdx > 0 && starIdx == s.Length - 2)
+            // 2. alias.*
+            if (s.EndsWith(".*", StringComparison.Ordinal))
             {
-                var alias = s.Substring(0, starIdx).Trim();
+                var alias = s.Substring(0, s.Length - 2).Trim();
                 list.Add(new WildcardRef { TableAlias = alias });
                 continue;
             }
 
-            var asMatch = Regex.Match(s, @"^(.*?)(?:\s+AS\s+|\s+)([A-Za-z_][A-Za-z0-9_]*)$", RegexOptions.IgnoreCase);
-            if (asMatch.Success)
+            // 3. Cast expression: table.col::type AS alias
+            var castMatch = Regex.Match(s,
+                @"^(?:(?<t>[A-Za-z_][A-Za-z0-9_]*)\.)?(?<c>[A-Za-z_][A-Za-z0-9_]*)(::(?<cast>[A-Za-z_][A-Za-z0-9_]*))\s+AS\s+(?<alias>[A-Za-z_][A-Za-z0-9_]*)$",
+                RegexOptions.IgnoreCase);
+            if (castMatch.Success)
             {
-                var left = asMatch.Groups[1].Value.Trim();
-                var alias = asMatch.Groups[2].Value.Trim();
-                var colMatch = Regex.Match(left, @"^(?:(?<t>[A-Za-z_][A-Za-z0-9_]*)\.)?(?<c>[A-Za-z_][A-Za-z0-9_]*)$",
-                    RegexOptions.IgnoreCase);
-                if (colMatch.Success)
+                list.Add(new CastRef
                 {
-                    list.Add(new ColumnRef
-                    {
-                        TableAlias = colMatch.Groups["t"].Success ? colMatch.Groups["t"].Value : null,
-                        ColumnName = colMatch.Groups["c"].Value,
-                        Alias = alias
-                    });
-                }
-                else
-                {
-                    list.Add(new ExpressionRef { ExpressionSql = left, Alias = alias });
-                }
+                    TableAlias = castMatch.Groups["t"].Success ? castMatch.Groups["t"].Value : null,
+                    ColumnName = castMatch.Groups["c"].Value,
+                    Alias = castMatch.Groups["alias"].Value,
+                    CastType = castMatch.Groups["cast"].Value
+                });
                 continue;
             }
 
-            var colMatch2 = Regex.Match(s, @"^(?:(?<t>[A-Za-z_][A-Za-z0-9_]*)\.)?(?<c>[A-Za-z_][A-Za-z0-9_]*)$",
+            // 4. Normal column with alias: col AS alias
+            var asMatch = Regex.Match(s,
+                @"^(?:(?<t>[A-Za-z_][A-Za-z0-9_]*)\.)?(?<c>[A-Za-z_][A-Za-z0-9_]*)(?:\s+AS\s+|\s+)(?<alias>[A-Za-z_][A-Za-z0-9_]*)$",
                 RegexOptions.IgnoreCase);
-            if (colMatch2.Success)
+            if (asMatch.Success)
             {
                 list.Add(new ColumnRef
                 {
-                    TableAlias = colMatch2.Groups["t"].Success ? colMatch2.Groups["t"].Value : null,
-                    ColumnName = colMatch2.Groups["c"].Value,
+                    TableAlias = asMatch.Groups["t"].Success ? asMatch.Groups["t"].Value : null,
+                    ColumnName = asMatch.Groups["c"].Value,
+                    Alias = asMatch.Groups["alias"].Value
+                });
+                continue;
+            }
+
+            // 5. Bare column: table.col
+            var colMatch = Regex.Match(s,
+                @"^(?:(?<t>[A-Za-z_][A-Za-z0-9_]*)\.)?(?<c>[A-Za-z_][A-Za-z0-9_]*)$",
+                RegexOptions.IgnoreCase);
+            if (colMatch.Success)
+            {
+                list.Add(new ColumnRef
+                {
+                    TableAlias = colMatch.Groups["t"].Success ? colMatch.Groups["t"].Value : null,
+                    ColumnName = colMatch.Groups["c"].Value,
                     Alias = null
                 });
+                continue;
             }
-            else
-            {
-                list.Add(new ExpressionRef { ExpressionSql = s, Alias = null });
-            }
+
+            // 6. Fallback: expression
+            list.Add(new ExpressionRef { ExpressionSql = s, Alias = null });
         }
+
         return list;
     }
 
     private List<FromSource> ParseFromSources(string fromSql)
     {
         var sources = new List<FromSource>();
+        if (string.IsNullOrWhiteSpace(fromSql)) return sources;
 
-        // Tách theo từ khóa JOIN ở mức top-level
-        var parts = Regex.Split(fromSql, @"\bJOIN\b", RegexOptions.IgnoreCase);
+        // Cắt bỏ WHERE/HAVING/ORDER... nếu lỡ dính vào (phòng hờ)
+        var cutIdx = IndexOfAnyKeywordTopLevel(fromSql,
+            new[] { "WHERE", "GROUP", "HAVING", "ORDER", "LIMIT", "OFFSET", "UNION", "INTERSECT", "EXCEPT" });
+        var core = cutIdx >= 0 ? fromSql.Substring(0, cutIdx).Trim() : fromSql.Trim();
 
-        foreach (var part in parts)
+        int i = 0;
+        while (i < core.Length)
         {
-            var s = part.Trim();
-            if (string.IsNullOrWhiteSpace(s)) continue;
+            SkipWs(core, ref i);
+            if (i >= core.Length) break;
 
-            // Nếu bắt đầu bằng ON thì bỏ qua (điều kiện join)
-            if (s.StartsWith("ON", StringComparison.OrdinalIgnoreCase)) continue;
-
-            // Nếu là subquery
-            if (s.StartsWith("("))
+            // Bỏ dấu phẩy giữa các nguồn
+            if (core[i] == ',')
             {
-                var sub = ExtractParenthesized(s);
-                var inner = sub.Trim();
-                if (inner.StartsWith("(") && inner.EndsWith(")"))
-                    inner = inner.Substring(1, inner.Length - 2).Trim();
-
-                var alias = s.Substring(sub.Length).Trim();
-                if (string.IsNullOrEmpty(alias))
-                    throw new Exception("Subquery must have alias.");
-
-                var subParser = new SqlParser(inner);
-                sources.Add(new SubqueryRef { Subquery = subParser.Parse(), Alias = alias });
+                i++;
+                continue;
             }
-            else
+
+            // Đọc 1 nguồn (table hoặc subquery)
+            var src = ReadOneSource(core, ref i);
+            sources.Add(src);
+
+            // Sau nguồn đầu, xử lý tất cả JOIN chuỗi theo sau
+            while (true)
             {
-                var primary = ReadPrimaryTableToken(s);
-                sources.Add(primary);
+                SkipWs(core, ref i);
+                if (!StartsWithAnyJoin(core, i)) break;
+
+                // Bỏ phần join type + 'JOIN'
+                MovePastJoinKeyword(core, ref i);
+
+                // Đọc nguồn bên phải JOIN
+                SkipWs(core, ref i);
+                var right = ReadOneSource(core, ref i);
+                sources.Add(right);
+
+                // Bỏ điều kiện ON/USING
+                SkipWs(core, ref i);
+                if (StartsWithAt(core, i, "ON ") || StartsWithAt(core, i, "USING "))
+                {
+                    ConsumeJoinCondition(core, ref i);
+                }
+            }
+
+            // Nếu có dấu phẩy thì vòng while lớn sẽ đọc tiếp nguồn kế tiếp
+            SkipWs(core, ref i);
+            if (i < core.Length && core[i] == ',')
+            {
+                i++;
+                continue;
             }
         }
 
         return sources;
+    }
+
+    private void ConsumeJoinCondition(string s, ref int i)
+    {
+        // Tiêu thụ "ON ..." hoặc "USING (...)" cho tới khi gặp dấu phẩy hoặc một JOIN mới ở mức top-level
+        int depth = 0;
+        while (i < s.Length)
+        {
+            char ch = s[i++];
+            if (ch == '(') depth++;
+            else if (ch == ')') depth = Math.Max(0, depth - 1);
+
+            if (depth == 0)
+            {
+                // Kết thúc khi tới dấu phẩy (ngăn cách nguồn) hoặc gặp JOIN mới
+                if (i < s.Length && s[i] == ',') break;
+                if (StartsWithAnyJoin(s, i)) break;
+            }
+        }
+    }
+
+    private static void SkipWs(string s, ref int i)
+    {
+        while (i < s.Length && char.IsWhiteSpace(s[i])) i++;
+    }
+
+    private static bool StartsWithAnyJoin(string s, int i)
+    {
+        // Hỗ trợ các biến thể JOIN phổ biến
+        return StartsWithAt(s, i, "JOIN ") ||
+               StartsWithAt(s, i, "LEFT JOIN ") ||
+               StartsWithAt(s, i, "RIGHT JOIN ") ||
+               StartsWithAt(s, i, "FULL JOIN ") ||
+               StartsWithAt(s, i, "INNER JOIN ") ||
+               StartsWithAt(s, i, "OUTER JOIN ") ||
+               StartsWithAt(s, i, "CROSS JOIN ") ||
+               StartsWithAt(s, i, "NATURAL JOIN ");
+    }
+
+    private static void MovePastJoinKeyword(string s, ref int i)
+    {
+        // Nhảy qua chuỗi join type + JOIN
+        // Ví dụ: "LEFT JOIN" hoặc "JOIN"
+        // Đi tới sau chữ "JOIN "
+        while (i < s.Length && char.IsWhiteSpace(s[i])) i++;
+        // ăn hết các từ không phải 'JOIN'
+        var start = i;
+        while (i < s.Length)
+        {
+            if (StartsWithAt(s, i, "JOIN "))
+            {
+                i += "JOIN ".Length;
+                break;
+            }
+
+            i++;
+        }
+    }
+
+    private static string ReadAliasToken(string s, ref int i)
+    {
+        var start = i;
+        while (i < s.Length && (char.IsLetterOrDigit(s[i]) || s[i] == '_')) i++;
+        return s.Substring(start, i - start);
+    }
+
+    private static string ReadIdentifierToken(string s, ref int i)
+    {
+        var start = i;
+        while (i < s.Length)
+        {
+            char ch = s[i];
+            if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '.')
+            {
+                i++;
+            }
+            else break;
+        }
+
+        return s.Substring(start, i - start);
+    }
+
+    private static string PeekIdentifierToken(string s, int i)
+    {
+        var j = i;
+        while (j < s.Length && char.IsWhiteSpace(s[j])) j++;
+        var start = j;
+        while (j < s.Length)
+        {
+            char ch = j < s.Length ? s[j] : '\0';
+            if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '.')
+                j++;
+            else break;
+        }
+
+        return s.Substring(start, j - start);
+    }
+
+    private static ReadOnlySpan<char> ReadParenthesizedSpan(string s, ref int i)
+    {
+        int depth = 0;
+        int start = i;
+        if (i >= s.Length || s[i] != '(') throw new Exception("Parenthesized block expected.");
+        while (i < s.Length)
+        {
+            var ch = s[i++];
+            if (ch == '(') depth++;
+            else if (ch == ')')
+            {
+                depth--;
+                if (depth == 0) break;
+            }
+        }
+
+        return s.AsSpan(start, i - start);
+    }
+
+
+    private FromSource ReadOneSource(string s, ref int i)
+    {
+        SkipWs(s, ref i);
+        if (i >= s.Length) throw new Exception("FROM source expected.");
+
+        if (s[i] == '(')
+        {
+            // Subquery: (SELECT ...) alias
+            var sub = ReadParenthesizedSpan(s, ref i); // trả về span "(...)"
+            var inner = sub.ToString().Trim();
+            if (inner.StartsWith("(") && inner.EndsWith(")"))
+                inner = inner.Substring(1, inner.Length - 2).Trim();
+
+            // Đọc alias sau subquery, hỗ trợ AS
+            SkipWs(s, ref i);
+            string alias = null;
+            if (StartsWithAt(s, i, "AS "))
+            {
+                i += 3;
+                SkipWs(s, ref i);
+            }
+
+            alias = ReadAliasToken(s, ref i);
+            if (string.IsNullOrEmpty(alias))
+                throw new Exception("Subquery must have alias.");
+
+            var subParser = new SqlParser(inner);
+            return new SubqueryRef { Subquery = subParser.Parse(), Alias = alias };
+        }
+        else
+        {
+            // Bảng thường: [schema.]table [AS] alias?
+            var tableToken = ReadIdentifierToken(s, ref i); // lấy "schema.table" hoặc "table"
+            if (string.IsNullOrEmpty(tableToken))
+                throw new Exception($"Invalid FROM source head at: {SafeContext(s, i)}");
+
+            SkipWs(s, ref i);
+
+            // Optional AS
+            if (StartsWithAt(s, i, "AS "))
+            {
+                i += 3;
+                SkipWs(s, ref i);
+            }
+
+            // Alias nếu token tiếp theo là identifier và không phải keyword JOIN/ON/USING
+            string alias = null;
+            var look = PeekIdentifierToken(s, i);
+            if (!string.IsNullOrEmpty(look) && !IsJoinKeyword(look) &&
+                !look.Equals("ON", StringComparison.OrdinalIgnoreCase) &&
+                !look.Equals("USING", StringComparison.OrdinalIgnoreCase))
+            {
+                alias = ReadIdentifierToken(s, ref i);
+            }
+
+            string schema = null, name = null;
+            if (tableToken.Contains('.'))
+            {
+                var parts = tableToken.Split('.', 2);
+                schema = parts[0];
+                name = parts[1];
+            }
+            else
+            {
+                name = tableToken;
+            }
+
+            return new TableRef { Schema = schema, Name = name, Alias = alias ?? name };
+        }
+    }
+
+
+    private static int IndexOfAnyKeywordTopLevel(string s, string[] keywords)
+    {
+        int depth = 0;
+        for (int i = 0; i < s.Length; i++)
+        {
+            char ch = s[i];
+            if (ch == '(') depth++;
+            else if (ch == ')') depth = Math.Max(0, depth - 1);
+
+            if (depth == 0)
+            {
+                foreach (var kw in keywords)
+                {
+                    if (StartsWithAt(s, i, kw))
+                        return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool StartsWithAt(string s, int idx, string kw)
+    {
+        if (idx < 0 || idx + kw.Length > s.Length) return false;
+        return s.AsSpan(idx, kw.Length).Equals(kw, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static List<string> SplitByJoinTopLevel(string s)
+    {
+        var parts = new List<string>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < s.Length; i++)
+        {
+            char ch = s[i];
+            if (ch == '(') depth++;
+            else if (ch == ')') depth = Math.Max(0, depth - 1);
+
+            if (depth == 0)
+            {
+                // Phát hiện từ khóa JOIN
+                if (StartsWithAt(s, i, " JOIN ") || StartsWithAt(s, i, " LEFT JOIN ") ||
+                    StartsWithAt(s, i, " RIGHT JOIN ") || StartsWithAt(s, i, " FULL JOIN ") ||
+                    StartsWithAt(s, i, " INNER JOIN ") || StartsWithAt(s, i, " OUTER JOIN ") ||
+                    StartsWithAt(s, i, " CROSS JOIN ") || StartsWithAt(s, i, " NATURAL JOIN "))
+                {
+                    parts.Add(s.Substring(start, i - start));
+                    // Nhảy qua cụm JOIN
+                    // Tìm hết phần "JOIN <source> [ON/USING ...]" rồi bắt đầu phần kế tiếp
+                    // Ở đây để đơn giản: bắt đầu phần mới ngay sau khoảng trắng trước JOIN
+                    // (vì chúng ta chỉ cần nguồn đầu mỗi segment)
+                    start = i + 1; // bỏ qua khoảng trắng trước JOIN, phần sau sẽ bắt nguồn mới
+                }
+            }
+        }
+
+        parts.Add(s.Substring(start));
+        return parts;
+    }
+
+// Parse 1 nguồn bảng: hỗ trợ "schema.table alias" và "table AS alias"
+    private static TableRef ParseTableWithAlias(string s)
+    {
+        // Cắt tail điều kiện ON/USING nếu vô tình dính vào
+        var cutIdx = s.IndexOf(" ON ", StringComparison.OrdinalIgnoreCase);
+        var usingIdx = s.IndexOf(" USING ", StringComparison.OrdinalIgnoreCase);
+        int end = s.Length;
+        if (cutIdx >= 0) end = Math.Min(end, cutIdx);
+        if (usingIdx >= 0) end = Math.Min(end, usingIdx);
+        var head = s.Substring(0, end).Trim();
+
+        // Hỗ trợ 'AS'
+        var asMatch = Regex.Match(head,
+            @"^(?<tbl>(?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*)(?:\s+(?:AS\s+)?(?<alias>[A-Za-z_][A-Za-z0-9_]*))?$",
+            RegexOptions.IgnoreCase);
+        if (!asMatch.Success)
+            throw new Exception($"Invalid FROM source: {s}");
+
+        var tbl = asMatch.Groups["tbl"].Value;
+        var alias = asMatch.Groups["alias"].Success ? asMatch.Groups["alias"].Value : null;
+
+        string schema = null, name = null;
+        if (tbl.Contains('.'))
+        {
+            var parts = tbl.Split('.', 2);
+            schema = parts[0];
+            name = parts[1];
+        }
+        else
+        {
+            name = tbl;
+        }
+
+        return new TableRef { Schema = schema, Name = name, Alias = alias ?? name };
     }
 
     private FromSource ReadPrimaryTableToken(string s)
@@ -291,13 +624,14 @@ public class SqlParser
             alias = tokens[1];
         }
 
-        return new TableRef { Schema = schema, Name = table, Alias = alias ?? table };  
+        return new TableRef { Schema = schema, Name = table, Alias = alias ?? table };
     }
 
     private static bool IsJoinKeyword(string s)
     {
         s = s.ToUpperInvariant();
-        return s is "JOIN" or "LEFT" or "RIGHT" or "FULL" or "INNER" or "OUTER" or "CROSS" or "NATURAL" or "ON" or "USING";
+        return s is "JOIN" or "LEFT" or "RIGHT" or "FULL" or "INNER" or "OUTER" or "CROSS" or "NATURAL" or "ON"
+            or "USING";
     }
 
     // --- Utility parsing functions ---
@@ -353,6 +687,7 @@ public class SqlParser
                 if (depth == 0) break;
             }
         }
+
         return sql.Substring(start, idx - start);
     }
 
@@ -377,8 +712,10 @@ public class SqlParser
                     }
                 }
             }
+
             idx++;
         }
+
         return sql.Substring(start).Trim();
     }
 
@@ -398,6 +735,7 @@ public class SqlParser
                 start = i + 1;
             }
         }
+
         items.Add(s.Substring(start));
         return items;
     }
@@ -420,6 +758,7 @@ public class SqlParser
                 }
             }
         }
+
         return s.Substring(0, i);
     }
 
@@ -432,6 +771,7 @@ public class SqlParser
             if (!string.IsNullOrEmpty(p))
                 tokens.Add(p);
         }
+
         return tokens;
     }
 }
@@ -440,7 +780,11 @@ public class SqlParser
 public class PgMetadataProvider
 {
     private readonly string _connStr;
-    public PgMetadataProvider(string connectionString) { _connStr = connectionString; }
+
+    public PgMetadataProvider(string connectionString)
+    {
+        _connStr = connectionString;
+    }
 
     public List<PgColumn> GetColumns(string schema, string table)
     {
@@ -460,6 +804,7 @@ public class PgMetadataProvider
         {
             cols.Add(new PgColumn { ColumnName = r.GetString(0), DataType = r.GetString(1) });
         }
+
         return cols;
     }
 }
@@ -469,7 +814,6 @@ public class PgColumn
     public string ColumnName { get; set; }
     public string DataType { get; set; }
 }
-
 
 public class ResolvedQuery
 {
@@ -540,6 +884,7 @@ public class QueryResolver
                             });
                         }
                     }
+
                     break;
 
                 case ColumnRef cr:
@@ -588,6 +933,21 @@ public class QueryResolver
                         PgDataType = "unknown"
                     });
                     break;
+                
+                case CastRef cast:
+                    if (!aliasMap.TryGetValue(cast.TableAlias, out var sourceTableCastRef))
+                        throw new Exception($"Unknown table alias: {cast.TableAlias}");
+
+                    outputColumns.Add(new ResolvedColumn
+                    {
+                        OutputName = cast.Alias,
+                        SourceTable = $"{sourceTableCastRef.Schema ?? "public"}.{sourceTableCastRef.Name}",
+                        SourceAlias = cast.TableAlias,
+                        SourceColumn = cast.ColumnName,
+                        PgDataType = cast.CastType // dùng kiểu ép
+                    });
+                    break;
+
             }
         }
 
@@ -599,16 +959,20 @@ public class QueryResolver
         return result;
     }
 
-    private void ExpandWildcardForSource(FromSource src, Dictionary<string, TableRef> aliasMap, List<ResolvedColumn> output)
+    private void ExpandWildcardForSource(
+        FromSource src,
+        Dictionary<string, TableRef> aliasMap,
+        List<ResolvedColumn> output)
     {
         if (src is TableRef t)
         {
+            // Lấy toàn bộ cột của bảng từ metadata
             var cols = _meta.GetColumns(t.Schema, t.Name);
             foreach (var c in cols)
             {
                 output.Add(new ResolvedColumn
                 {
-                    OutputName = $"{t.Alias}.{c.ColumnName}",
+                    OutputName = $"{t.Alias}_{c.ColumnName}", // dùng alias_column để tránh trùng
                     SourceTable = $"{t.Schema ?? "public"}.{t.Name}",
                     SourceAlias = t.Alias,
                     SourceColumn = c.ColumnName,
@@ -618,15 +982,21 @@ public class QueryResolver
         }
         else if (src is SubqueryRef sq)
         {
-            // Có thể resolve đệ quy để lấy cột của subquery, tạm gán unknown ở bản đơn giản
-            output.Add(new ResolvedColumn
+            // Resolve đệ quy subquery để lấy danh sách cột
+            var subResolved = Resolve(sq.Subquery);
+
+            foreach (var c in subResolved.OutputColumns)
             {
-                OutputName = $"{sq.Alias}.*",
-                SourceTable = null,
-                SourceAlias = sq.Alias,
-                SourceColumn = "*",
-                PgDataType = "unknown"
-            });
+                output.Add(new ResolvedColumn
+                {
+                    // Gắn alias của subquery vào trước để phân biệt
+                    OutputName = $"{sq.Alias}_{c.OutputName}",
+                    SourceTable = c.SourceTable, // giữ nguyên nguồn nếu có
+                    SourceAlias = sq.Alias,
+                    SourceColumn = c.OutputName,
+                    PgDataType = c.PgDataType
+                });
+            }
         }
     }
 
@@ -655,10 +1025,16 @@ public class QueryResolver
             {
                 map[t.Alias] = t;
             }
-            // SubqueryRef có alias nhưng không có schema/name thật; nếu muốn, có thể thêm vào map logic riêng.
+            else if (src is SubqueryRef sq)
+            {
+                // Thêm alias của subquery như một bảng logic
+                map[sq.Alias] = new TableRef { Schema = null, Name = sq.Alias, Alias = sq.Alias };
+            }
         }
+
         return map;
     }
+
 
     private TableRef FindUniqueColumnOwner(string column, List<TableRef> tables)
     {
