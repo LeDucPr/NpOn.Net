@@ -10,11 +10,15 @@ using CommonObject;
 using Enums;
 using ProjectEntry.QuestionEntries;
 using System.Text.Json;
+using DbFactory;
+using CommonDb.DbResults;
+using QuestionServiceObject;
 
 namespace QuestionService.Services;
 
 public class SurveyService(
     IFldMasterPgService fldMasterPgService,
+    IDbFactoryWrapper dbFactoryWrapper,
     ILogger<CommonService> logger
 ) : CommonService(logger), ISurveyService
 {
@@ -145,10 +149,7 @@ public class SurveyService(
             var scoreExecution = new TblFldExecution
             {
                 Code = QuestionServiceQueryCode.SurveyGetAnswersScore,
-                QueryParams =
-                [
-                    new TblFldExecutionParam { ParamName = "answer_ids", StringValue = "{" + string.Join(",", query.AnswerIds) + "}" }
-                ]
+                QueryParams = [new TblFldExecutionParam { ParamName = "answer_ids", StringValue = query.AnswerIds }]
             };
             var scoreResponse = await fldMasterPgService.Execute(scoreExecution);
             if (!scoreResponse.Status || scoreResponse.Data == null)
@@ -186,27 +187,34 @@ public class SurveyService(
         });
     }
 
-    public async Task<CommonResponse<INpOnGrpcObject>> GetSurveyHistory(SurveyHistoryQuery query)
+    public async Task<CommonResponse<BaseQuestionExecFuncJsonObject?>> GetSurveyHistory(SurveyHistoryQuery query)
     {
-        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        return await CommonProcess<BaseQuestionExecFuncJsonObject?>(async (response) =>
         {
+            string funcName = "ques_srv_get_by_user_or_survey_history";
             string jsonQuery = JsonSerializer.Serialize(query, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
-            var historyExecution = new TblFldExecution
-            {
-                Code = QuestionServiceQueryCode.GetByUserOrSurveyHistory,
-                QueryParams = [new TblFldExecutionParam { ParamName = "json_object_data", StringValue = jsonQuery }]
-            };
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
+                funcName,
+                new Dictionary<string, object> { { "json_object_data", jsonQuery } },
+                true,
+                isUseOutputJsonAsName: funcName
+            );
 
-            var historyResponse = await fldMasterPgService.Execute(historyExecution);
-
-            if (!historyResponse.Status)
+            if (resultOfQuery == null)
             {
-                response.SetFail(historyResponse.ErrorMessages);
+                response.SetFail("No result from database.", EErrorCode.NotFound);
                 return;
             }
 
-            response.Data = historyResponse.Data;
+            var historyContainer = resultOfQuery
+                .GenericConverterForJson(typeof(BaseQuestionExecFuncJsonObject), jsonColumnName: funcName)?
+                .Cast<BaseQuestionExecFuncJsonObject>()
+                .FirstOrDefault();
+            
+            historyContainer?.ToObject<object>();
+
+            response.Data = historyContainer;
             response.SetSuccess();
         });
     }

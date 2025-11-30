@@ -1,6 +1,7 @@
 ﻿using CommonGrpcObject;
 using System.ServiceModel;
 using CommonDb.DbResults.Grpc;
+using QuestionServiceObject;
 using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
 
@@ -25,7 +26,7 @@ public interface ISurveyService
     Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(SurveyOutcomeScoreQuery query);
     
     [OperationContract]
-    Task<CommonResponse<INpOnGrpcObject>> GetSurveyHistory(SurveyHistoryQuery query);
+    Task<CommonResponse<BaseQuestionExecFuncJsonObject?>> GetSurveyHistory(SurveyHistoryQuery query);
 
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> GetAnswersScore(AnswersScoreQuery query);

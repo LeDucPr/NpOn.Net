@@ -13,8 +13,6 @@ using SSO.ServiceModels;
 using SSO.ServiceModels.Survey;
 using SSO.OutputModels;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using CommonDb.DbResults.Grpc;
 
 namespace SSO.Controllers;
 
@@ -256,36 +254,16 @@ public class SurveyController(
 
             var historyResponse = await surveyService.GetSurveyHistory(query);
 
-            if (!historyResponse.Status)
+            if (!historyResponse.Status || historyResponse.Data == null)
             {
                 response.SetFail(historyResponse.ErrorMessages);
                 return;
             }
-
-            if (historyResponse.Data is not NpOnGrpcTable table || table.Rows != null)
-            {
-                response.SetFail("No data returned from service.", EErrorCode.NotFound);
-                return;
-            }
-
-            var jsonResult = table.Rows?.First().Value.Cells.First().Value.GetValue<string>();
-            if (string.IsNullOrEmpty(jsonResult))
-            {
-                response.SetFail("Empty JSON result from service.", EErrorCode.NotFound);
-                return;
-            }
-
-            // Correctly deserialize the nested JSON structure
-            var jsonNode = JsonNode.Parse(jsonResult);
-            if (jsonNode?["Data"]?.ToString() is not {} dataNode || string.IsNullOrEmpty(dataNode))
-            {
-                response.SetFail("JSON result does not contain 'Data' property.", EErrorCode.NotFound);
-                return;
-            }
             
-            var historyData = JsonSerializer.Deserialize<SurveyHistoryResultModel>(dataNode, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var historyContainer = historyResponse.Data;
+            //historyContainer.ParseAndAssignData();
 
-            response.Data = historyData;
+            response.Data = historyContainer.Data;
             response.SetSuccess();
         });
     }
