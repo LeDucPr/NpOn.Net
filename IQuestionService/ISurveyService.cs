@@ -23,4 +23,13 @@ public interface ISurveyService
 
     [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(SurveyOutcomeScoreQuery query);
+    
+    [OperationContract]
+    Task<CommonResponse<INpOnGrpcObject>> GetSurveyHistory(SurveyHistoryQuery query);
+
+    [OperationContract]
+    Task<CommonResponse<INpOnGrpcObject>> GetAnswersScore(AnswersScoreQuery query);
+
+    [OperationContract]
+    Task<CommonResponse<INpOnGrpcObject>> GetMaxSurveyScore(MaxSurveyScoreQuery query);
 }

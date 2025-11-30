@@ -4,11 +4,12 @@ using IGeneralService;
 using IQuestionService;
 using QuestionServiceObject.CommandObjects;
 using GeneralServiceObject.QueryObjects;
-using Enums;
 using QuestionServiceObject.QueryObjects;
 using CommonDb.DbResults.Grpc;
 using CommonObject;
+using Enums;
 using ProjectEntry.QuestionEntries;
+using System.Text.Json;
 
 namespace QuestionService.Services;
 
@@ -55,7 +56,6 @@ public class SurveyService(
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            // This call should execute the query to get data
             var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
                 Code = QuestionServiceQueryCode.QuestionsBySurveyId,
@@ -72,7 +72,7 @@ public class SurveyService(
             response.SetSuccess();
         });
     }
-
+    
     public async Task<CommonResponse<INpOnGrpcObject>> CalculateScore(CalculateSurveyScoreQuery query)
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
@@ -136,5 +136,78 @@ public class SurveyService(
         QuestionGetByUserIdAndSurveyIdQuery query)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetAnswersScore(AnswersScoreQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var scoreExecution = new TblFldExecution
+            {
+                Code = QuestionServiceQueryCode.SurveyGetAnswersScore,
+                QueryParams =
+                [
+                    new TblFldExecutionParam { ParamName = "answer_ids", StringValue = "{" + string.Join(",", query.AnswerIds) + "}" }
+                ]
+            };
+            var scoreResponse = await fldMasterPgService.Execute(scoreExecution);
+            if (!scoreResponse.Status || scoreResponse.Data == null)
+            {
+                response.SetFail("Could not calculate score from answers.", scoreResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            response.Data = scoreResponse.Data;
+            response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetMaxSurveyScore(MaxSurveyScoreQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var maxScoreExecution = new TblFldExecution
+            {
+                Code = QuestionServiceQueryCode.SurveyGetMaxScore,
+                QueryParams =
+                [
+                    new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
+                ]
+            };
+            var maxScoreResponse = await fldMasterPgService.Execute(maxScoreExecution);
+            if (!maxScoreResponse.Status || maxScoreResponse.Data == null)
+            {
+                response.SetFail("Could not get max survey score.", maxScoreResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            response.Data = maxScoreResponse.Data;
+            response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetSurveyHistory(SurveyHistoryQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            string jsonQuery = JsonSerializer.Serialize(query, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            var historyExecution = new TblFldExecution
+            {
+                Code = QuestionServiceQueryCode.GetByUserOrSurveyHistory,
+                QueryParams = [new TblFldExecutionParam { ParamName = "json_object_data", StringValue = jsonQuery }]
+            };
+
+            var historyResponse = await fldMasterPgService.Execute(historyExecution);
+
+            if (!historyResponse.Status)
+            {
+                response.SetFail(historyResponse.ErrorMessages);
+                return;
+            }
+
+            response.Data = historyResponse.Data;
+            response.SetSuccess();
+        });
     }
 }
