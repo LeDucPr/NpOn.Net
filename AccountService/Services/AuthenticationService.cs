@@ -301,7 +301,7 @@ public class AuthenticationService(
                     new TblFldExecutionParam
                     {
                         ParamName = "session_id",
-                        StringValue = accountLoginInfo.AccountId.AsDefaultString()
+                        StringValue = accountLoginInfo.SessionId.AsDefaultString()
                     },
                 ]
             };
