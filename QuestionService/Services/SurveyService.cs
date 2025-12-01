@@ -216,6 +216,25 @@ public class SurveyService(
 
             response.Data = historyContainer;
             response.SetSuccess();
+            
+            //// v2
+            // string funcCode = "get_by_user_or_survey_history";
+            // var funcExecution = new TblFldExecution
+            // {
+            //     Code = QuestionServiceQueryCode.SurveyGetMaxScore,
+            //     QueryParams =
+            //     [
+            //         new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
+            //     ]
+            // };
+            //
+            // var resultOfQueryResponse = await fldMasterPgService.Execute(funcExecution);
+            //
+            // if (resultOfQueryResponse.Data == null)
+            // {
+            //     response.SetFail("No result from database.", EErrorCode.NotFound);
+            //     return;
+            // }
         });
     }
 }

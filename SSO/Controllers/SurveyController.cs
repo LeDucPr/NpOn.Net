@@ -158,7 +158,7 @@ public class SurveyController(
                 ResultId = resultId,
                 TotalScore = totalScore,
                 MaxPossibleScore = maxScore,
-                Outcome = outcomeModel?.ToModel()
+                Outcome = outcomeModel?.ToModel() // OutcomeModel
             };
             response.SetSuccess();
         });
@@ -226,7 +226,10 @@ public class SurveyController(
 
             SurveyScoreOutcomeOutputModel[] finalOutcomes = outcomeModels.Select(x => x.ToModel()).ToArray();
 
-            response.Data = finalOutcomes;
+            response.Data = new
+            {
+                Models = finalOutcomes
+            };
             response.SetSuccess();
         });
     }
@@ -263,7 +266,10 @@ public class SurveyController(
             var historyContainer = historyResponse.Data;
             //historyContainer.ParseAndAssignData();
 
-            response.Data = historyContainer.Json;
+            response.Data = new
+            {
+                Model = historyContainer.Json,
+            };
             response.SetSuccess();
         });
     }
