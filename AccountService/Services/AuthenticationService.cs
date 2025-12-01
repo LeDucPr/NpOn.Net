@@ -26,9 +26,6 @@ public class AuthenticationService(
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
-    private const string SessionIdPrefix = "SESSIONID";
-    private const string MinuteExpirePrefix = "MinuteExpire";
-
     public async Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query)
     {
         return await CommonProcess<AccountLoginInfoObject>(async (response) =>
@@ -117,7 +114,7 @@ public class AuthenticationService(
             }
 
             AccountLoginInfoObject accountInfoObject = accountInfoObjects.First();
-            if (accountInfoObject.SessionId != query.SessionId)
+            if (accountInfoObject.SessionId != query.SessionId || accountInfoObject.TokenStatus != ETokenStatus.Active)
             {
                 response.SetFail("SessionId does not match");
                 return;
@@ -150,7 +147,7 @@ public class AuthenticationService(
                     accountExecutionResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
-            
+
             AccountObject? accountObject = execStringResponse.Data?
                 .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
                 .Cast<AccountObject>().FirstOrDefault();
@@ -160,7 +157,7 @@ public class AuthenticationService(
                 response.SetFail("Incorrect data type of 'IEnumerable<AccountObject>'");
                 return;
             }
-            
+
             AccountLoginInfoObject accountLoginInfoObject = await CreateToken(
                 accountObject, query.AuthType /*, ELoginType.Default*/);
 
@@ -330,7 +327,7 @@ public class AuthenticationService(
             // await authenService.RemoveLoginInfo(oldRefreshToken);
         }
 
-        string sessionKey = $"{SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuid()}";
+        string sessionKey = $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuid()}";
         int minuteExpire = expireMinutes == 0
             ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : expireMinutes;
@@ -341,7 +338,8 @@ public class AuthenticationService(
         List<Claim> claims =
         [
             new(ContextService.SessionCode, sessionKey),
-            new($"{MinuteExpirePrefix}", minuteExpire.ToString()),
+            new(ContextService.TokenCreatedUtc, DateTime.UtcNow.AddMinutes(minuteExpire).ToIso8601()),
+            new($"{ContextService.MinuteExpirePrefix}", minuteExpire.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, account.UserName),
             new(ContextService.LoginTypeEnumCode, loginType.EnumAsInt().AsDefaultString()),
             new(JwtRegisteredClaimNames.Sid, account.Id.AsDefaultString()),

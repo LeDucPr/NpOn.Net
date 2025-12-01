@@ -25,7 +25,11 @@ public class ContextService(
     // for header 
     public const string HeaderLanguage = "language";
     public const string SessionCode = "VuaChocCho";
-    public const string LoginTypeEnumCode = "LoginType"; 
+    public const string LoginTypeEnumCode = "LoginType";
+    public const string TokenCreatedUtc = "TokenCreatedUtc";
+    public const string SessionIdPrefix = "SESSIONID";
+    public const string MinuteExpirePrefix = "MinuteExpire";
+
     private const string DefaultLang = "vi";
 
     // EApplicationConfiguration.RabbitMqHost.GetAppSettingConfig().AsDefaultString();
@@ -75,9 +79,8 @@ public class ContextService(
             return null;
         // private AuthenticationService.CreateToken
         return user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
-        
     }
-    
+
     public AccountLoginInfoObject? UserInfo()
     {
         var isAuthenticated = httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;
@@ -176,8 +179,8 @@ public class ContextService(
         var clientId = (httpContextAccessor?.HttpContext?.Request.Headers[SessionCode]).AsDefaultString();
         return clientId; // maybe null => empty string
     }
-    
-    public string ClientId =>  CheckAndReturnHeaderFromSession();
+
+    public string ClientId => CheckAndReturnHeaderFromSession();
 
     public void Set404()
     {
