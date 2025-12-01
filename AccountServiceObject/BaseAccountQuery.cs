@@ -14,4 +14,6 @@ public abstract class BaseAccountQuery : CommonAbsQuery
     [ProtoMember(2)] public override EErrorCode? ErrorCode { get; set; }
     [ProtoMember(3)] public override string? Object { get; set; }
     [ProtoMember(4)] public sealed override DateTime QueryUtcTime { get; init; } = DateTime.UtcNow;
+    [ProtoMember(5)] public string? ProcessUId { get; set; }
+    // [ProtoMember(6)] public string? LoginUId { get; set; }
 }

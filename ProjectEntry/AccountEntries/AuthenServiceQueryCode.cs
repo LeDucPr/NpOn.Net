@@ -8,5 +8,7 @@ public static class AuthenServiceQueryCode
     public const string AccountLoginInfoGetByUsernameAndPassword = "account_login_info_get_by_refresh_token";
     public const string AccountLoginInfoGetByAccountId = "account_login_info_get_by_account_id";
     public const string AccountLoginInfoGetBySessionId = "account_login_info_get_by_session_id";
-    public const string AccountLoginInfoSaveLogin = "account_login_info_save";
+    public const string AccountLoginInfoSaveLogin = "account_login_info_save_login";
+    public const string AccountLoginInfoSaveLogOut = "account_login_info_save_logout";
+    public const string AccountGetById = "account_get_by_id";
 }

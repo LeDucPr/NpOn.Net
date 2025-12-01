@@ -75,6 +75,7 @@ public class AuthenticationService(
                 response.SetFail("AccountLogin save failure");
                 return;
             }
+
             // set 
             response.Data = accountLoginInfoObject;
             response.SetSuccess();
@@ -104,26 +105,73 @@ public class AuthenticationService(
                 return;
             }
 
-            List<AccountLoginInfoObject>? accountObjects = execStringResponse.Data?
+            List<AccountLoginInfoObject>? accountInfoObjects = execStringResponse.Data?
                 .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
                 .Cast<AccountLoginInfoObject>()
                 .ToList();
 
-            if (accountObjects is not { Count: > 0 })
+            if (accountInfoObjects is not { Count: > 0 })
             {
                 response.SetFail("Incorrect data type of 'IEnumerable<AccountInfoAliasTestObject>'");
                 return;
             }
 
-            AccountLoginInfoObject accountObject = accountObjects.First();
-            string userName = accountObject.UserName;
-            if (userName is not { Length: > 0 })
+            AccountLoginInfoObject accountInfoObject = accountInfoObjects.First();
+            if (accountInfoObject.SessionId != query.SessionId)
             {
-                response.SetFail("Invalid username");
+                response.SetFail("SessionId does not match");
                 return;
             }
 
-            response.Data = accountObject;
+            // logout for old session
+            if (!(await SaveLogout(accountInfoObject)).Status)
+            {
+                response.SetFail("AccountLogout save failure");
+                return;
+            }
+
+            // get account to sync for new session 
+            var accountExecution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountGetById,
+                QueryParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "refresh_token",
+                        StringValue = query.RefreshToken
+                    },
+                ]
+            };
+            var accountExecutionResponse = await fldMasterPgService.Execute(execution);
+            if (!accountExecutionResponse.Status || accountExecutionResponse.Data == null)
+            {
+                response.SetFail("Could not Find ExecString",
+                    accountExecutionResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+            
+            AccountObject? accountObject = execStringResponse.Data?
+                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
+                .Cast<AccountObject>().FirstOrDefault();
+
+            if (accountObject == null)
+            {
+                response.SetFail("Incorrect data type of 'IEnumerable<AccountObject>'");
+                return;
+            }
+            
+            AccountLoginInfoObject accountLoginInfoObject = await CreateToken(
+                accountObject, query.AuthType /*, ELoginType.Default*/);
+
+            if (!(await SaveLogin(accountLoginInfoObject)).Status)
+            {
+                response.SetFail("AccountLogin save failure");
+                return;
+            }
+
+            // set 
+            response.Data = accountLoginInfoObject;
             response.SetSuccess();
         });
     }
@@ -231,6 +279,40 @@ public class AuthenticationService(
                     execStringResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
+
+            response.SetSuccess();
+        });
+    }
+
+    private async Task<CommonResponse> SaveLogout(AccountLoginInfoObject accountLoginInfo)
+    {
+        return await CommonProcess(async (response) =>
+        {
+            var execution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountLoginInfoSaveLogOut,
+                QueryParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "token_status",
+                        StringValue = ETokenStatus.Inactive.EnumAsInt().AsDefaultString(),
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "session_id",
+                        StringValue = accountLoginInfo.AccountId.AsDefaultString()
+                    },
+                ]
+            };
+            var execStringResponse = await fldMasterPgService.Execute(execution);
+            if (!execStringResponse.Status || execStringResponse.Data == null)
+            {
+                response.SetFail($"Could not Find ExecString {AuthenServiceQueryCode.AccountLoginInfoSaveLogOut}",
+                    execStringResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
             response.SetSuccess();
         });
     }
@@ -256,14 +338,14 @@ public class AuthenticationService(
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(EApplicationConfiguration.JwtTokensKey.GetAppSettingConfig()
             .AsDefaultString());
-        string uniqueNameKey = JwtRegisteredClaimNames.UniqueName;
         List<Claim> claims =
         [
             new(ContextService.SessionCode, sessionKey),
             new($"{MinuteExpirePrefix}", minuteExpire.ToString()),
-            new(uniqueNameKey, account.UserName),
+            new(JwtRegisteredClaimNames.UniqueName, account.UserName),
+            new(ContextService.LoginTypeEnumCode, loginType.EnumAsInt().AsDefaultString()),
             new(JwtRegisteredClaimNames.Sid, account.Id.AsDefaultString()),
-            new Claim(JwtHeaderParameterNames.Typ, loginType.GetDisplayName())
+            new(JwtHeaderParameterNames.Typ, loginType.GetDisplayName())
         ];
 
         var tokenDescriptor = new SecurityTokenDescriptor

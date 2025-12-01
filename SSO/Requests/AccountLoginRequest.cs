@@ -19,4 +19,6 @@ public class AccountRefreshTokenRequest
     public required string RefreshToken { get; set; }
     public string? DeviceInfo { get; set; }
     public ELoginType? LoginType { get; set; }
+    public required EAuthentication AuthType {get; set; }
+    public string? ReturnUrl { get; set; }
 }

@@ -8,6 +8,7 @@ using CommonMode;
 using CommonObject;
 using Enums;
 using Microsoft.IdentityModel.Tokens;
+using ProjectEnums.AccountEnums;
 using RabbitMqBroker;
 
 namespace CommonWebApplication.Services;
@@ -24,6 +25,7 @@ public class ContextService(
     // for header 
     public const string HeaderLanguage = "language";
     public const string SessionCode = "VuaChocCho";
+    public const string LoginTypeEnumCode = "LoginType"; 
     private const string DefaultLang = "vi";
 
     // EApplicationConfiguration.RabbitMqHost.GetAppSettingConfig().AsDefaultString();
@@ -66,6 +68,16 @@ public class ContextService(
 
     #region user info
 
+    public string? GetAccountIdAsString()
+    {
+        var user = httpContextAccessor?.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+            return null;
+        // private AuthenticationService.CreateToken
+        return user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
+        
+    }
+    
     public AccountLoginInfoObject? UserInfo()
     {
         var isAuthenticated = httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;

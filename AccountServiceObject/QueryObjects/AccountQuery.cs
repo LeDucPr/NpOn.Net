@@ -25,4 +25,6 @@ public class AccountRefreshTokenQuery : BaseAccountQuery
     [ProtoMember(1)] public required string RefreshToken { get; set; }
     [ProtoMember(2)] public string? DeviceInfo { get; set; }
     [ProtoMember(3)] public ELoginType? LoginType { get; set; }
+    [ProtoMember(4)] public required EAuthentication AuthType { get; set; }
+    [ProtoMember(5)] public required string SessionId { get; set; }
 }

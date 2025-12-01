@@ -54,7 +54,8 @@ public sealed class Program : CommonProgram
         {
             app.UseRequestResponseLogging();
         }
-
+        app.UseTokenValidation();
+        
         // if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool())
         // {
         //     app.UseCors("AllowAll");

@@ -1,9 +1,11 @@
 ﻿using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
+using CommonObject;
 using CommonWebApplication.Services;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProjectEnums.AccountEnums;
 using SSO.Mappings.Account;
 using SSO.Requests;
 using SSO.Validators;
@@ -64,7 +66,7 @@ public class AccountController(
         });
     }
 
-    [AllowAnonymous]
+    // [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> RefreshToken([FromBody] AccountRefreshTokenRequest request)
     {
@@ -77,12 +79,14 @@ public class AccountController(
                 return;
             }
 
-            var aaaaa = contextService.UserInfo();
             AccountRefreshTokenQuery inputQuery = new AccountRefreshTokenQuery
             {
                 RefreshToken = request.RefreshToken,
                 DeviceInfo = request.DeviceInfo,
                 LoginType = request.LoginType,
+                AuthType = request.AuthType,
+                SessionId = contextService.GetSessionKey().AsDefaultString(),
+                ProcessUId = contextService.GetAccountIdAsString(),
             };
             var accountLoginResponse = await authenticationService.RefreshToken(inputQuery);
             if (!accountLoginResponse.Status)

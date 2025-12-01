@@ -23,6 +23,7 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
     [ProtoMember(15)] public required string SessionId { get; set; }
     [ProtoMember(16)] public int MinuteExpire { get; set; }
     [ProtoMember(17)] public ETokenStatus TokenStatus { get; set; } = ETokenStatus.Inactive;
+    // [ProtoMember(18)] public string? ReturnUrl { get; set; }
 
     protected override void FieldMapper()
     {
