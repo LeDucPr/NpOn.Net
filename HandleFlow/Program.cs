@@ -76,7 +76,7 @@ class Program
 
         string pgQuery_unified_table_mapping_ctrl = "Select * from unified_table_mapping_ctrl";
         INpOnWrapperResult? resultOfQueryTableFieldMappingCtrls =
-            dbFactoryWrapper?.QueryAsync(pgQuery_unified_table_mapping_ctrl).GetAwaiter().GetResult();
+            dbFactoryWrapper?.ExecuteAsync(pgQuery_unified_table_mapping_ctrl).GetAwaiter().GetResult();
         List<SysBaseCtrl>? unifiedTableFieldMappingCtrls = resultOfQueryTableFieldMappingCtrls
             ?.SysGenericConverter(typeof(UnifiedTableMappingCtrl))?.ToList();
         if (unifiedTableFieldMappingCtrls is not { Count: > 0 })

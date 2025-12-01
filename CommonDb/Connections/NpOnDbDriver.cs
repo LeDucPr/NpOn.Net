@@ -15,7 +15,7 @@ public interface INpOnDbDriver
     public INpOnConnectOption Option { get; }
     Task ConnectAsync(CancellationToken cancellationToken);
     Task DisconnectAsync();
-    Task<INpOnWrapperResult> Query(INpOnDbCommand? command);
+    Task<INpOnWrapperResult> Execute(INpOnDbCommand? command);
     Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand);
 
     Task<INpOnWrapperResult> ExecuteFuncParams<TEnum>(INpOnDbExecCommand? execCommand,
@@ -33,7 +33,7 @@ public abstract class NpOnDbDriver : INpOnDbDriver, IAsyncDisposable
     public abstract Task ConnectAsync(CancellationToken cancellationToken);
     public abstract Task DisconnectAsync();
 
-    public virtual Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    public virtual Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         throw new NotImplementedException("Need to override this method");
     }

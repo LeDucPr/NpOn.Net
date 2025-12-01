@@ -1,288 +1,142 @@
-﻿using CommonDb.DbCommands;
-using CommonDb.DbResults;
-using CommonGrpcObject;
+﻿using CommonGrpcObject;
 using CommonWebApplication.Services;
-using DbFactory;
-using HandleFlow.ResultConverters;
+using IGeneralService;
 using IQuestionService;
-using NpgsqlTypes;
-using QuestionServiceObject.BusinessObjects;
+using QuestionServiceObject.CommandObjects;
+using GeneralServiceObject.QueryObjects;
+using Enums;
 using QuestionServiceObject.QueryObjects;
+using CommonDb.DbResults.Grpc;
+using ProjectEnums.FldMasterEnums;
+using CommonObject;
 
 namespace QuestionService.Services;
 
 public class SurveyService(
-    IDbFactoryWrapper dbFactoryWrapper,
+    IFldMasterPgService fldMasterPgService,
     ILogger<CommonService> logger
 ) : CommonService(logger), ISurveyService
 {
-    /// <summary>
-    /// Lấy danh sách tất cả surveys
-    /// </summary>
-    public async Task<CommonResponse<List<QuesSrvDiseaseObject>>> GetAllSurveys()
+    public async Task<CommonResponse<string>> AddOrUpdateSurvey(SurveyAddOrUpdateCommand addOrUpdateCommand)
     {
-        return await CommonProcess<List<QuesSrvDiseaseObject>>(async (response) =>
+        return await CommonProcess<string>(async (response) =>
         {
-            string pgQuery = @"
-                    SELECT 
-                        id,
-                        title,
-                        description,
-                        max_total_score,
-                        is_published,
-                        created_at,
-                        updated_at
-                    FROM surveys
-                    WHERE is_published = true
-                    ORDER BY created_at DESC";
+            List<TblFldExecutionParam> queryParams =
+            [
+                new TblFldExecutionParam() { ParamName = "title", StringValue = addOrUpdateCommand.Title },
+                new TblFldExecutionParam() { ParamName = "description", StringValue = addOrUpdateCommand.Description },
+                new TblFldExecutionParam()
+                    { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
+                new TblFldExecutionParam()
+                    { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
+            ];
 
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
-
-            List<QuesSrvDiseaseObject>? surveyObjects = resultOfQuery?
-                .GenericConverter(typeof(QuesSrvDiseaseObject))?
-                .Cast<QuesSrvDiseaseObject>()
-                .ToList();
-
-            if (surveyObjects is not { Count: > 0 })
+            if (addOrUpdateCommand.Id != null)
             {
-                response.SetFail("Không tìm thấy survey nào");
+                queryParams.Add(new TblFldExecutionParam() { ParamName = "id", StringValue = addOrUpdateCommand.Id });
+            }
+
+            // This call is correct as it executes an INSERT/UPDATE
+            var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
+            {
+                Code = addOrUpdateCommand.Id == null ? FldMasterCodes.SurveyAdd : FldMasterCodes.SurveyUpdate,
+                QueryParams = queryParams.ToArray(),
+            });
+
+            if (!addNewSurveyResponse.Status)
+            {
+                response.SetFail(addNewSurveyResponse.ErrorMessages);
                 return;
             }
 
-            response.Data = surveyObjects;
+            response.Data = addOrUpdateCommand.Id == null ? "Add new survey success" : "Update survey success";
             response.SetSuccess();
         });
     }
 
-    /// <summary>
-    /// Lấy thông tin chi tiết survey theo ID
-    /// </summary>
-    public async Task<CommonResponse<QuesSrvDiseaseObject>> GetSurveyById(Guid surveyId)
+    public async Task<CommonResponse<INpOnGrpcObject>> GetQuestionsBySurveyId(QuestionGetBySurveyIdQuery query)
     {
-        return await CommonProcess<QuesSrvDiseaseObject>(async (response) =>
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            string pgQuery = @"
-                    SELECT 
-                        s.id,
-                        s.title,
-                        s.description,
-                        s.max_total_score,
-                        s.is_published,
-                        s.created_at,
-                        s.updated_at,
-                        COUNT(DISTINCT q.id) AS question_count,
-                        COUNT(DISTINCT ss.id) FILTER (WHERE ss.status = 'submitted') AS total_submissions,
-                        COALESCE(AVG(ss.total_score) FILTER (WHERE ss.status = 'submitted'), 0) AS average_score
-                    FROM surveys s
-                    LEFT JOIN questions q ON s.id = q.survey_id
-                    LEFT JOIN survey_submissions ss ON s.id = ss.survey_id
-                    WHERE s.id = @survey_id
-                    GROUP BY s.id, s.title, s.description, s.max_total_score, s.is_published, s.created_at, s.updated_at";
-
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
-            //new Dictionary<string, object>
-            //{
-            //    ["survey_id"] = surveyId
-            //}
-
-            List<QuesSrvDiseaseObjectDetailObject>? qSdObjects = resultOfQuery?
-                .GenericConverter(typeof(QuesSrvDiseaseObjectDetailObject))?
-                .Cast<QuesSrvDiseaseObjectDetailObject>()
-                .ToList();
-
-            if (qSdObjects is not { Count: > 0 })
+            // This call should execute the query to get data
+            var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                response.SetFail("Không tìm thấy survey");
+                Code = FldMasterCodes.QuestionsBySurveyId,
+                QueryParams = [new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId }],
+            });
+
+            if (!questionGetBySurveyIdResponse.Status)
+            {
+                response.SetFail(questionGetBySurveyIdResponse.ErrorMessages);
                 return;
             }
 
-            response.Data = qSdObjects.First();
+            response.Data = questionGetBySurveyIdResponse.Data;
             response.SetSuccess();
         });
     }
 
-    /// <summary>
-    /// Lấy survey với đầy đủ questions và options
-    /// </summary>
-    public async Task<CommonResponse<QuesSrvDiseaseFullObject>> GetSurveyWithQuestions(Guid surveyId)
+    public async Task<CommonResponse<INpOnGrpcObject>> CalculateScore(CalculateSurveyScoreQuery query)
     {
-        return await CommonProcess<QuesSrvDiseaseFullObject>(async (response) =>
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            // 1. Lấy thông tin survey
-            string surveySql = @"
-                    SELECT 
-                        id,
-                        title,
-                        description,
-                        max_total_score,
-                        is_published,
-                        created_at,
-                        updated_at
-                    FROM surveys
-                    WHERE id = @survey_id";
-
-            INpOnWrapperResult? surveyResult = await dbFactoryWrapper.QueryAsync(surveySql);
-            //new Dictionary<string, object> { ["survey_id"] = surveyId }
-
-            List<QuesSrvDiseaseObject>? surveyObjects = surveyResult?
-                .GenericConverter(typeof(QuesSrvDiseaseObject))?
-                .Cast<QuesSrvDiseaseObject>()
-                .ToList();
-
-            if (surveyObjects is not { Count: > 0 })
+            var scoreExecution = new TblFldExecution
             {
-                response.SetFail("Không tìm thấy survey");
+                Code = FldMasterCodes.SurveyCalcScore,
+                QueryParams =
+                [
+                    new TblFldExecutionParam { ParamName = "user_id", StringValue = query.UserId },
+                    new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
+                ]
+            };
+            var scoreResponse = await fldMasterPgService.Execute(scoreExecution);
+            if (!scoreResponse.Status || scoreResponse.Data == null)
+            {
+                response.SetFail("Could not calculate score.", scoreResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
-            QuesSrvDiseaseObject survey = surveyObjects.First();
+            response.Data = scoreResponse.Data;
+            response.SetSuccess();
+        });
+    }
 
-            // 2. Lấy questions
-            string questionsSql = @"
-                    SELECT 
-                        id,
-                        survey_id,
-                        question_text,
-                        question_type,
-                        question_order,
-                        is_required,
-                        max_score,
-                        created_at
-                    FROM questions
-                    WHERE survey_id = @survey_id
-                    ORDER BY question_order";
-
-            INpOnWrapperResult? questionsResult = await dbFactoryWrapper.QueryAsync(questionsSql);
-            //new Dictionary<string, object> { ["survey_id"] = surveyId }
-
-            List<QuestionObject>? questionObjects = questionsResult?
-                .GenericConverter(typeof(QuestionObject))?
-                .Cast<QuestionObject>()
-                .ToList();
-
-            // 3. Lấy options cho từng question
-            List<QuestionWithOptionsObject> questionsWithOptions = new();
-
-            if (questionObjects is { Count: > 0 })
+    public async Task<CommonResponse<INpOnGrpcObject>> GetSurveyOutcomes(SurveyOutcomeScoreQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var outcomeExecution = new TblFldExecution
             {
-                foreach (var question in questionObjects)
-                {
-                    string optionsSql = @"
-                            SELECT 
-                                id,
-                                question_id,
-                                option_text,
-                                option_order,
-                                score_value,
-                                created_at
-                            FROM answer_options
-                            WHERE question_id = @question_id
-                            ORDER BY option_order";
-
-                    INpOnWrapperResult? optionsResult = await dbFactoryWrapper.QueryAsync(optionsSql);
-                    //new Dictionary<string, object> { ["question_id"] = question.Id }
-
-                    List<AnswerOptionsObject>? optionObjects = optionsResult?
-                        .GenericConverter(typeof(AnswerOptionsObject))?
-                        .Cast<AnswerOptionsObject>()
-                        .ToList();
-
-                    questionsWithOptions.Add(new QuestionWithOptionsObject
+                Code = FldMasterCodes.GetSurveyOutcomesBySurveyId,
+                QueryParams =
+                [
+                    new TblFldExecutionParam
                     {
-                        //Id = question.Id,
-                        SurveyId = question.SurveyId,
-                        QuestionText = question.QuestionText,
-                        QuestionType = question.QuestionType,
-                        QuestionOrder = question.QuestionOrder,
-                        IsRequired = question.IsRequired,
-                        MaxScore = question.MaxScore,
-                        //CreatedAt = question.CreatedAt,
-                        Options = optionObjects ?? new List<AnswerOptionsObject>()
-                    });
-                }
-            }
-
-            // 4. Lấy result categories
-            string categoriesSql = @"
-                    SELECT 
-                        id,
-                        survey_id,
-                        category_name,
-                        description,
-                        min_score,
-                        max_score,
-                        recommendation,
-                        severity_level,
-                        color_hex,
-                        display_order,
-                        created_at
-                    FROM result_categories
-                    WHERE survey_id = @survey_id
-                    ORDER BY display_order";
-
-            INpOnWrapperResult? categoriesResult = await dbFactoryWrapper.QueryAsync(categoriesSql);
-            //new Dictionary<string, object> { ["survey_id"] = surveyId }
-
-            List<ResultCategoriesObject>? categoryObjects = categoriesResult?
-                .GenericConverter(typeof(ResultCategoriesObject))?
-                .Cast<ResultCategoriesObject>()
-                .ToList();
-
-            // 5. Tạo SurveyFullObject
-            var fullSurvey = new QuesSrvDiseaseFullObject
-            {
-                //Id = survey.Id,
-                Title = survey.Title,
-                Description = survey.Description,
-                CreatedAt = survey.CreatedAt,
-                UpdatedAt = survey.UpdatedAt,
-                Questions = questionsWithOptions,
-                ResultCategories = categoryObjects ?? new List<ResultCategoriesObject>()
+                        ParamName = "ques_srv_survey_id",
+                        StringValue = query.SurveyId
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "total_score",
+                        StringValue = query.TotalScore.AsDefaultString(),
+                    }
+                ]
             };
-
-            response.Data = fullSurvey;
-            response.SetSuccess();
-        });
-    }
-
-    /// <summary>
-    /// Lấy danh sách questions của survey
-    /// </summary>
-    public async Task<CommonResponse<List<QuestionObject>>> GetQuestionsBySurvey(SurveyGetAllQuery query)
-    {
-        return await CommonProcess<List<QuestionObject>>(async (response) =>
-        {
-            string queryString = @"
-                    SELECT * FROM ques_srv_question
-                        WHERE ques_srv_survey_id = @ques_srv_survey_id
-                        ORDER BY question_order
-                    ";
-
-            NpOnDbCommandParam param = new NpOnDbCommandParam<NpgsqlDbType>
+            var outcomesResult = await fldMasterPgService.Execute(outcomeExecution);
+            if (!outcomesResult.Status)
             {
-                ParamName = "ques_srv_survey_id",
-                ParamValue = query.SurveyId,
-                ParamType = NpgsqlDbType.Uuid,
-            };
-            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryString, [param]);
-
-            List<QuestionObject>? questionObjects = wrapperResult?
-                .GenericConverter(typeof(QuestionObject))?
-                .Cast<QuestionObject>()
-                .ToList();
-
-            if (questionObjects is not { Count: > 0 })
-            {
-                response.SetFail("Không tìm thấy survey");
+                response.SetFail("Could not retrieve survey outcomes.",
+                    outcomesResult.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
-            response.Data = questionObjects;
+            response.Data = outcomesResult.Data;
             response.SetSuccess();
         });
     }
 
-    public Task<CommonResponse<QuestionWithOptionsObject>> GetQuestionWithOptions(Guid questionId)
+    public Task<CommonResponse<INpOnGrpcObject>> GetQuestionsByUserIdAndSurveyId(
+        QuestionGetByUserIdAndSurveyIdQuery query)
     {
         throw new NotImplementedException();
     }

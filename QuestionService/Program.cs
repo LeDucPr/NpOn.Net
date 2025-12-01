@@ -42,6 +42,7 @@ public sealed class Program : CommonProgram
         // Add Service
         services.AddTransient<IFaqService, FaqService>();
         services.AddTransient<ISurveyService, SurveyService>();
+        services.AddTransient<IQuestionAndAnswerService, QuestionAndAnswerService>();
 
         return Task.CompletedTask;
     }
@@ -57,6 +58,7 @@ public sealed class Program : CommonProgram
         // Add Map Grpc Service
         app.MapGrpcService<FaqService>();
         app.MapGrpcService<SurveyService>();
+        app.MapGrpcService<QuestionAndAnswerService>();
         return Task.CompletedTask;
     }
 }

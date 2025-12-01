@@ -20,7 +20,7 @@ public class FaqService(
         {
             string pgQuery = "SELECT * FROM patient limit 1";
 
-            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.QueryAsync(pgQuery);
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteAsync(pgQuery);
             List<FaqObject>? patientObjs = resultOfQuery?
                 .GenericConverter(typeof(FaqObject))?
                 .Cast<FaqObject>()

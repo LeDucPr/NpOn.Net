@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sso-controller
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sso-controller
+  template:
+    metadata:
+      labels:
+        app: sso-controller
+    spec:
+      containers:
+        - name: sso-controller
+          image: ghcr.io/leducpr/sso-controller:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080

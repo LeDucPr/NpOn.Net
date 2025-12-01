@@ -8,8 +8,8 @@ public interface IDbFactoryWrapper
 {
     string? FactoryOptionCode { get; }
     EDb DbType { get; }
-    Task<INpOnWrapperResult?> QueryAsync(string queryString);
-    Task<INpOnWrapperResult?> QueryAsync(string queryString, List<NpOnDbCommandParam> parameters);
+    Task<INpOnWrapperResult?> ExecuteAsync(string queryString);
+    Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters);
 
     Task<INpOnWrapperResult?> ExecuteFunc(string funcName, Dictionary<string, object> parameters,
         bool isUseInputJson = false,

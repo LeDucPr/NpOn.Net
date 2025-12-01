@@ -52,9 +52,10 @@ public class LoggerInterceptor(
             LogError(ex, $"GRPC call error - ServiceName: {serviceName} - Action: {action} - Message: {ex.Message}",
                 serviceName, action);
             // Console.ForegroundColor = initialColor;
-#if DEBUG
             throw;
-#endif
+// #if DEBUG
+//             throw;
+// #endif
         }
     }
 

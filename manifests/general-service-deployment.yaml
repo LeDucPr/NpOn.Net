@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: general-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: general-service
+  template:
+    metadata:
+      labels:
+        app: general-service
+    spec:
+      containers:
+        - name: general-service
+          image: ghcr.io/leducpr/general-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080

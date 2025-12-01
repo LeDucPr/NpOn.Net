@@ -7,22 +7,31 @@ public enum EErrorCode
     Fail = 2,
     ErrorCommentLimit = 3,
     ErrorCommentTime = 4,
-    InternalExceptions = 500,
+    
+    // HTTP Status Code Style
+    NotFound = 404,
+    UserNotFound = 404, // Can be the same as NotFound or a more specific one
     Unauthorized = 401,
+    PermissionDeny = 403,
+    
+    // Internal Errors
+    InternalExceptions = 500,
     NullRequestExceptions = 501,
+    AntiXss = 502,
     NotExistExceptions = 503,
     UserNullException = 504,
     IdNullException = 505,
     CurrentWebsiteNullException = 506,
     CurrentCompanyNullException = 507,
-    PermissionDeny = 403,
-    AntiXss = 502,
     InternalExceptionsNotDefine = 508,
     InternalExceptionsInService = 509,
     AccountPasswordIsConfigured = 510,
     OtpSendLimit = 511,
     OtpVerifyLimit = 512,
     OtpInvalid = 513,
+    DataProcessingError = 530,
+
+    // gRPC Specific Errors
     Grpc = 514,
     GrpcUnimplemented = 515,
     GrpcUnavailable = 516,

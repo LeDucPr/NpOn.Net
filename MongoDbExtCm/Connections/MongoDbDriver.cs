@@ -70,7 +70,7 @@ public class MongoDbDriver : NpOnDbDriver
         return Task.CompletedTask;
     }
 
-    public override async Task<INpOnWrapperResult> Query(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         if (!IsValidSession || _collection == null)
         {

@@ -45,14 +45,26 @@ public class NpOnGrpcCell : INpOnGrpcObject
             return Enum.ToObject(type, raw);
         }
         
+        // Handle Guid first because it's not a primitive and doesn't implement IConvertible
+        if (type == typeof(Guid))
+        {
+            if (ValueBytes.Length == 16)
+                return new Guid(ValueBytes);
+            var guidString = Encoding.UTF8.GetString(ValueBytes);
+            if (Guid.TryParse(guidString, out var parsedGuid))
+                return parsedGuid;
+            throw new ArgumentException($"Byte array for Guid was {ValueBytes.Length} bytes, which is not 16. Also failed to parse as a string representation of a Guid: '{guidString}'. ValueTypeName was '{ValueTypeName}'.");
+        }
+        
         if (IsPrimitiveLike(type)) // primitive + DateTime + decimal
         {
             object raw = ConvertPrimitive(ValueBytes, type);
             return Convert.ChangeType(raw, type);
         }
-        
-        using var ms = new MemoryStream(ValueBytes); // complex object → protobuf deserialize
-        return /*ProtoBuf.*/Serializer.NonGeneric.Deserialize(type, ms);
+
+        // Fallback for other types (which are serialized as JSON by ToGrpcCell)
+        var json = Encoding.UTF8.GetString(ValueBytes);
+        return JsonConverter.FromJson(json, type);
     }
 
     private static bool IsPrimitiveLike(Type t)
@@ -73,16 +85,14 @@ public class NpOnGrpcCell : INpOnGrpcObject
 
         if (type == typeof(decimal))
         {
-            int[] bits = new int[4];
-            for (int i = 0; i < 4; i++)
-                bits[i] = BitConverter.ToInt32(bytes, i * 4);
-            return new decimal(bits);
+            var str = Encoding.UTF8.GetString(bytes);
+            return decimal.Parse(str, CultureInfo.InvariantCulture);
         }
 
         if (type == typeof(DateTime))
         {
             long ticks = BitConverter.ToInt64(bytes, 0);
-            return new DateTime(ticks, DateTimeKind.Utc);
+            return new DateTime(ticks); // Removed DateTimeKind.Utc for consistency with FromGrpcCell
         }
 
         throw new NotSupportedException($"not support primitive: {type}");

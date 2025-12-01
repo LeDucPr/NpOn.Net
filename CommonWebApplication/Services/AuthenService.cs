@@ -11,9 +11,14 @@ public class AuthenService(ILogger<CommonService> logger) : CommonService(logger
             return null;
         }
 
+        // Redis 
         // key = GetKey(key);
         // RedisValue value = WriteDatabase().StringGet(key);
         // return ConvertOutput<AccountLoginInfo>(value);
+        
+        // TODO:
+        // Chưa có redis lưu tạm Db thường 
+        
         return null;
     }
 }

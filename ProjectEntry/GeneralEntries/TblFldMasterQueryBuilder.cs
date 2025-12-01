@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
-namespace ProjectEntry;
+namespace ProjectEntry.GeneralEntries;
 
 public class TblFldMasterQueryBuilder
 {
@@ -16,7 +14,11 @@ public class TblFldMasterQueryBuilder
             tbl.description AS query_desc,
             tbl.ExecFunc AS exec_func,
             tbl.Query AS query, 
+            tbl.exectype as exec_type,
+            tbl.service_name as service_name,
+            tbl.db_type as db_type,
             fld.id as fld_id, 
+            fld.order_sort as order_sort,
             fld.field_name as field_name, 
             fld.field_type as field_type, 
             fld.field_type_string as field_type_string
@@ -56,6 +58,7 @@ public class TblFldMasterQueryBuilder
             queryBuilder.Append(" WHERE ");
             queryBuilder.Append(string.Join(" AND ", _conditions));
         }
+        queryBuilder.Append(" ORDER BY fld.order_sort ");
         return (queryBuilder.ToString(), _parameters);
     }
 }

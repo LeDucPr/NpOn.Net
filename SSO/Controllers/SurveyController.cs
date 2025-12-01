@@ -1,230 +1,173 @@
-﻿using AccountServiceObject.QueryObjects;
-using CommonGrpcObject;
+﻿using CommonGrpcObject;
+using CommonObject;
 using CommonWebApplication.Services;
 using Enums;
 using IQuestionService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuestionServiceObject.BusinessObjects;
+using QuestionServiceObject.CommandObjects;
 using QuestionServiceObject.QueryObjects;
-using SSO.OutputModels;
+using SSO.Mappings.Survey;
 using SSO.Requests;
+using SSO.ServiceModels;
+using SSO.ServiceModels.Survey;
+using SSO.OutputModels;
 
 namespace SSO.Controllers;
 
 public class SurveyController(
     ILogger<AccountController> logger,
     ContextService contextService,
-    ISurveyService surveyService
-) : BaseSsoController(logger, contextService)
+    IQuestionAndAnswerService questionAndAnswerService,
+    ISurveyService surveyService)
+    : BaseSsoController(logger, contextService)
 {
+    private readonly ContextService _contextService = contextService;
+
+
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> QuestionGetBySurvey([FromBody] QuestionGetBySurveyIdRequest? request)
-    {   
+    public async Task<CommonApiResponse<object>> GetSurveyDetail([FromBody] QuestionGetBySurveyIdRequest? request)
+    {
         return await ProcessRequest<object>(async (response) =>
         {
             if (request == null)
             {
-                response.SetFail(EErrorCode.NullRequestExceptions);
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
                 return;
             }
 
-            var questionsBySurvey = await surveyService.GetQuestionsBySurvey(new SurveyGetAllQuery
+            var surveyGetResponse = await surveyService.GetQuestionsBySurveyId(new QuestionGetBySurveyIdQuery()
             {
-                SurveyIdAsString = request.SurveyId,
+                SurveyId = request.SurveyId
             });
-            List<QuestionObject>? questions = questionsBySurvey.Data;
-            if (!questionsBySurvey.Status)
+
+            if (!surveyGetResponse.Status)
             {
-                response.SetFail(questionsBySurvey.ErrorMessages);
+                response.SetFail(surveyGetResponse.ErrorMessages);
                 return;
             }
 
-            List<OutputModels.SurveyModel>? questionModels = questions?.Select(x => new OutputModels.SurveyModel()
+            List<QuestionGetBySurveyModel>? models = surveyGetResponse.Data
+                ?.ConverterToChildOfSsoModel(typeof(QuestionGetBySurveyModel))?
+                .OfType<QuestionGetBySurveyModel>()
+                .ToList();
+
+            response.Data = new { Models = models.ToSurveyModel() };
+            response.SetSuccess();
+        });
+    }
+
+
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> SubmitAnswers([FromBody] SubmitSurveyRequest? request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            if (request == null)
             {
-                SurveyId = "20000001-1001-1001-1001-100000000001",
-                Title = "Đánh giá nguy cơ phụ thuộc thuốc cắt cơn",
-                Description = "Bộ câu hỏi đánh giá nguy cơ lệ thuộc bình xịt cắt cơn dựa trên 6 câu trả lời.",
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                ExpiredAt = DateTime.UtcNow.AddYears(10),
-                Questions = new[]
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
+                return;
+            }
+            
+            var userId = _contextService.GetSessionKey();
+            if (string.IsNullOrEmpty(userId))
+            {
+                response.SetFail("User is not authenticated or session key is missing.", EErrorCode.UserNotFound);
+                return;
+            }
+
+            var command = new SubmitSurveyCommand
+            {
+                UserId = userId,
+                SurveyId = request.SurveyId,
+                Answers = request.Answers.Select(a => new SubmissionAnswer
                 {
-                    // CÂU 1
-                    new QuestionSimpleModel
-                    {
-                        QuestionId = "30000001-0001-0001-0001-100000000001",
-                        SurveyId = "20000001-1001-1001-1001-100000000001",
-                        QuestionText = "Dùng bình xịt cắt cơn để giảm triệu chứng là cách tốt nhất để kiểm soát Hen.",
-                        QuestionOrder = 1,
-                        IsRequired = true,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Options = new QuestionOptionModel
-                        {
-                            QuestionOptionId = "SingleChoice",
-                            Code = "SingleChoice",
-                            Description = "Chỉ cho phép chọn 1 câu trả lời",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        },
-                        Answers = new[]
-                        {
-                            new AnswerModel { AnswerId = "a1-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Hoàn toàn không đồng ý", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a2-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Không đồng ý", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a3-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Không chắc", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a4-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Đồng ý", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a5-q1", QuestionId = "30000001-0001-0001-0001-100000000001", Description = "Hoàn toàn đồng ý", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
-                    },
-
-                    // CÂU 2
-                    new QuestionSimpleModel
-                    {
-                        QuestionId = "30000001-0001-0001-0002-100000000001",
-                        SurveyId = "20000001-1001-1001-1001-100000000001",
-                        QuestionText = "Bệnh nhân không lo ngại gì về bệnh Hen khi có bình xịt cắt cơn bên cạnh.",
-                        QuestionOrder = 2,
-                        IsRequired = true,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Options = new QuestionOptionModel
-                        {
-                            QuestionOptionId = "SingleChoice",
-                            Code = "SingleChoice",
-                            Description = "Chỉ cho phép chọn 1 câu trả lời",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        },
-                        Answers = new[]
-                        {
-                            new AnswerModel { AnswerId = "a1-q2", QuestionId = "30000001-0001-0001-0002-100000000001", Description = "Hoàn toàn không đồng ý", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a2-q2", QuestionId = "30000001-0001-0001-0002-100000000001", Description = "Không đồng ý", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a3-q2", QuestionId = "30000001-0001-0001-0002-100000000001", Description = "Không chắc", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a4-q2", QuestionId = "30000001-0001-0001-0002-100000000001", Description = "Đồng ý", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a5-q2", QuestionId = "30000001-0001-0001-0002-100000000001", Description = "Hoàn toàn đồng ý", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
-                    },
-
-                    //CÂU 3
-                    new QuestionSimpleModel
-                    {
-                        QuestionId = "30000001-0001-0001-0003-100000000001",
-                        SurveyId = "20000001-1001-1001-1001-100000000001",
-                        QuestionText = "Bình xịt cắt cơn là điều trị duy nhất mà tôi thật sự tin tưởng.",
-                        QuestionOrder = 3,
-                        IsRequired = true,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Options = new QuestionOptionModel
-                        {
-                            QuestionOptionId = "SingleChoice",
-                            Code = "SingleChoice",
-                            Description = "Chỉ cho phép chọn 1 câu trả lời",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        },
-                        Answers = new[]
-                        {
-                            new AnswerModel { AnswerId = "a1-q3", QuestionId = "30000001-0001-0001-0003-100000000001", Description = "Hoàn toàn không đồng ý", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a2-q3", QuestionId = "30000001-0001-0001-0003-100000000001", Description = "Không đồng ý", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a3-q3", QuestionId = "30000001-0001-0001-0003-100000000001", Description = "Không chắc", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a4-q3", QuestionId = "30000001-0001-0001-0003-100000000001", Description = "Đồng ý", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a5-q3", QuestionId = "30000001-0001-0001-0003-100000000001", Description = "Hoàn toàn đồng ý", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
-                    },
-
-                    //CÂU 4
-                    new QuestionSimpleModel
-                    {
-                        QuestionId = "30000001-0001-0001-0004-100000000001",
-                        SurveyId = "20000001-1001-1001-1001-100000000001",
-                        QuestionText = "Lợi ích của bình xịt cắt cơn thật sự nhiều hơn so với nguy cơ.",
-                        QuestionOrder = 4,
-                        IsRequired = true,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Options = new QuestionOptionModel
-                        {
-                            QuestionOptionId = "SingleChoice",
-                            Code = "SingleChoice",
-                            Description = "Chỉ cho phép chọn 1 câu trả lời",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        },
-                        Answers = new[]
-                        {
-                            new AnswerModel { AnswerId = "a1-q4", QuestionId = "30000001-0001-0001-0004-100000000001", Description = "Hoàn toàn không đồng ý", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a2-q4", QuestionId = "30000001-0001-0001-0004-100000000001", Description = "Không đồng ý", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a3-q4", QuestionId = "30000001-0001-0001-0004-100000000001", Description = "Không chắc", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a4-q4", QuestionId = "30000001-0001-0001-0004-100000000001", Description = "Đồng ý", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a5-q4", QuestionId = "30000001-0001-0001-0004-100000000001", Description = "Hoàn toàn đồng ý", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
-                    },
-
-                    //CÂU 5
-                    new QuestionSimpleModel
-                    {
-                        QuestionId = "30000001-0001-0001-0005-100000000001",
-                        SurveyId = "20000001-1001-1001-1001-100000000001",
-                        QuestionText = "Bệnh nhân ưu tiên lựa chọn bình xịt cắt cơn màu xanh hơn dùng ống hít duy trì chứa corticoid.",
-                        QuestionOrder = 5,
-                        IsRequired = true,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Options = new QuestionOptionModel
-                        {
-                            QuestionOptionId = "SingleChoice",
-                            Code = "SingleChoice",
-                            Description = "Chỉ cho phép chọn 1 câu trả lời",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        },
-                        Answers = new[]
-                        {
-                            new AnswerModel { AnswerId = "a1-q5", QuestionId = "30000001-0001-0001-0005-100000000001", Description = "Hoàn toàn không đồng ý", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a2-q5", QuestionId = "30000001-0001-0001-0005-100000000001", Description = "Không đồng ý", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a3-q5", QuestionId = "30000001-0001-0001-0005-100000000001", Description = "Không chắc", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a4-q5", QuestionId = "30000001-0001-0001-0005-100000000001", Description = "Đồng ý", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a5-q5", QuestionId = "30000001-0001-0001-0005-100000000001", Description = "Hoàn toàn đồng ý", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
-                    },
-
-                    //CÂU 6
-                    new QuestionSimpleModel
-                    {
-                        QuestionId = "30000001-0001-0001-0006-100000000001",
-                        SurveyId = "20000001-1001-1001-1001-100000000001",
-                        QuestionText = "Trong 4 tuần vừa qua, bệnh nhân sử dụng bình xịt cắt cơn như thế nào?",
-                        QuestionOrder = 6,
-                        IsRequired = true,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Options = new QuestionOptionModel
-                        {
-                            QuestionOptionId = "SingleChoice",
-                            Code = "SingleChoice",
-                            Description = "Chỉ cho phép chọn 1 câu trả lời",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        },
-                        Answers = new[]
-                        {
-                            new AnswerModel { AnswerId = "a1-q6", QuestionId = "30000001-0001-0001-0006-100000000001", Description = "Không sử dụng", OrderSort = 1, Score = 1, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a2-q6", QuestionId = "30000001-0001-0001-0006-100000000001", Description = "2 lần/tuần", OrderSort = 2, Score = 2, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a3-q6", QuestionId = "30000001-0001-0001-0006-100000000001", Description = "3 lần/tuần", OrderSort = 3, Score = 3, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a4-q6", QuestionId = "30000001-0001-0001-0006-100000000001", Description = "4-5 lần/tuần", OrderSort = 4, Score = 4, CreatedAt = DateTime.UtcNow },
-                            new AnswerModel { AnswerId = "a5-q6", QuestionId = "30000001-0001-0001-0006-100000000001", Description = "> 5 lần/tuần", OrderSort = 5, Score = 5, CreatedAt = DateTime.UtcNow }
-                        }
-                    }
-                }
-            }).ToList();
-
-            response.Data = new
-            {
-                Models = questionModels,
+                    QuestionId = a.QuestionId,
+                    AnswerIds = a.SelectedOptionIds ?? new List<string>(),
+                    TextAnswer = a.TextAnswer
+                }).ToList()
             };
+
+            var submitResult = await questionAndAnswerService.SubmitAnswers(command);
+
+            if (!submitResult.Status)
+            {
+                response.SetFail(submitResult.ErrorMessages);
+                return;
+            }
+
+            response.Data = new { Message = submitResult.Data };
+            response.SetSuccess();
+        });
+    }
+    
+    
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> GetSurveyOutcome([FromBody] GetSurveyOutcomeRequest? request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            if (request == null)
+            {
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
+                return;
+            }
+            
+            var userId = _contextService.GetSessionKey();
+            if (string.IsNullOrEmpty(userId))
+            {
+                response.SetFail("User is not authenticated or session key is missing.", EErrorCode.UserNotFound);
+                return;
+            }
+
+            // Calculate score
+            var scoreResponse = await surveyService.CalculateScore(new CalculateSurveyScoreQuery
+            {
+                UserId = userId,
+                SurveyId = request.SurveyId
+            });
+
+            if (!scoreResponse.Status)
+            {
+                response.SetFail(scoreResponse.ErrorMessages);
+                return;
+            }
+
+            UseSurveyScoreModel? scoreModel = scoreResponse.Data
+                ?.ConverterToChildOfSsoModel(typeof(UseSurveyScoreModel))?
+                .OfType<UseSurveyScoreModel>().FirstOrDefault();
+
+            int totalScore = scoreModel?.TotalScore?.AsDefaultInt() ?? 0;
+
+            // compare
+            var outcomesResponse = await surveyService.GetSurveyOutcomes(new SurveyOutcomeScoreQuery()
+            {
+                SurveyId = request.SurveyId,
+                TotalScore = totalScore
+            });
+            if (!outcomesResponse.Status)
+            {
+                response.SetFail(outcomesResponse.ErrorMessages);
+                return;
+            }
+            
+            List<SurveyComeoutScoreModel>? outcomeModels = outcomesResponse.Data
+                ?.ConverterToChildOfSsoModel(typeof(SurveyComeoutScoreModel))?
+                .OfType<SurveyComeoutScoreModel>().ToList();
+
+            if (outcomeModels is not { Count: > 0 })
+            {
+                response.SetFail("No outcomes configured for this survey.", EErrorCode.NotFound);
+                return;
+            }
+
+            // Find the matching outcome in the controller
+            SurveyScoreOutcomeOutputModel[] finalOutcomes = outcomeModels.Select(x => x.ToModel()).ToArray();
+
+            response.Data = finalOutcomes;
             response.SetSuccess();
         });
     }

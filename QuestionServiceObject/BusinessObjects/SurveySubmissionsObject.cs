@@ -15,10 +15,10 @@ public class SurveySubmissionsObject : BaseQuestionObject
     [ProtoMember(6)] public DateTime StartedAt { get; set; }
     [ProtoMember(7)] public DateTime? SubmittedAt { get; set; }
     [ProtoMember(8)] public int? TimeTakenSeconds { get; set; }
-    [ProtoMember(9)] public string Status { get; set; }
-    [ProtoMember(10)] public string IpAddress { get; set; }
-    [ProtoMember(11)] public string UserAgent { get; set; }
-    [ProtoMember(12)] public string Metadata { get; set; }
+    [ProtoMember(9)] public string? Status { get; set; }
+    [ProtoMember(10)] public string? IpAddress { get; set; }
+    [ProtoMember(11)] public string? UserAgent { get; set; }
+    [ProtoMember(12)] public string? Metadata { get; set; }
 
     protected override void FieldMapper()
     {

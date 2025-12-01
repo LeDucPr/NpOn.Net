@@ -1,13 +1,14 @@
-﻿using AccountServiceObject;
-using AccountServiceObject.QueryObjects;
+﻿using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
-using CommonWebApplication.Controllers;
+using CommonObject;
 using CommonWebApplication.Services;
-using Enums;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using ProjectEnums.AccountEnums;
+using SSO.Mappings.Account;
+using SSO.Requests;
+using SSO.Validators;
 
 namespace SSO.Controllers;
 
@@ -19,45 +20,92 @@ public class AccountController(
 {
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> Login([FromBody] LoginRequest? request)
+    public async Task<CommonApiResponse<object>> Login([FromBody] AccountLoginRequest request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
-            // await Logout();
-            if (request == null)
+            var validator = AccountLoginRequestValidator.ValidateRequest(request);
+            if (!validator.IsValid)
             {
-                response.SetFail(EErrorCode.NullRequestExceptions);
+                response.SetFail(validator.Errors.Select(p => p.ToString()));
                 return;
             }
 
-            // type 1
-            AccountLoginQuery inputQuery = new AccountLoginQuery()
+            AccountLoginQuery inputQuery = new AccountLoginQuery
             {
                 Email = request.Email,
+                ClientId = contextService.ClientId,
+                PhoneNumber = request.PhoneNumber,
+                UserName = request.UserName,
+                Password = request.Password,
+                DeviceLoginInfo = request.DeviceInfo,
+                LoginType = request.LoginType,
+                Ip = contextService.GetIp(),
+                AuthenApplicationId = request.AppId,
+                AuthType = request.AuthType,
             };
-            var tokenResult = await authenticationService.Login(inputQuery);
-            if (!tokenResult.Status)
+            var accountLoginResponse = await authenticationService.Login(inputQuery);
+            if (!accountLoginResponse.Status)
             {
-                response.SetFail(tokenResult.ErrorMessages);
+                response.SetFail(accountLoginResponse.ErrorMessages);
                 return;
             }
-            
-            
-            // type 2
-            string jsonInputQuery = CommonObject.JsonConverter.ToJson(inputQuery);
 
-            var tokenResult2 = await authenticationService.LoginJ(new CommonJsonQuery
+            if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
             {
-                Json = jsonInputQuery,
-            });
-            if (!tokenResult2.Status)
-            {
-                response.SetFail(tokenResult.ErrorMessages);
+                response.SetFail("Login invalid");
                 return;
             }
 
             // response.Data = await LoginProcess(tokenResult.Data);
-            response.Data = "84780rhf89h289rh2";
+            response.Data = new
+            {
+                Model = accountLoginResponse.Data.ToModel(),
+            };
+            response.SetSuccess();
+        });
+    }
+
+    // [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> RefreshToken([FromBody] AccountRefreshTokenRequest request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            var validator = AccountRefreshTokenValidator.ValidateRequest(request);
+            if (!validator.IsValid)
+            {
+                response.SetFail(validator.Errors.Select(p => p.ToString()));
+                return;
+            }
+
+            AccountRefreshTokenQuery inputQuery = new AccountRefreshTokenQuery
+            {
+                RefreshToken = request.RefreshToken,
+                DeviceInfo = request.DeviceInfo,
+                LoginType = request.LoginType,
+                AuthType = request.AuthType,
+                SessionId = contextService.GetSessionKey().AsDefaultString(),
+                ProcessUId = contextService.GetAccountIdAsString(),
+            };
+            var accountLoginResponse = await authenticationService.RefreshToken(inputQuery);
+            if (!accountLoginResponse.Status)
+            {
+                response.SetFail(accountLoginResponse.ErrorMessages);
+                return;
+            }
+
+            if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
+            {
+                response.SetFail("Login invalid");
+                return;
+            }
+
+            // response.Data = await LoginProcess(tokenResult.Data);
+            response.Data = new
+            {
+                Model = accountLoginResponse.Data.ToModel(),
+            };
             response.SetSuccess();
         });
     }

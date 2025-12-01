@@ -10,7 +10,8 @@ using GeneralServiceObject.QueryObjects;
 using HandleFlow.ResultConverters;
 using IGeneralService;
 using NpgsqlTypes;
-using ProjectEntry;
+using ProjectEntry.GeneralEntries;
+using ProjectEnums.GeneralEnums;
 
 namespace GeneralService.Services;
 
@@ -19,11 +20,11 @@ public class FldMasterPgService(
     ILogger<CommonService> logger
 ) : CommonService(logger), IFldMasterPgService
 {
-    public async Task<CommonResponse<List<TblFldObject>>> GetQuery(TblFldQuery query)
+    public async Task<CommonResponse<List<TblFldObject>>> GetExecution(TblFldExecution execution)
     {
         return await CommonProcess<List<TblFldObject>>(async (response) =>
         {
-            if (query.ExecFunc == null && query.Code == null && query.TblMaterId == null)
+            if (execution.ExecFunc == null && execution.Code == null && execution.TblMaterId == null)
             {
                 response.SetFail("Invalid query");
                 return;
@@ -31,39 +32,39 @@ public class FldMasterPgService(
 
             List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
             var queryBuilder = new TblFldMasterQueryBuilder();
-            if (query.Code != null)
+            if (execution.Code != null)
             {
-                queryBuilder = queryBuilder.WhereCode(query.Code);
+                queryBuilder = queryBuilder.WhereCode(execution.Code);
                 parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
                 {
-                    ParamName = nameof(query.Code),
-                    ParamValue = query.Code,
+                    ParamName = nameof(execution.Code),
+                    ParamValue = execution.Code,
                     ParamType = NpgsqlDbType.Varchar
                 });
             }
-            else if (query.TblMaterId != null)
+            else if (execution.TblMaterId != null)
             {
-                queryBuilder = queryBuilder.WhereTblMasterId(query.TblMaterId);
+                queryBuilder = queryBuilder.WhereTblMasterId(execution.TblMaterId);
                 parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
                 {
-                    ParamName = nameof(query.TblMaterId),
-                    ParamValue = query.Code,
+                    ParamName = nameof(execution.TblMaterId),
+                    ParamValue = execution.Code,
                     ParamType = NpgsqlDbType.Uuid
                 });
             }
-            else if (query.ExecFunc != null)
+            else if (execution.ExecFunc != null)
             {
-                queryBuilder = queryBuilder.WhereExecFunc(query.ExecFunc);
+                queryBuilder = queryBuilder.WhereExecFunc(execution.ExecFunc);
                 parameters.Add(new NpOnDbCommandParam<NpgsqlDbType>
                 {
-                    ParamName = nameof(query.ExecFunc),
-                    ParamValue = query.Code,
+                    ParamName = nameof(execution.ExecFunc),
+                    ParamValue = execution.Code,
                     ParamType = NpgsqlDbType.Varchar
                 });
             }
             var (queryBuilderString, _) = queryBuilder.Build();
 
-            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.QueryAsync(queryBuilderString, parameters);
+            INpOnWrapperResult? wrapperResult = await dbFactoryWrapper.ExecuteAsync(queryBuilderString, parameters);
             if (wrapperResult == null)
             {
                 response.SetFail("FldMaster not found");
@@ -86,11 +87,11 @@ public class FldMasterPgService(
         });
     }
 
-    public async Task<CommonResponse<INpOnGrpcObject>> Query(TblFldQuery query)
+    public async Task<CommonResponse<INpOnGrpcObject>> Execute(TblFldExecution execution)
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            List<TblFldObject>? tblFldObjects = (await GetQuery(query)).Data;
+            List<TblFldObject>? tblFldObjects = (await GetExecution(execution)).Data;
             if (tblFldObjects is not { Count: > 0 })
             {
                 response.SetFail("FldMasterObject not found");
@@ -99,7 +100,7 @@ public class FldMasterPgService(
 
             TblFldObject tblFldObjectFirst = tblFldObjects.First();
             INpOnWrapperResult? wrapperResult = null;
-            if (tblFldObjectFirst.ExecFunc != null)
+            if (tblFldObjectFirst is { ExecFunc: not null, ExecType: EExecType.ExecFunc })
             {
                 string funcName = tblFldObjectFirst.ExecFunc;
                 List<INpOnDbCommandParam<NpgsqlDbType>> parameters = [];
@@ -108,7 +109,7 @@ public class FldMasterPgService(
                 {
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
-                    string? stringValue = query.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                    string? stringValue = execution.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                     NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
                     {
                         ParamName = paramObj.FieldName,
@@ -129,15 +130,15 @@ public class FldMasterPgService(
                     return;
                 }
             }
-            else if (tblFldObjectFirst.Query != null)
+            else if (tblFldObjectFirst is { Query: not null, ExecType: EExecType.Query })
             {
-                string queryString = tblFldObjectFirst.Query;
+                string execString = tblFldObjectFirst.Query;
                 List<NpOnDbCommandParam> parameters = new List<NpOnDbCommandParam>();
                 foreach (var paramObj in tblFldObjects)
                 {
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
-                    string? stringValue = query.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                    string? stringValue = execution.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                     NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
                     {
                         ParamName = paramObj.FieldName,
@@ -150,9 +151,9 @@ public class FldMasterPgService(
                 try
                 {
                     if (parameters is { Count: > 0 })
-                        wrapperResult = await dbFactoryWrapper.QueryAsync(queryString, parameters);
+                        wrapperResult = await dbFactoryWrapper.ExecuteAsync(execString, parameters);
                     else
-                        wrapperResult = await dbFactoryWrapper.QueryAsync(queryString);
+                        wrapperResult = await dbFactoryWrapper.ExecuteAsync(execString);
                 }
                 catch (Exception)
                 {
