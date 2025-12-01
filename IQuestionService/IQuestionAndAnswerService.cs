@@ -1,4 +1,5 @@
 ﻿using System.ServiceModel;
+using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
 using QuestionServiceObject.CommandObjects;
 
@@ -8,5 +9,8 @@ namespace IQuestionService;
 public interface IQuestionAndAnswerService
 {
     [OperationContract]
-    Task<CommonResponse<string>> SubmitAnswers(SubmitSurveyCommand command);
+    Task<CommonResponse<string>> InsertUserAnswer(List<UserAnswerSubmitCommand> commands);
+
+    [OperationContract]
+    Task<CommonResponse<INpOnGrpcObject>> InsertUserResult(SurveyResultInsertCommand command);
 }

@@ -1,11 +1,13 @@
-﻿using CommonGrpcObject;
+﻿using CommonDb.DbResults.Grpc;
+using CommonGrpcObject;
 using CommonObject;
 using CommonWebApplication.Services;
-using GeneralServiceObject.QueryObjects;
+using Enums;
 using IGeneralService;
 using IQuestionService;
-using ProjectEnums.FldMasterEnums;
 using QuestionServiceObject.CommandObjects;
+using GeneralServiceObject.QueryObjects;
+using ProjectEntry.QuestionEntries;
 
 namespace QuestionService.Services;
 
@@ -14,38 +16,63 @@ public class QuestionAndAnswerService(
     ILogger<CommonService> logger
 ) : CommonService(logger), IQuestionAndAnswerService
 {
-    public async Task<CommonResponse<string>> SubmitAnswers(SubmitSurveyCommand command)
+    public async Task<CommonResponse<string>> InsertUserAnswer(List<UserAnswerSubmitCommand> commands)
     {
         return await CommonProcess<string>(async (response) =>
         {
-            foreach (var answer in command.Answers)
+            foreach (var command in commands)
             {
-                var queryParams = new List<TblFldExecutionParam>
+                var answerExecution = new TblFldExecution
                 {
-                    new() { ParamName = "user_id", StringValue = command.UserId.AsDefaultString() },
-                    new() { ParamName = "question_id", StringValue = answer.QuestionId.AsDefaultString() },
-                    new() { ParamName = "answer_ids", StringValue = answer.AnswerIds?.AsArrayJoin() },
-                    new() { ParamName = "text_answer", StringValue = answer.TextAnswer }
+                    Code = QuestionServiceQueryCode.SurveyInsertUserAnswer,
+                    QueryParams =
+                    [
+                        new TblFldExecutionParam { ParamName = "user_id", StringValue = command.UserId },
+                        new TblFldExecutionParam { ParamName = "question_id", StringValue = command.QuestionId },
+                        new TblFldExecutionParam { ParamName = "answer_ids", StringValue = "{" + string.Join(",", command.AnswerIds) + "}" },
+                        new TblFldExecutionParam { ParamName = "text_answer", StringValue = command.TextAnswer.AsDefaultString() },
+                        new TblFldExecutionParam { ParamName = "score_text_answer", StringValue = command.ScoreTextAnswer.AsDefaultString() },
+                        new TblFldExecutionParam { ParamName = "result_id", StringValue = command.ResultId }
+                    ]
                 };
-
-                // This call is correct as it executes an INSERT
-                var result = await fldMasterPgService.Execute(new TblFldExecution
+                var answerResponse = await fldMasterPgService.Execute(answerExecution);
+                if (!answerResponse.Status)
                 {
-                    Code = FldMasterCodes.SurveyInsertAns,
-                    QueryParams = queryParams.ToArray()
-                });
-
-                if (!result.Status)
-                {
-                    response.Status = false;
-                    response.ErrorCode = result.ErrorCode;
-                    response.Data = $"Failed to submit answer for question {answer.QuestionId}.";
+                    response.SetFail($"Failed to submit answer for question {command.QuestionId}.", answerResponse.ErrorCode ?? EErrorCode.Fail);
                     return;
                 }
             }
 
-            response.Status = true;
             response.Data = "All answers submitted successfully.";
+            response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> InsertUserResult(SurveyResultInsertCommand command)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var insertExecution = new TblFldExecution
+            {
+                Code = QuestionServiceQueryCode.SurveyResultInsert,
+                QueryParams =
+                [
+                    new TblFldExecutionParam { ParamName = "user_id", StringValue = command.UserId },
+                    new TblFldExecutionParam { ParamName = "survey_id", StringValue = command.SurveyId },
+                    new TblFldExecutionParam { ParamName = "total_score", StringValue = command.TotalScore.AsDefaultString() },
+                    new TblFldExecutionParam { ParamName = "max_score", StringValue = command.MaxScore.AsDefaultString() },
+                    new TblFldExecutionParam { ParamName = "outcome_data", StringValue = command.OutcomeData }
+                ]
+            };
+            var insertResponse = await fldMasterPgService.Execute(insertExecution);
+            if (!insertResponse.Status || insertResponse.Data == null)
+            {
+                response.SetFail("Could not insert survey result.", insertResponse.ErrorCode ?? EErrorCode.Fail);
+                return;
+            }
+
+            response.Data = insertResponse.Data;
+            response.SetSuccess();
         });
     }
 }

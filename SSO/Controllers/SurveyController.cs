@@ -12,6 +12,7 @@ using SSO.Requests;
 using SSO.ServiceModels;
 using SSO.ServiceModels.Survey;
 using SSO.OutputModels;
+using System.Text.Json;
 
 namespace SSO.Controllers;
 
@@ -23,8 +24,7 @@ public class SurveyController(
     : BaseSsoController(logger, contextService)
 {
     private readonly ContextService _contextService = contextService;
-
-
+    
     [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> GetSurveyDetail([FromBody] QuestionGetBySurveyIdRequest? request)
@@ -58,51 +58,111 @@ public class SurveyController(
         });
     }
 
-
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> SubmitAnswers([FromBody] SubmitSurveyRequest? request)
+    public async Task<CommonApiResponse<object>> SubmitSurvey([FromBody] SubmitSurveyRequest? request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
-            if (request == null)
+            if (request?.Answers == null)
             {
-                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
+                response.SetFail("Request or answers cannot be null.", EErrorCode.NullRequestExceptions);
                 return;
             }
-            
-            var userId = _contextService.GetSessionKey();
+
+            //var userId = _contextService.GetSessionKey();
+            var userId = "00353bde-b7df-4c9e-a6fd-d6ecda162972";
             if (string.IsNullOrEmpty(userId))
             {
                 response.SetFail("User is not authenticated or session key is missing.", EErrorCode.UserNotFound);
                 return;
             }
 
-            var command = new SubmitSurveyCommand
+            var allAnswerIds = request.Answers.Where(a => a.SelectedOptionIds != null).SelectMany(a => a.SelectedOptionIds!).ToArray();
+            long totalScore = 0;
+
+            if (allAnswerIds.Length > 0)
+            {
+                var scoreResponse = await surveyService.GetAnswersScore(new AnswersScoreQuery { AnswerIds = string.Join(",", allAnswerIds) });
+                if (!scoreResponse.Status)
+                {
+                    response.SetFail(scoreResponse.ErrorMessages);
+                    return;
+                }
+                var scoreModel = scoreResponse.Data?.ConverterToChildOfSsoModel(typeof(TotalScoreModel))?.OfType<TotalScoreModel>().FirstOrDefault();
+                totalScore += scoreModel?.TotalScore ?? 0;
+            }
+
+            totalScore += request.Answers.Sum(a => a.ScoreTextAnswer ?? 0);
+
+            var maxScoreResponse = await surveyService.GetMaxSurveyScore(new MaxSurveyScoreQuery { SurveyId = request.SurveyId });
+            if (!maxScoreResponse.Status)
+            {
+                response.SetFail(maxScoreResponse.ErrorMessages);
+                return;
+            }
+            var maxScoreModel = maxScoreResponse.Data?.ConverterToChildOfSsoModel(typeof(MaxScoreModel))?.OfType<MaxScoreModel>().FirstOrDefault();
+            long maxScore = maxScoreModel?.MaxPossibleScore ?? 0;
+
+            var outcomesResponse = await surveyService.GetSurveyOutcomes(new SurveyOutcomeScoreQuery { SurveyId = request.SurveyId, TotalScore = totalScore });
+            if (!outcomesResponse.Status)
+            {
+                response.SetFail(outcomesResponse.ErrorMessages);
+                return;
+            }
+            var outcomeModel = outcomesResponse.Data?.ConverterToChildOfSsoModel(typeof(SurveyComeoutScoreModel))?.OfType<SurveyComeoutScoreModel>().FirstOrDefault();
+            var outcomeJson = outcomeModel != null ? JsonSerializer.Serialize(outcomeModel) : "{}";
+
+            var resultInsertCmd = new SurveyResultInsertCommand
             {
                 UserId = userId,
                 SurveyId = request.SurveyId,
-                Answers = request.Answers.Select(a => new SubmissionAnswer
-                {
-                    QuestionId = a.QuestionId,
-                    AnswerIds = a.SelectedOptionIds ?? new List<string>(),
-                    TextAnswer = a.TextAnswer
-                }).ToList()
+                TotalScore = totalScore,
+                MaxScore = maxScore,
+                OutcomeData = outcomeJson
             };
+            var resultInsertResponse = await questionAndAnswerService.InsertUserResult(resultInsertCmd);
+            if (!resultInsertResponse.Status)
+            {
+                response.SetFail(resultInsertResponse.ErrorMessages);
+                return;
+            }
+            var resultIdModel = resultInsertResponse.Data?.ConverterToChildOfSsoModel(typeof(ResultIdModel))?.OfType<ResultIdModel>().FirstOrDefault();
+            var resultId = resultIdModel?.Id;
 
-            var submitResult = await questionAndAnswerService.SubmitAnswers(command);
+            if (string.IsNullOrEmpty(resultId))
+            {
+                response.SetFail("Failed to retrieve result ID after insertion.", EErrorCode.Fail);
+                return;
+            }
 
+            var answerCommands = request.Answers.Select(a => new UserAnswerSubmitCommand
+            {
+                UserId = userId,
+                QuestionId = a.QuestionId,
+                AnswerIds = a.SelectedOptionIds?.ToArray() ?? [],
+                TextAnswer = a.TextAnswer,
+                ScoreTextAnswer = a.ScoreTextAnswer,
+                ResultId = resultId
+            }).ToList();
+
+            var submitResult = await questionAndAnswerService.InsertUserAnswer(answerCommands);
             if (!submitResult.Status)
             {
                 response.SetFail(submitResult.ErrorMessages);
                 return;
             }
 
-            response.Data = new { Message = submitResult.Data };
+            response.Data = new
+            {
+                ResultId = resultId,
+                TotalScore = totalScore,
+                MaxPossibleScore = maxScore,
+                Outcome = outcomeModel?.ToModel() // OutcomeModel
+            };
             response.SetSuccess();
         });
     }
-    
     
     [AllowAnonymous]
     [HttpPost]
@@ -164,10 +224,52 @@ public class SurveyController(
                 return;
             }
 
-            // Find the matching outcome in the controller
             SurveyScoreOutcomeOutputModel[] finalOutcomes = outcomeModels.Select(x => x.ToModel()).ToArray();
 
-            response.Data = finalOutcomes;
+            response.Data = new
+            {
+                Models = finalOutcomes
+            };
+            response.SetSuccess();
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> GetSurveyHistory([FromBody] GetSurveyHistoryRequest? request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            if (request == null)
+            {
+                response.SetFail("Request cannot be null.", EErrorCode.NullRequestExceptions);
+                return;
+            }
+
+            var query = new SurveyHistoryQuery
+            {
+                ResultId = request.ResultId,
+                UserId = request.UserId,
+                SurveyId = request.SurveyId,
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize
+            };
+
+            var historyResponse = await surveyService.GetSurveyHistory(query);
+
+            if (!historyResponse.Status || historyResponse.Data == null)
+            {
+                response.SetFail(historyResponse.ErrorMessages);
+                return;
+            }
+            
+            var historyContainer = historyResponse.Data;
+            //historyContainer.ParseAndAssignData();
+
+            response.Data = new
+            {
+                Model = historyContainer.Json,
+            };
             response.SetSuccess();
         });
     }

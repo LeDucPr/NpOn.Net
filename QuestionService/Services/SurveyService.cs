@@ -4,16 +4,21 @@ using IGeneralService;
 using IQuestionService;
 using QuestionServiceObject.CommandObjects;
 using GeneralServiceObject.QueryObjects;
-using Enums;
 using QuestionServiceObject.QueryObjects;
 using CommonDb.DbResults.Grpc;
-using ProjectEnums.FldMasterEnums;
 using CommonObject;
+using Enums;
+using ProjectEntry.QuestionEntries;
+using System.Text.Json;
+using DbFactory;
+using CommonDb.DbResults;
+using QuestionServiceObject;
 
 namespace QuestionService.Services;
 
 public class SurveyService(
     IFldMasterPgService fldMasterPgService,
+    IDbFactoryWrapper dbFactoryWrapper,
     ILogger<CommonService> logger
 ) : CommonService(logger), ISurveyService
 {
@@ -25,10 +30,8 @@ public class SurveyService(
             [
                 new TblFldExecutionParam() { ParamName = "title", StringValue = addOrUpdateCommand.Title },
                 new TblFldExecutionParam() { ParamName = "description", StringValue = addOrUpdateCommand.Description },
-                new TblFldExecutionParam()
-                    { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
-                new TblFldExecutionParam()
-                    { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
+                new TblFldExecutionParam() { ParamName = "is_published", StringValue = addOrUpdateCommand.IsPublished.AsDefaultString() },
+                new TblFldExecutionParam() { ParamName = "expired_at", StringValue = addOrUpdateCommand.ExpiredAt.AsDefaultString() },
             ];
 
             if (addOrUpdateCommand.Id != null)
@@ -36,10 +39,9 @@ public class SurveyService(
                 queryParams.Add(new TblFldExecutionParam() { ParamName = "id", StringValue = addOrUpdateCommand.Id });
             }
 
-            // This call is correct as it executes an INSERT/UPDATE
             var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = addOrUpdateCommand.Id == null ? FldMasterCodes.SurveyAdd : FldMasterCodes.SurveyUpdate,
+                Code = addOrUpdateCommand.Id == null ? QuestionServiceQueryCode.SurveyAdd : QuestionServiceQueryCode.SurveyUpdate,
                 QueryParams = queryParams.ToArray(),
             });
 
@@ -58,10 +60,9 @@ public class SurveyService(
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
-            // This call should execute the query to get data
             var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
-                Code = FldMasterCodes.QuestionsBySurveyId,
+                Code = QuestionServiceQueryCode.QuestionsBySurveyId,
                 QueryParams = [new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId }],
             });
 
@@ -75,14 +76,14 @@ public class SurveyService(
             response.SetSuccess();
         });
     }
-
+    
     public async Task<CommonResponse<INpOnGrpcObject>> CalculateScore(CalculateSurveyScoreQuery query)
     {
         return await CommonProcess<INpOnGrpcObject>(async (response) =>
         {
             var scoreExecution = new TblFldExecution
             {
-                Code = FldMasterCodes.SurveyCalcScore,
+                Code = QuestionServiceQueryCode.SurveyCalcScore,
                 QueryParams =
                 [
                     new TblFldExecutionParam { ParamName = "user_id", StringValue = query.UserId },
@@ -107,7 +108,7 @@ public class SurveyService(
         {
             var outcomeExecution = new TblFldExecution
             {
-                Code = FldMasterCodes.GetSurveyOutcomesBySurveyId,
+                Code = QuestionServiceQueryCode.GetSurveyOutcomesBySurveyId,
                 QueryParams =
                 [
                     new TblFldExecutionParam
@@ -139,5 +140,101 @@ public class SurveyService(
         QuestionGetByUserIdAndSurveyIdQuery query)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetAnswersScore(AnswersScoreQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var scoreExecution = new TblFldExecution
+            {
+                Code = QuestionServiceQueryCode.SurveyGetAnswersScore,
+                QueryParams = [new TblFldExecutionParam { ParamName = "answer_ids", StringValue = query.AnswerIds }]
+            };
+            var scoreResponse = await fldMasterPgService.Execute(scoreExecution);
+            if (!scoreResponse.Status || scoreResponse.Data == null)
+            {
+                response.SetFail("Could not calculate score from answers.", scoreResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            response.Data = scoreResponse.Data;
+            response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<INpOnGrpcObject>> GetMaxSurveyScore(MaxSurveyScoreQuery query)
+    {
+        return await CommonProcess<INpOnGrpcObject>(async (response) =>
+        {
+            var maxScoreExecution = new TblFldExecution
+            {
+                Code = QuestionServiceQueryCode.SurveyGetMaxScore,
+                QueryParams =
+                [
+                    new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
+                ]
+            };
+            var maxScoreResponse = await fldMasterPgService.Execute(maxScoreExecution);
+            if (!maxScoreResponse.Status || maxScoreResponse.Data == null)
+            {
+                response.SetFail("Could not get max survey score.", maxScoreResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            response.Data = maxScoreResponse.Data;
+            response.SetSuccess();
+        });
+    }
+
+    public async Task<CommonResponse<BaseQuestionExecFuncJsonObject?>> GetSurveyHistory(SurveyHistoryQuery query)
+    {
+        return await CommonProcess<BaseQuestionExecFuncJsonObject?>(async (response) =>
+        {
+            string funcName = "ques_srv_get_by_user_or_survey_history";
+            string jsonQuery = JsonSerializer.Serialize(query, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            INpOnWrapperResult? resultOfQuery = await dbFactoryWrapper.ExecuteFunc(
+                funcName,
+                new Dictionary<string, object> { { "json_object_data", jsonQuery } },
+                true,
+                isUseOutputJsonAsName: funcName
+            );
+
+            if (resultOfQuery == null)
+            {
+                response.SetFail("No result from database.", EErrorCode.NotFound);
+                return;
+            }
+
+            var historyContainer = resultOfQuery
+                .GenericConverterForJson(typeof(BaseQuestionExecFuncJsonObject), jsonColumnName: funcName)?
+                .Cast<BaseQuestionExecFuncJsonObject>()
+                .FirstOrDefault();
+            
+            historyContainer?.ToObject<object>();
+
+            response.Data = historyContainer;
+            response.SetSuccess();
+            
+            //// v2
+            // string funcCode = "get_by_user_or_survey_history";
+            // var funcExecution = new TblFldExecution
+            // {
+            //     Code = QuestionServiceQueryCode.SurveyGetMaxScore,
+            //     QueryParams =
+            //     [
+            //         new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
+            //     ]
+            // };
+            //
+            // var resultOfQueryResponse = await fldMasterPgService.Execute(funcExecution);
+            //
+            // if (resultOfQueryResponse.Data == null)
+            // {
+            //     response.SetFail("No result from database.", EErrorCode.NotFound);
+            //     return;
+            // }
+        });
     }
 }
