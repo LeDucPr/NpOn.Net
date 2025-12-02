@@ -42,7 +42,7 @@ public class SurveyService(
             var addNewSurveyResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
                 Code = addOrUpdateCommand.Id == null ? QuestionServiceQueryCode.SurveyAdd : QuestionServiceQueryCode.SurveyUpdate,
-                QueryParams = queryParams.ToArray(),
+                ExecParams = queryParams.ToArray(),
             });
 
             if (!addNewSurveyResponse.Status)
@@ -63,7 +63,7 @@ public class SurveyService(
             var questionGetBySurveyIdResponse = await fldMasterPgService.Execute(new TblFldExecution()
             {
                 Code = QuestionServiceQueryCode.QuestionsBySurveyId,
-                QueryParams = [new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId }],
+                ExecParams = [new TblFldExecutionParam() { ParamName = "survey_id", StringValue = query.SurveyId }],
             });
 
             if (!questionGetBySurveyIdResponse.Status)
@@ -84,7 +84,7 @@ public class SurveyService(
             var scoreExecution = new TblFldExecution
             {
                 Code = QuestionServiceQueryCode.SurveyCalcScore,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam { ParamName = "user_id", StringValue = query.UserId },
                     new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
@@ -109,7 +109,7 @@ public class SurveyService(
             var outcomeExecution = new TblFldExecution
             {
                 Code = QuestionServiceQueryCode.GetSurveyOutcomesBySurveyId,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam
                     {
@@ -149,7 +149,7 @@ public class SurveyService(
             var scoreExecution = new TblFldExecution
             {
                 Code = QuestionServiceQueryCode.SurveyGetAnswersScore,
-                QueryParams = [new TblFldExecutionParam { ParamName = "answer_ids", StringValue = query.AnswerIds }]
+                ExecParams = [new TblFldExecutionParam { ParamName = "answer_ids", StringValue = query.AnswerIds }]
             };
             var scoreResponse = await fldMasterPgService.Execute(scoreExecution);
             if (!scoreResponse.Status || scoreResponse.Data == null)
@@ -170,7 +170,7 @@ public class SurveyService(
             var maxScoreExecution = new TblFldExecution
             {
                 Code = QuestionServiceQueryCode.SurveyGetMaxScore,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam { ParamName = "survey_id", StringValue = query.SurveyId }
                 ]

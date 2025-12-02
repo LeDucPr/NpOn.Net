@@ -25,7 +25,7 @@ public class QuestionAndAnswerService(
                 var answerExecution = new TblFldExecution
                 {
                     Code = QuestionServiceQueryCode.SurveyInsertUserAnswer,
-                    QueryParams =
+                    ExecParams =
                     [
                         new TblFldExecutionParam { ParamName = "user_id", StringValue = command.UserId },
                         new TblFldExecutionParam { ParamName = "question_id", StringValue = command.QuestionId },
@@ -55,7 +55,7 @@ public class QuestionAndAnswerService(
             var insertExecution = new TblFldExecution
             {
                 Code = QuestionServiceQueryCode.SurveyResultInsert,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam { ParamName = "user_id", StringValue = command.UserId },
                     new TblFldExecutionParam { ParamName = "survey_id", StringValue = command.SurveyId },

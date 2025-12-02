@@ -33,7 +33,7 @@ public class AuthenticationService(
             var execution = new TblFldExecution
             {
                 Code = AuthenServiceQueryCode.AccountGetByUsernameAndPassword,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam
                     {
@@ -86,7 +86,7 @@ public class AuthenticationService(
             var execution = new TblFldExecution
             {
                 Code = AuthenServiceQueryCode.AccountLoginInfoGetByUsernameAndPassword,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam
                     {
@@ -131,7 +131,7 @@ public class AuthenticationService(
             var accountExecution = new TblFldExecution
             {
                 Code = AuthenServiceQueryCode.AccountGetById,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam
                     {
@@ -195,7 +195,7 @@ public class AuthenticationService(
             var execution = new TblFldExecution
             {
                 Code = AuthenServiceQueryCode.AccountLoginInfoSaveLogin,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam
                     {
@@ -288,7 +288,7 @@ public class AuthenticationService(
             var execution = new TblFldExecution
             {
                 Code = AuthenServiceQueryCode.AccountLoginInfoSaveLogOut,
-                QueryParams =
+                ExecParams =
                 [
                     new TblFldExecutionParam
                     {

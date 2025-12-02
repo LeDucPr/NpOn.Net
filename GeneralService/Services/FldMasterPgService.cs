@@ -109,7 +109,7 @@ public class FldMasterPgService(
                 {
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
-                    string? stringValue = execution.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                    string? stringValue = execution.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                     NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
                     {
                         ParamName = paramObj.FieldName,
@@ -138,7 +138,7 @@ public class FldMasterPgService(
                 {
                     if (string.IsNullOrEmpty(paramObj.FieldName))
                         break;
-                    string? stringValue = execution.QueryParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
+                    string? stringValue = execution.ExecParams?.First(x => x.ParamName == paramObj.FieldName).StringValue;
                     NpOnDbCommandParam<NpgsqlDbType> commandParam = new NpOnDbCommandParam<NpgsqlDbType>
                     {
                         ParamName = paramObj.FieldName,

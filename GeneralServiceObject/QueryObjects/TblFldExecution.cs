@@ -9,7 +9,7 @@ public class TblFldExecution : BaseGeneralQuery
     [ProtoMember(1)] public string? TblMaterId { get; set; }
     [ProtoMember(2)] public string? Code { get; set; }
     [ProtoMember(3)] public string? ExecFunc { get; set; }
-    [ProtoMember(4)] public TblFldExecutionParam[]? QueryParams { get; set; }
+    [ProtoMember(4)] public TblFldExecutionParam[]? ExecParams { get; set; }
 }
 
 [ProtoContract]
