@@ -109,4 +109,20 @@ public class AccountController(
             response.SetSuccess();
         });
     }
+    
+    [HttpPost]
+    
+    public async Task<CommonApiResponse<object>> CCCCCCC([FromBody] AccountRefreshTokenRequest request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            // response.Data = await LoginProcess(tokenResult.Data);
+            response.Data = new
+            {
+                Model = "Oke phân quyền xong",
+            };
+            response.SetSuccess();
+        });
+    }
+    
 }

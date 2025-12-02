@@ -339,6 +339,7 @@ public class AuthenticationService(
         [
             new(ContextService.SessionCode, sessionKey),
             new(ContextService.TokenCreatedUtc, DateTime.UtcNow.AddMinutes(minuteExpire).ToIso8601()),
+            new(ContextService.Permission, account.Permission.EnumAsInt().AsDefaultString()),
             new($"{ContextService.MinuteExpirePrefix}", minuteExpire.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, account.UserName),
             new(ContextService.LoginTypeEnumCode, loginType.EnumAsInt().AsDefaultString()),

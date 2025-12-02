@@ -9,12 +9,21 @@ public static class DefaultValueForObject
 
 public static class DefaultValueForObjectExtensions
 {
+    public static int EnumAsInt<TEnum>(this TEnum? value) where TEnum : struct, Enum
+        => Convert.ToInt32(value);
+    
     public static int EnumAsInt<TEnum>(this TEnum value) where TEnum : struct, Enum
         => Convert.ToInt32(value);
 
     public static long EnumAsLong<TEnum>(this TEnum value) where TEnum : struct, Enum
         => Convert.ToInt64(value);
+    
+    public static long EnumAsLong<TEnum>(this TEnum? value) where TEnum : struct, Enum
+        => Convert.ToInt64(value);
 
+    public static byte EnumAsByte<TEnum>(this TEnum? value) where TEnum : struct, Enum
+        => Convert.ToByte(value);
+    
     public static byte EnumAsByte<TEnum>(this TEnum value) where TEnum : struct, Enum
         => Convert.ToByte(value);
 

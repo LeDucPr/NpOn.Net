@@ -27,6 +27,7 @@ public class ContextService(
     public const string SessionCode = "VuaChocCho";
     public const string LoginTypeEnumCode = "LoginType";
     public const string TokenCreatedUtc = "TokenCreatedUtc";
+    public const string Permission = "PermissionSession";
     public const string SessionIdPrefix = "SESSIONID";
     public const string MinuteExpirePrefix = "MinuteExpire";
 
