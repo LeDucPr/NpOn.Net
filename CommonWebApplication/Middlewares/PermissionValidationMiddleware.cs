@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CommonMode;
 using CommonObject;
 using CommonWebApplication.Attributes;
 using CommonWebApplication.Services;
@@ -40,18 +41,8 @@ public class PermissionValidationMiddleware(RequestDelegate next)
         {
             var claimsPrincipal = context.User;
             var identity = claimsPrincipal.Identity as ClaimsIdentity;
-            var permissionClaimValue = identity?.FindFirst(ContextService.Permission)?.Value;
-            if (string.IsNullOrEmpty(permissionClaimValue))
-            {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                return;
-            }
-            int intValue = permissionClaimValue.AsDefaultInt();
-            EPermission permission = EPermission.Unknown;
-            if (Enum.IsDefined(typeof(EPermission), intValue))
-            {
-                permission = (EPermission)intValue;
-            }
+            EPermission permission = identity?.FindFirst(ContextService.Permission)?.Value.ToEnum<EPermission>() ??
+                                     EPermission.Unknown;
             isHasPermission = permissionControllerAttribute.IsHasPermission(permission);
         }
 

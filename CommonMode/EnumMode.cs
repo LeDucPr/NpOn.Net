@@ -64,6 +64,7 @@ public static class EnumMode
             .Where(e => Convert.ToInt64(e) != 0 && value.HasFlag(e))
             .ToArray();
     }
+
     public static TEnum[] GetAllInitEnum<TEnum>() where TEnum : struct, Enum
     {
         return Enum.GetValues(typeof(TEnum))
@@ -71,7 +72,7 @@ public static class EnumMode
             .Where(e => Convert.ToInt64(e) != 0)
             .ToArray();
     }
-    
+
     #endregion
 
 
@@ -101,7 +102,7 @@ public static class EnumMode
     /// <param name="enumString"></param>
     /// <typeparam name="TEnum"></typeparam>
     /// <returns></returns>
-    public static TEnum? ConvertStringToEnum<TEnum>(this string enumString) where TEnum : struct, Enum
+    public static TEnum? ToEnum<TEnum>(this string enumString) where TEnum : struct, Enum
     {
         if (string.IsNullOrWhiteSpace(enumString))
             return null;
@@ -109,12 +110,30 @@ public static class EnumMode
         int lastDotIndex = enumString.LastIndexOf('.');
         if (lastDotIndex >= 0)
             memberName = enumString.Substring(lastDotIndex + 1);
-        if (Enum.TryParse<TEnum>(memberName, true, out TEnum result))
+        if (Enum.TryParse(memberName, true, out TEnum result))
             return result;
-        else
-            return null;
+        return null;
     }
     
+    public static TEnum? IntAsStringToEnum<TEnum>(this string enumString) where TEnum : struct, Enum
+    {
+        if (string.IsNullOrWhiteSpace(enumString))
+            return null;
+        if (int.TryParse(enumString, out int intValue))
+            if (Enum.IsDefined(typeof(TEnum), intValue))
+                return (TEnum)(object)intValue;
+        return null;
+    }
+    
+    public static TEnum? ToEnum<TEnum>(this long enumValue) where TEnum : struct, Enum
+        => Enum.IsDefined(typeof(TEnum), enumValue) ? (TEnum)(object)enumValue : null;
+
+    public static TEnum? ToEnum<TEnum>(this int enumValue) where TEnum : struct, Enum
+        => Enum.IsDefined(typeof(TEnum), enumValue) ? (TEnum)(object)enumValue : null;
+
+    public static TEnum? ToEnum<TEnum>(this byte enumValue) where TEnum : struct, Enum
+        => Enum.IsDefined(typeof(TEnum), enumValue) ? (TEnum)(object)enumValue : null;
+
     #endregion
 
 

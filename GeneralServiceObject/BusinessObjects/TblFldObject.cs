@@ -23,7 +23,7 @@ public class TblFldObject : BaseGeneralObject
     [ProtoMember(11)] public string? ServiceName { get; set; }  
     [ProtoMember(12)] public EDb? DataBaseType { get; set; }  
     [ProtoMember(13)] public int? OrderSort { get; set; }  
-    public NpgsqlDbType? FieldDbType => FieldTypeString?.ConvertStringToEnum<NpgsqlDbType>();
+    public NpgsqlDbType? FieldDbType => FieldTypeString?.ToEnum<NpgsqlDbType>();
 
     protected override void FieldMapper()
     {

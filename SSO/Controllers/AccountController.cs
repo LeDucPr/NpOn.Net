@@ -117,6 +117,7 @@ public class AccountController(
         return await ProcessRequest<object>(async (response) =>
         {
             // response.Data = await LoginProcess(tokenResult.Data);
+            
             response.Data = new
             {
                 Model = "Oke phân quyền xong",
@@ -124,5 +125,4 @@ public class AccountController(
             response.SetSuccess();
         });
     }
-    
 }
