@@ -255,7 +255,7 @@ public class AuthenticationService(
                     new TblFldExecutionParam()
                     {
                         ParamName = "permission",
-                        StringValue = accountLoginInfo.Permission.AsDefaultString()
+                        StringValue = accountLoginInfo.Permission.EnumAsInt().AsDefaultString()
                     },
                     new TblFldExecutionParam()
                     {
@@ -372,6 +372,7 @@ public class AuthenticationService(
                 SessionId = sessionKey,
                 MinuteExpire = minuteExpire,
                 RefreshToken = CommonUtilityMode.GenerateGuid(),
+                Permission = account.Permission,
                 TokenStatus = ETokenStatus.Active,
                 Token = tokenValue,
             };

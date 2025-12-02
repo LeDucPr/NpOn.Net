@@ -3,11 +3,23 @@ using ProjectEnums.AccountEnums;
 
 namespace CommonWebApplication.Attributes;
 
+public class PermissionException : Exception
+{
+    public PermissionException(string? message) : base()
+    {
+    }
+}
+
 public class PermissionControllerAttribute : Attribute
 {
     private EPermission _permission;
 
-    private string[]? _permissionCodes = [];
+    private string[] _permissionCodes = [];
+
+    public PermissionControllerAttribute()
+    {
+        _permission = EPermission.Unknown;
+    }
 
     public PermissionControllerAttribute(EPermission permission)
     {
@@ -25,9 +37,27 @@ public class PermissionControllerAttribute : Attribute
         }
     }
 
-    // public PermissionControllerAttribute(Dictionary<EPermission, IEnumerable<string>> groupPermissions)
-    // {
-    // }
+    public PermissionControllerAttribute(EPermission permission, string[] permissionCodes)
+    {
+        _permission = permission;
+        _permissionCodes = _permissionCodes.Concat(permissionCodes).ToArray();
+    }
+
+    public bool IsHasPermission(EPermission permissionNeedToCheck, string? permissionCodeNeedToCheck = null)
+    {
+        if (_permission == EPermission.Unknown || !_permission.HasFlag(permissionNeedToCheck))
+            return false;
+        if (_permissionCodes is not { Length: > 0 })
+            return true;
+        if (!string.IsNullOrWhiteSpace(permissionCodeNeedToCheck))
+        {
+            if (_permissionCodes.Contains(permissionCodeNeedToCheck))
+                return true;
+            return false;
+        }
+
+        return true;
+    }
 
     public EPermission[] GetAllPermission() => _permission.GetFlags();
 }

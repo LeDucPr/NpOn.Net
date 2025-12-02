@@ -1,6 +1,7 @@
 ﻿using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
 using CommonObject;
+using CommonWebApplication.Attributes;
 using CommonWebApplication.Services;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
@@ -66,7 +67,6 @@ public class AccountController(
         });
     }
 
-    // [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> RefreshToken([FromBody] AccountRefreshTokenRequest request)
     {
@@ -110,8 +110,8 @@ public class AccountController(
         });
     }
     
+    [PermissionController(EPermission.SuperUser, EPermission.Administrator)]
     [HttpPost]
-    
     public async Task<CommonApiResponse<object>> CCCCCCC([FromBody] AccountRefreshTokenRequest request)
     {
         return await ProcessRequest<object>(async (response) =>

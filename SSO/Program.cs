@@ -27,26 +27,9 @@ public sealed class Program : CommonProgram
         services.AddControllers(); 
         services.AddControllers()
             .AddApplicationPart(typeof(CommonProgram).Assembly); // CommonWebApplication
-        // if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool())
-        // {
-        //     // debug
-        //     services.AddCors(options =>
-        //     {
-        //         options.AddPolicy("AllowAll",
-        //             builder => builder.AllowAnyOrigin()
-        //                 .AllowAnyMethod()
-        //                 .AllowAnyHeader());
-        //     });
-        // }
         
         return Task.CompletedTask;
     }
-
-    // protected override void ConfigureBasePipeline(WebApplication app)
-    // {
-    //     base.ConfigureBasePipeline(app);
-    // }
-    
 
     protected override Task ConfigurePipeline(WebApplication app)
     {
@@ -55,11 +38,7 @@ public sealed class Program : CommonProgram
             app.UseRequestResponseLogging();
         }
         app.UseTokenValidation();
-        
-        // if (EApplicationConfiguration.IsDevEnvironment.GetAppSettingConfig().AsDefaultBool())
-        // {
-        //     app.UseCors("AllowAll");
-        // }
+        app.UsePermissionValidation();
         
         // app.UseMiddleware<AuthenFilterHandlerMiddleware>();
         return Task.CompletedTask;

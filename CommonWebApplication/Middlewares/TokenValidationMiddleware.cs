@@ -1,9 +1,7 @@
-using System.Globalization;
 using System.Net;
 using System.Security.Claims;
 using CommonMode;
 using CommonWebApplication.Services;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.Net.Http.Headers;
 
 namespace CommonWebApplication.Middlewares;
@@ -22,7 +20,7 @@ public class TokenValidationMiddleware(RequestDelegate next)
                 if (claimsPrincipal == null)
                     return;
                 context.User = claimsPrincipal;
-                var identity = claimsPrincipal?.Identity as ClaimsIdentity;
+                var identity = claimsPrincipal.Identity as ClaimsIdentity;
                 var createdDateClaim = identity?.FindFirst(ContextService.TokenCreatedUtc)?.Value;
                 var minuteExpireClaim = identity?.FindFirst($"{ContextService.MinuteExpirePrefix}")?.Value;
 

@@ -5,9 +5,8 @@ using DbFactory;
 using Enums;
 using GeneralService.Services;
 using IGeneralService;
-using IQuestionService;
 
-namespace QuestionService;
+namespace GeneralService;
 
 public sealed class Program : CommonProgram
 {
