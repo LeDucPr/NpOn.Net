@@ -67,6 +67,10 @@ public class AuthenticationService(
             AccountLoginInfoObject accountLoginInfoObject = await CreateToken(
                 accountObject, query.AuthType /*, ELoginType.Default*/);
 
+            if (query.IsEnableMultiDevice)
+            {
+            }
+
             if (!(await SaveLogin(accountLoginInfoObject)).Status)
             {
                 response.SetFail("AccountLogin save failure");
@@ -85,7 +89,7 @@ public class AuthenticationService(
         {
             var execution = new TblFldExecution
             {
-                Code = AuthenServiceQueryCode.AccountLoginInfoGetByUsernameAndPassword,
+                Code = AuthenServiceQueryCode.AccountLoginInfoGetByRefreshToken,
                 ExecParams =
                 [
                     new TblFldExecutionParam
@@ -121,7 +125,7 @@ public class AuthenticationService(
             }
 
             // logout for old session
-            if (!(await SaveLogout(accountInfoObject)).Status)
+            if (!(await SaveLogoutWhenLogoutOrRefreshToken(accountInfoObject)).Status)
             {
                 response.SetFail("AccountLogout save failure");
                 return;
@@ -135,12 +139,12 @@ public class AuthenticationService(
                 [
                     new TblFldExecutionParam
                     {
-                        ParamName = "refresh_token",
-                        StringValue = query.RefreshToken
+                        ParamName = "id",
+                        StringValue = accountInfoObject.AccountId.AsDefaultString(),
                     },
                 ]
             };
-            var accountExecutionResponse = await fldMasterPgService.Execute(execution);
+            var accountExecutionResponse = await fldMasterPgService.Execute(accountExecution);
             if (!accountExecutionResponse.Status || accountExecutionResponse.Data == null)
             {
                 response.SetFail("Could not Find ExecString",
@@ -148,7 +152,7 @@ public class AuthenticationService(
                 return;
             }
 
-            AccountObject? accountObject = execStringResponse.Data?
+            AccountObject? accountObject = accountExecutionResponse.Data?
                 .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
                 .Cast<AccountObject>().FirstOrDefault();
 
@@ -178,14 +182,83 @@ public class AuthenticationService(
         throw new NotImplementedException();
     }
 
-    public Task<CommonResponse<AccountLoginInfoObject>> Info()
+    public async Task<CommonResponse<AccountLoginInfoObject>> GetLogonTokenBySessionId(
+        AccountGetLogonInfoBySessionIdQuery query)
     {
-        throw new NotImplementedException();
+        return await CommonProcess<AccountLoginInfoObject>(async (response) =>
+        {
+            var logoutExecution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountLoginInfoGetBySessionId,
+                ExecParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "session_id",
+                        StringValue = query.SessionId.AsDefaultString(),
+                    },
+                ]
+            };
+            var logoutExecutionResponse = await fldMasterPgService.Execute(logoutExecution);
+            if (!logoutExecutionResponse.Status || logoutExecutionResponse.Data == null)
+            {
+                response.SetFail("Could not found data", logoutExecutionResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            AccountLoginInfoObject? accountInfoObject = logoutExecutionResponse.Data?
+                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
+                .Cast<AccountLoginInfoObject>().FirstOrDefault();
+
+            if (accountInfoObject == null)
+            {
+                response.SetFail("Incorrect data type of AccountInfoAliasTestObject");
+                return;
+            }
+
+            response.Data = accountInfoObject;
+            response.SetSuccess();
+        });
     }
 
-    public Task<CommonResponse> LogOut()
+    public async Task<CommonResponse<string>> LogOut(AccountLogoutQuery query)
     {
-        throw new NotImplementedException();
+        return await CommonProcess<string>(async (response) =>
+        {
+            var logoutExecution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountLoginInfoGetBySessionId,
+                ExecParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "session_id",
+                        StringValue = query.SessionId.AsDefaultString(),
+                    },
+                ]
+            };
+            var logoutExecutionResponse = await fldMasterPgService.Execute(logoutExecution);
+            if (!logoutExecutionResponse.Status || logoutExecutionResponse.Data == null)
+            {
+                response.SetFail("Could not Find ExecString", logoutExecutionResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            AccountLoginInfoObject? accountInfoObject = logoutExecutionResponse.Data?
+                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
+                .Cast<AccountLoginInfoObject>().FirstOrDefault();
+
+            if (accountInfoObject == null)
+            {
+                response.SetFail("Incorrect data type of AccountInfoAliasTestObject");
+                return;
+            }
+
+            await SaveLogoutWhenLogoutOrRefreshToken(accountInfoObject);
+
+            response.Data = "Logout successful";
+            response.SetSuccess();
+        });
     }
 
     private async Task<CommonResponse> SaveLogin(AccountLoginInfoObject accountLoginInfo)
@@ -281,7 +354,7 @@ public class AuthenticationService(
         });
     }
 
-    private async Task<CommonResponse> SaveLogout(AccountLoginInfoObject accountLoginInfo)
+    private async Task<CommonResponse> SaveLogoutWhenLogoutOrRefreshToken(AccountLoginInfoObject accountLoginInfo)
     {
         return await CommonProcess(async (response) =>
         {

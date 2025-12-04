@@ -16,11 +16,11 @@ public interface IAuthenticationService
     Task<CommonResponse<AccountLoginInfoObject>> RefreshToken(AccountRefreshTokenQuery query);
 
     [OperationContract]
+    Task<CommonResponse<AccountLoginInfoObject>> GetLogonTokenBySessionId(AccountGetLogonInfoBySessionIdQuery query);
+
+    [OperationContract]
     Task<CommonResponse<INpOnGrpcObject>> LoginToken(CommonJsonQuery query);
 
     [OperationContract]
-    Task<CommonResponse<AccountLoginInfoObject>> Info();
-
-    [OperationContract]
-    Task<CommonResponse> LogOut();
+    Task<CommonResponse<string>> LogOut(AccountLogoutQuery query);
 }

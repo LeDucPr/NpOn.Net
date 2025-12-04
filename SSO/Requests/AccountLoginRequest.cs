@@ -22,3 +22,9 @@ public class AccountRefreshTokenRequest
     public required EAuthentication AuthType {get; set; }
     public string? ReturnUrl { get; set; }
 }
+
+public class AccountLogoutRequest
+{
+    // public string? DeviceInfo { get; set; }
+    // public required EAuthentication AuthType { get; set; }
+}

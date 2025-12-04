@@ -3,18 +3,12 @@ using ProjectEnums.AccountEnums;
 
 namespace CommonWebApplication.Attributes;
 
-public class PermissionException : Exception
-{
-    public PermissionException(string? message) : base()
-    {
-    }
-}
-
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
 public class PermissionControllerAttribute : Attribute
 {
-    private EPermission _permission;
+    private readonly EPermission _permission;
 
-    private string[] _permissionCodes = [];
+    private readonly string[] _permissionCodes = [];
 
     public PermissionControllerAttribute()
     {

@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using CommonMode;
-using CommonObject;
 using CommonWebApplication.Attributes;
 using CommonWebApplication.Services;
 using ProjectEnums.AccountEnums;
@@ -14,9 +13,7 @@ public class PermissionValidationMiddleware(RequestDelegate next)
     {
         var endpoint = context.GetEndpoint();
         if (endpoint == null)
-        {
             return;
-        }
 
         // AllowAnonymous
         var isAnonymousAllowed = endpoint.Metadata.Any(m => m.GetType() == typeof(AllowAnonymousAttribute));
@@ -36,7 +33,7 @@ public class PermissionValidationMiddleware(RequestDelegate next)
             return;
         }
 
-        bool isHasPermission = false;
+        bool isHasPermission; // false
         if (permissionControllerAttribute != null)
         {
             var claimsPrincipal = context.User;
@@ -45,8 +42,12 @@ public class PermissionValidationMiddleware(RequestDelegate next)
                                      EPermission.Unknown;
             isHasPermission = permissionControllerAttribute.IsHasPermission(permission);
         }
+        else // Không có PermissionControllerAttribute => pass
+        {
+            await next(context);
+            return;
+        }
 
-        // Không có PermissionControllerAttribute => pass
         if (isHasPermission)
         {
             // !! Nếu có Global Policy yêu cầu mọi API phải có quyền
@@ -55,7 +56,6 @@ public class PermissionValidationMiddleware(RequestDelegate next)
         }
 
         context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return;
     }
 }
 

@@ -13,6 +13,8 @@ using SSO.ServiceModels;
 using SSO.ServiceModels.Survey;
 using SSO.OutputModels;
 using System.Text.Json;
+using CommonWebApplication.Attributes;
+using ProjectEnums.AccountEnums;
 
 namespace SSO.Controllers;
 
@@ -25,7 +27,7 @@ public class SurveyController(
 {
     private readonly ContextService _contextService = contextService;
     
-    [AllowAnonymous]
+    [PermissionController(EPermission.Administrator, EPermission.SuperUser, EPermission.User)]
     [HttpPost]
     public async Task<CommonApiResponse<object>> GetSurveyDetail([FromBody] QuestionGetBySurveyIdRequest? request)
     {

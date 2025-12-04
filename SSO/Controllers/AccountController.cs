@@ -32,6 +32,8 @@ public class AccountController(
                 return;
             }
 
+            bool isUseMultiDevice = !string.IsNullOrWhiteSpace(request.DeviceInfo) &&
+                                    request.AuthType == EAuthentication.WebApp;
             AccountLoginQuery inputQuery = new AccountLoginQuery
             {
                 Email = request.Email,
@@ -44,6 +46,7 @@ public class AccountController(
                 Ip = contextService.GetIp(),
                 AuthenApplicationId = request.AppId,
                 AuthType = request.AuthType,
+                IsEnableMultiDevice = isUseMultiDevice
             };
             var accountLoginResponse = await authenticationService.Login(inputQuery);
             if (!accountLoginResponse.Status)
@@ -109,19 +112,26 @@ public class AccountController(
             response.SetSuccess();
         });
     }
-    
-    [PermissionController(EPermission.SuperUser, EPermission.Administrator)]
+
     [HttpPost]
-    public async Task<CommonApiResponse<object>> CCCCCCC([FromBody] AccountRefreshTokenRequest request)
+    public async Task<CommonApiResponse<string>> Logout([FromBody] AccountLogoutRequest request)
     {
-        return await ProcessRequest<object>(async (response) =>
+        return await ProcessRequest<string>(async (response) =>
         {
-            // response.Data = await LoginProcess(tokenResult.Data);
-            
-            response.Data = new
+            var logoutResponse = await authenticationService.LogOut(
+                new AccountLogoutQuery
+                {
+                    SessionId = contextService.GetSessionKey().AsDefaultString(),
+                    ProcessUId = contextService.GetAccountIdAsString(),
+                });
+
+            response.Data = logoutResponse.Status ? "Logout successful" : "Logout fail";
+            if (!logoutResponse.Status)
             {
-                Model = "Oke phân quyền xong",
-            };
+                response.SetFail(logoutResponse.ErrorMessages);
+                return;
+            }
+
             response.SetSuccess();
         });
     }

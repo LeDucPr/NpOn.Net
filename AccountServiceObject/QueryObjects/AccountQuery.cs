@@ -15,8 +15,11 @@ public class AccountLoginQuery : BaseAccountQuery
     [ProtoMember(7)] public required string ClientId { get; set; }
     [ProtoMember(8)] public string? Ip { get; set; }
     [ProtoMember(9)] public string? DeviceLoginInfo { get; set; }
+
     [ProtoMember(10)] public string? AuthenApplicationId { get; set; }
+
     // [ProtoMember(11)] public string? ExternalLoginId { get; set; }
+    [ProtoMember(12)] public bool IsEnableMultiDevice { get; set; } = false;
 }
 
 [ProtoContract]
@@ -28,3 +31,17 @@ public class AccountRefreshTokenQuery : BaseAccountQuery
     [ProtoMember(4)] public required EAuthentication AuthType { get; set; }
     [ProtoMember(5)] public required string SessionId { get; set; }
 }
+
+[ProtoContract]
+[ProtoInclude(100, typeof(AccountGetLogonInfoBySessionIdQuery))]
+public class AccountLogoutQuery : BaseAccountQuery
+{
+    [ProtoMember(1)] public required string SessionId { get; set; }
+}
+
+[ProtoContract]
+public class AccountGetLogonInfoBySessionIdQuery : AccountLogoutQuery
+{
+}
+
+

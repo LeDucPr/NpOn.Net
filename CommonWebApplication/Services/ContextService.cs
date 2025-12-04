@@ -79,7 +79,7 @@ public class ContextService(
         if (user?.Identity?.IsAuthenticated != true)
             return null;
         // private AuthenticationService.CreateToken
-        return user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
+        return user.FindFirst(JwtRegisteredClaimNames.Sid)?.Value.AsDefaultString();
     }
 
     public AccountLoginInfoObject? UserInfo()
