@@ -5,6 +5,7 @@ using CommonGrpcObject;
 using CommonObject;
 using CommonWebApplication.Services;
 using DbFactory;
+using DbFactory.Generics;
 using GeneralServiceObject.BusinessObjects;
 using GeneralServiceObject.QueryObjects;
 using HandleFlow.ResultConverters;

@@ -1,5 +1,6 @@
 ﻿using CommonDb.DbResults;
 using DbFactory;
+using DbFactory.Generics;
 using Enums;
 using HandleFlow.FactoryInitialzations;
 using HandleFlow.ResultConverters;

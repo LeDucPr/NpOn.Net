@@ -3,6 +3,7 @@ using CommonMode;
 using CommonObject;
 using CommonWebApplication;
 using DbFactory;
+using DbFactory.Generics;
 using Enums;
 using IAccountService;
 

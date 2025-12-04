@@ -2,11 +2,10 @@
 using CommonDb.DbCommands;
 using CommonDb.DbCommands.Extensions;
 using CommonDb.DbResults;
-using CommonObject;
 using DbFactory.FactoryResults;
 using Enums;
 
-namespace DbFactory;
+namespace DbFactory.Generics;
 
 public class DbFactoryWrapper : IDbFactoryWrapper
 {
