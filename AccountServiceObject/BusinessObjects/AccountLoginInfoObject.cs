@@ -23,6 +23,8 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
     [ProtoMember(15)] public required string SessionId { get; set; }
     [ProtoMember(16)] public int MinuteExpire { get; set; }
     [ProtoMember(17)] public ETokenStatus TokenStatus { get; set; } = ETokenStatus.Inactive;
+    [ProtoMember(18)] public string? Email { get; set; }
+    [ProtoMember(19)] public string? AvatarUrl { get; set; }
     // [ProtoMember(18)] public string? ReturnUrl { get; set; }
 
     protected override void FieldMapper()
@@ -34,17 +36,19 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
         FieldMap.Add(nameof(Password), "password");
         FieldMap.Add(nameof(FullName), "full_name");
         FieldMap.Add(nameof(PhoneNumber), "phone_number");
+        FieldMap.Add(nameof(Email), "email");
 
         FieldMap.Add(nameof(AuthType), "auth_type");
         FieldMap.Add(nameof(LoginType), "login_type");
         FieldMap.Add(nameof(TokenStatus), "token_status");
         FieldMap.Add(nameof(Permission), "permission");
-        
-        FieldMap.Add(nameof(DeviceId), "device_id"); 
+        FieldMap.Add(nameof(AvatarUrl), "avatar_url");
+
+        FieldMap.Add(nameof(DeviceId), "device_id");
         FieldMap.Add(nameof(Token), "token");
         FieldMap.Add(nameof(RefreshToken), "refresh_token");
         FieldMap.Add(nameof(SessionId), "session_id");
-        FieldMap.Add(nameof(MinuteExpire), "minute_expire"); 
+        FieldMap.Add(nameof(MinuteExpire), "minute_expire");
         FieldMap.Add(nameof(CreatedAt), "created_at");
         FieldMap.Add(nameof(UpdatedAt), "updated_at");
     }

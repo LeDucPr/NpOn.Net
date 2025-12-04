@@ -17,6 +17,7 @@ public class AccountObject : BaseAccountObjectFromGrpcTable
     [ProtoMember(8)] public string? AvatarUrl { get; set; }
     [ProtoMember(9)] public EPermission? Permission { get; set; } // Flags
     public EPermission[]? Permissions => Permission?.GetFlags<EPermission>();
+    [ProtoMember(10)] public string? Email { get; set; }
 
     protected override void FieldMapper()
     {
@@ -25,6 +26,7 @@ public class AccountObject : BaseAccountObjectFromGrpcTable
         FieldMap.Add(nameof(UserName), "username");
         FieldMap.Add(nameof(Password), "password");
         FieldMap.Add(nameof(FullName), "full_name");
+        FieldMap.Add(nameof(Email), "email");
         FieldMap.Add(nameof(PhoneNumber), "phone_number");
         FieldMap.Add(nameof(CreatedAt), "created_at");
         FieldMap.Add(nameof(UpdatedAt), "updated_at");

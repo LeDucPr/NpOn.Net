@@ -174,8 +174,13 @@ public class FldMasterPgService(
                 return;
             }
 
-            INpOnGrpcObject grpcObject = tableWrapperResult.ToGrpcTable();
-            response.Data = grpcObject;
+            if (tableWrapperResult.RowWrappers.Count == 0)
+                response.Data = null;
+            else
+            {
+                INpOnGrpcObject grpcObject = tableWrapperResult.ToGrpcTable();
+                response.Data = grpcObject;
+            }
             response.SetSuccess();
         });
     }

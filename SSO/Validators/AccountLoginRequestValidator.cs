@@ -4,15 +4,45 @@ using SSO.Requests;
 
 namespace SSO.Validators;
 
+public class AccountSigninRequestValidator : AbstractValidator<AccountSigninRequest>
+{
+    private AccountSigninRequestValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.FullName).NotEmpty();
+        RuleFor(x => x.UserName).NotEmpty().Length(3, 50);
+        RuleFor(x => x.Password).NotEmpty().Length(8, 50).Must(HasValidPassword);
+        RuleFor(x => x.PhoneNumber).NotEmpty().Matches(@"^((\+?)|0)\d{9}$");
+    }
+
+    private bool HasValidPassword(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw)) return false;
+
+        var hasLowercase = new Regex(@"[a-z]+");
+        var hasUppercase = new Regex(@"[A-Z]+");
+        var hasDigit = new Regex(@"[0-9]+");
+        var hasSpecialChar = new Regex(@"[!@#$%^&*()_+=\[{\]};:<>|./?,-]");
+
+        return hasLowercase.IsMatch(pw) &&
+               hasUppercase.IsMatch(pw) &&
+               hasDigit.IsMatch(pw) &&
+               hasSpecialChar.IsMatch(pw);
+    }
+
+    public static FluentValidation.Results.ValidationResult ValidateRequest(AccountSigninRequest request)
+    {
+        var validationResult = new AccountSigninRequestValidator().Validate(request);
+        return validationResult;
+    }
+}
+
 public class AccountLoginRequestValidator : AbstractValidator<AccountLoginRequest>
 {
     private AccountLoginRequestValidator()
     {
-        RuleFor(x => x.UserName).NotEmpty()
-            .Length(3, 50);
-        RuleFor(x => x.Password).NotEmpty()
-            .Length(8, 50)
-            .Must(HasValidPassword).WithMessage("Password rule invalid");
+        RuleFor(x => x.UserName).NotEmpty().Length(3, 50);
+        RuleFor(x => x.Password).NotEmpty().Length(8, 50).Must(HasValidPassword);
         RuleFor(x => x.AuthType).NotNull();
     }
 
@@ -29,14 +59,13 @@ public class AccountLoginRequestValidator : AbstractValidator<AccountLoginReques
     }
 }
 
-
-
 public class AccountRefreshTokenValidator : AbstractValidator<AccountRefreshTokenRequest>
 {
     private AccountRefreshTokenValidator()
     {
         RuleFor(x => x.RefreshToken).NotEmpty();
     }
+
     public static FluentValidation.Results.ValidationResult ValidateRequest(AccountRefreshTokenRequest request)
     {
         var validationResult = new AccountRefreshTokenValidator().Validate(request);

@@ -1,7 +1,8 @@
-﻿using AccountServiceObject.QueryObjects;
+﻿using System.Security.Cryptography;
+using AccountServiceObject.CommandObjects;
+using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
 using CommonObject;
-using CommonWebApplication.Attributes;
 using CommonWebApplication.Services;
 using IAccountService;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,51 @@ public class AccountController(
     IAuthenticationService authenticationService
 ) : BaseSsoController(logger, contextService)
 {
+    [Obsolete("Obsolete")]
+    [AllowAnonymous]
+    [HttpPost]
+    public async Task<CommonApiResponse<object>> SignIn([FromBody] AccountSigninRequest request)
+    {
+        return await ProcessRequest<object>(async (response) =>
+        {
+            var validator = AccountSigninRequestValidator.ValidateRequest(request);
+            if (!validator.IsValid)
+            {
+                response.SetFail(validator.Errors.Select(p => p.ToString()));
+                return;
+            }
+
+            var signinResponse = await authenticationService.Signin(new AccountSigninCommand
+            {
+                AuthType = request.AuthType,
+                ClientId = contextService.ClientId,
+                Email = request.Email.AsEmptyString(),
+                PhoneNumber = request.PhoneNumber.AsEmptyString(),
+                UserName = request.UserName.AsEmptyString(),
+                Password = CreateHashPassword(request.Password)
+                    .AsEmptyString(),
+                LoginType = ELoginType.Default,
+                SigninIp = contextService.GetIp(),
+                DeviceSigninInfo = request.DeviceInfo,
+                AuthenApplicationId = request.AppId,
+                FullName = request.FullName.AsEmptyString(),
+            });
+
+            if (!signinResponse.Status)
+            {
+                string errMessages = signinResponse.ErrorMessages.AsArrayJoin();
+                response.SetFail(!string.IsNullOrWhiteSpace(errMessages) ? errMessages : "Signin fail");
+                return;
+            }
+            response.Data = new
+            {
+                Model = signinResponse.Data?.ToModel(),
+            };
+            response.SetSuccess();
+        });
+    }
+
+    [Obsolete("Obsolete")]
     [AllowAnonymous]
     [HttpPost]
     public async Task<CommonApiResponse<object>> Login([FromBody] AccountLoginRequest request)
@@ -40,7 +86,7 @@ public class AccountController(
                 ClientId = contextService.ClientId,
                 PhoneNumber = request.PhoneNumber,
                 UserName = request.UserName,
-                Password = request.Password,
+                Password = CreateHashPassword(request.Password),
                 DeviceLoginInfo = request.DeviceInfo,
                 LoginType = request.LoginType,
                 Ip = contextService.GetIp(),
@@ -57,7 +103,7 @@ public class AccountController(
 
             if (accountLoginResponse.Data == null || string.IsNullOrEmpty(accountLoginResponse.Data.Token))
             {
-                response.SetFail("Login invalid");
+                response.SetFail("Login fail");
                 return;
             }
 
@@ -135,4 +181,19 @@ public class AccountController(
             response.SetSuccess();
         });
     }
+
+    #region private func
+    
+    [Obsolete("Obsolete")]
+    private string CreateHashPassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            return string.Empty;
+        byte[] salt = System.Text.Encoding.UTF8.GetBytes(ContextService.DefaultSaltPassword);
+        var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 369);
+        byte[] hash = pbkdf2.GetBytes(20); // 160 bit
+        return Convert.ToBase64String(hash);
+    }
+
+    #endregion private func
 }

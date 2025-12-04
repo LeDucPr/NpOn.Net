@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
+using AccountServiceObject.CommandObjects;
 using AccountServiceObject.QueryObjects;
 using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
@@ -26,6 +27,122 @@ public class AuthenticationService(
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
+    public async Task<CommonResponse<AccountLoginInfoObject>> Signin(AccountSigninCommand command)
+    {
+        return await CommonProcess<AccountLoginInfoObject>(async (response) =>
+        {
+            var checkExistExecution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountGetByUsernameOrPhoneNumberOrEmail,
+                ExecParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "phone_number",
+                        StringValue = command.PhoneNumber
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "email",
+                        StringValue = command.Email
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "username",
+                        StringValue = command.UserName
+                    },
+                ]
+            };
+            var existAccountResponse = await fldMasterPgService.Execute(checkExistExecution);
+            if (!existAccountResponse.Status)
+            {
+                response.SetFail("Could not check Email/PhoneNumber/UserName", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            if (existAccountResponse.Data != null) // existed
+            {
+                List<AccountObject>? accountObjects = existAccountResponse.Data?
+                    .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
+                    .Cast<AccountObject>().ToList();
+                // 
+                if (accountObjects?.Any(x => x.PhoneNumber == command.PhoneNumber) ?? false)
+                    response.SetFail("NumberPhone is Existed", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
+                if (accountObjects?.Any(x => x.UserName == command.UserName) ?? false)
+                    response.SetFail("UserName is Existed", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
+                if (accountObjects?.Any(x => x.Email == command.Email) ?? false)
+                    response.SetFail("UserName is Existed", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+            
+            var execution = new TblFldExecution
+            {
+                Code = AuthenServiceQueryCode.AccountSignin,
+                ExecParams =
+                [
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "phone_number",
+                        StringValue = command.PhoneNumber
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "email",
+                        StringValue = command.Email
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "username",
+                        StringValue = command.UserName
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "password",
+                        StringValue = command.Password
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "full_name",
+                        StringValue = command.FullName
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "avatar_url",
+                        StringValue = command.AvatarUrl
+                    },
+                    new TblFldExecutionParam
+                    {
+                        ParamName = "permission",
+                        StringValue = 0.AsDefaultEnum<EPermission>().AsDefaultString()
+                    }
+                ]
+            };
+            var execSigninResponse = await fldMasterPgService.Execute(execution);
+            if (!execSigninResponse.Status)
+            {
+                response.SetFail("Could not Find ExecString", execSigninResponse.ErrorCode ?? EErrorCode.NotFound);
+                return;
+            }
+
+            var loginResponse = await Login(new AccountLoginQuery
+            {
+                UserName = command.UserName,
+                Password = command.Password,
+                AuthType = command.AuthType,
+                ClientId = command.ClientId,
+            });
+
+            if (!loginResponse.Status)
+            {
+                response.SetFail("Save accountLoginInfo fail after create account");
+                return;
+            }
+
+            response.Data = loginResponse.Data;
+            response.SetSuccess();
+        });
+    }
+
     public async Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query)
     {
         return await CommonProcess<AccountLoginInfoObject>(async (response) =>
@@ -47,14 +164,14 @@ public class AuthenticationService(
                     }
                 ]
             };
-            var execStringResponse = await fldMasterPgService.Execute(execution);
-            if (!execStringResponse.Status || execStringResponse.Data == null)
+            var execAccountResponse = await fldMasterPgService.Execute(execution);
+            if (!execAccountResponse.Status || execAccountResponse.Data == null)
             {
-                response.SetFail("Could not Find ExecString", execStringResponse.ErrorCode ?? EErrorCode.NotFound);
+                response.SetFail("Could not Find ExecString", execAccountResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
-            AccountObject? accountObject = execStringResponse.Data?
+            AccountObject? accountObject = execAccountResponse.Data?
                 .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
                 .Cast<AccountObject>().FirstOrDefault();
 
@@ -340,10 +457,20 @@ public class AuthenticationService(
                         ParamName = "token_status",
                         StringValue = accountLoginInfo.TokenStatus.EnumAsInt().AsDefaultString()
                     },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "email",
+                        StringValue = accountLoginInfo.Email
+                    },
+                    new TblFldExecutionParam()
+                    {
+                        ParamName = "avatar_url",
+                        StringValue = accountLoginInfo.AvatarUrl
+                    },
                 ]
             };
             var execStringResponse = await fldMasterPgService.Execute(execution);
-            if (!execStringResponse.Status || execStringResponse.Data == null)
+            if (!execStringResponse.Status)
             {
                 response.SetFail($"Could not Find ExecString {AuthenServiceQueryCode.AccountLoginInfoSaveLogin}",
                     execStringResponse.ErrorCode ?? EErrorCode.NotFound);
@@ -376,7 +503,7 @@ public class AuthenticationService(
                 ]
             };
             var execStringResponse = await fldMasterPgService.Execute(execution);
-            if (!execStringResponse.Status || execStringResponse.Data == null)
+            if (!execStringResponse.Status)
             {
                 response.SetFail($"Could not Find ExecString {AuthenServiceQueryCode.AccountLoginInfoSaveLogOut}",
                     execStringResponse.ErrorCode ?? EErrorCode.NotFound);
@@ -440,6 +567,8 @@ public class AuthenticationService(
                 Password = account.Password,
                 FullName = account.FullName,
                 PhoneNumber = account.PhoneNumber,
+                Email = account.Email,
+                AvatarUrl = account.AvatarUrl,
                 AuthType = authType,
                 LoginType = loginType,
                 SessionId = sessionKey,

@@ -1,5 +1,6 @@
 ﻿using System.ServiceModel;
 using AccountServiceObject.BusinessObjects;
+using AccountServiceObject.CommandObjects;
 using AccountServiceObject.QueryObjects;
 using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
@@ -9,6 +10,9 @@ namespace IAccountService;
 [ServiceContract]
 public interface IAuthenticationService
 {
+    [OperationContract]
+    Task<CommonResponse<AccountLoginInfoObject>> Signin(AccountSigninCommand command);
+    
     [OperationContract]
     Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query);
 

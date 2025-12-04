@@ -1,4 +1,5 @@
-﻿using AccountServiceObject.QueryObjects;
+﻿using AccountServiceObject.CommandObjects;
+using AccountServiceObject.QueryObjects;
 using CommonGrpcObject;
 using Enums;
 using ProtoBuf;
@@ -9,7 +10,8 @@ namespace AccountServiceObject;
 [ProtoInclude(100, typeof(AccountLoginQuery))]
 [ProtoInclude(200, typeof(AccountRefreshTokenQuery))]
 [ProtoInclude(300, typeof(AccountLogoutQuery))]
-public abstract class BaseAccountQuery : CommonAbsQuery
+[ProtoInclude(400, typeof(AccountSigninCommand))]
+public abstract class BaseAccountCommand : CommonAbsQuery
 {
     [ProtoMember(1)] public override bool Status { get; set; }
     [ProtoMember(2)] public override EErrorCode? ErrorCode { get; set; }

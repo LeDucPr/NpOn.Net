@@ -33,6 +33,8 @@ public class ContextService(
 
     private const string DefaultLang = "vi";
 
+    public const string DefaultSaltPassword = "viubghweroiufvg8iyuwogf8y7og2b3v4f87gv2837bvfd8732bf867243f867";
+
     // EApplicationConfiguration.RabbitMqHost.GetAppSettingConfig().AsDefaultString();
     private readonly IServiceProvider _serviceProvider =
         httpContextAccessor?.HttpContext?.RequestServices ?? serviceProvider;

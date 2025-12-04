@@ -4,7 +4,7 @@ using ProtoBuf;
 namespace AccountServiceObject.QueryObjects;
 
 [ProtoContract]
-public class AccountLoginQuery : BaseAccountQuery
+public class AccountLoginQuery : BaseAccountCommand
 {
     [ProtoMember(1)] public string? Email { get; set; }
     [ProtoMember(2)] public string? PhoneNumber { get; set; }
@@ -23,7 +23,7 @@ public class AccountLoginQuery : BaseAccountQuery
 }
 
 [ProtoContract]
-public class AccountRefreshTokenQuery : BaseAccountQuery
+public class AccountRefreshTokenQuery : BaseAccountCommand
 {
     [ProtoMember(1)] public required string RefreshToken { get; set; }
     [ProtoMember(2)] public string? DeviceInfo { get; set; }
@@ -34,7 +34,7 @@ public class AccountRefreshTokenQuery : BaseAccountQuery
 
 [ProtoContract]
 [ProtoInclude(100, typeof(AccountGetLogonInfoBySessionIdQuery))]
-public class AccountLogoutQuery : BaseAccountQuery
+public class AccountLogoutQuery : BaseAccountCommand
 {
     [ProtoMember(1)] public required string SessionId { get; set; }
 }
@@ -43,5 +43,3 @@ public class AccountLogoutQuery : BaseAccountQuery
 public class AccountGetLogonInfoBySessionIdQuery : AccountLogoutQuery
 {
 }
-
-
