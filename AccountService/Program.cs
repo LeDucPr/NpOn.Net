@@ -29,8 +29,6 @@ public sealed class Program : CommonProgram
             int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IDbFactoryWrapper factoryWrapper =
                 new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber, true);
-            // string stringQuery = "select * from Users where id = 'C000175'";
-            // INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
             return factoryWrapper;
         });
 

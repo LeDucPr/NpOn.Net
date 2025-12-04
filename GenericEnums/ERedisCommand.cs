@@ -4,5 +4,8 @@ public enum ERedisCommand
 {
     Get,
     Set,
-    Delete
+    Delete,
+    GetMany,
+    SetMany,
+    DeleteMany
 }
