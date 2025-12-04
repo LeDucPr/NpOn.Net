@@ -2,7 +2,6 @@ using CommonDb.DbResults;
 using CommonGrpcObject;
 using CommonWebApplication.Services;
 using DbFactory;
-using DbFactory.Generics;
 using HandleFlow.ResultConverters;
 using IQuestionService;
 using QuestionServiceObject.BusinessObjects;

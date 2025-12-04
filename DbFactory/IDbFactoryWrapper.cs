@@ -2,7 +2,7 @@
 using CommonDb.DbResults;
 using Enums;
 
-namespace DbFactory.Generics;
+namespace DbFactory;
 
 public interface IDbFactoryWrapper
 {

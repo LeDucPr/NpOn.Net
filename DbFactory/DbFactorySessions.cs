@@ -2,7 +2,7 @@ using CommonMode;
 using CommonObject;
 using Enums;
 
-namespace DbFactory.Generics;
+namespace DbFactory;
 
 public static class DbFactorySessions // DbFactoryWrapperExtension
 {
