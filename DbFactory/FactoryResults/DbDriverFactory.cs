@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MongoDbExtCm.Connections;
 using MssqlExtCm.Connections;
 using PostgresExtCm.Connections;
+using RedisExtCm.Connections;
 
 namespace DbFactory.FactoryResults;
 
@@ -209,6 +210,7 @@ public class DbDriverFactory : IDbDriverFactory
                     EDb.Postgres => CreatePostgresConnection(_option),
                     EDb.MongoDb => CreateMongoDbConnection(_option),
                     EDb.Mssql => CreateMssqlDbConnection(_option),
+                    EDb.Redis => CreateRedisDbConnection(_option),
                     _ => throw new NotSupportedException($"The database type '{_eDb}' is not supported.")
                 };
                 if (newConnection == null)
@@ -350,4 +352,32 @@ public class DbDriverFactory : IDbDriverFactory
     }
 
     #endregion Mssql
+
+
+    #region Redis
+
+    private NpOnDbConnection CreateRedisDbConnection(INpOnConnectOption option)
+    {
+        if (option is not RedisConnectOption redisOptions)
+        {
+            throw new ArgumentException("Invalid options for Redis. Expected RedisConnectOptions.",
+                nameof(option));
+        }
+
+        INpOnDbDriver driver = CreateRedisDriver(redisOptions);
+        return new NpOnDbConnection<RedisDriver>(driver);
+    }
+
+    private INpOnDbDriver CreateRedisDriver(INpOnConnectOption option)
+    {
+        if (option is not RedisConnectOption redisOptions)
+        {
+            throw new ArgumentException("Invalid options provided for Redis. Expected RedisConnectOptions.",
+                nameof(option));
+        }
+
+        return new RedisDriver(redisOptions);
+    }
+
+    #endregion Redis
 }

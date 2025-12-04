@@ -1,3 +1,4 @@
+using AccountService.DbFactories.Redis;
 using AccountService.Services;
 using CommonMode;
 using CommonObject;
@@ -31,6 +32,15 @@ public sealed class Program : CommonProgram
             // string stringQuery = "select * from Users where id = 'C000175'";
             // INpOnWrapperResult? resultOfQuery = factoryWrapper?.QueryAsync(stringQuery).GetAwaiter().GetResult();
             return factoryWrapper;
+        });
+
+        services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(factory =>
+        {
+            string connectionString = EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
+            int connectionNumber = EApplicationConfiguration.RedisConnectionNumber.GetAppSettingConfig().AsDefaultInt();
+            IRedisFactoryWrapper factoryWrapper =
+                new RedisFactoryWrapper(connectionString, EDb.Redis, connectionNumber, true);
+            return (RedisFactoryWrapper)factoryWrapper;
         });
 
         if (EApplicationConfiguration.IsStartAsync.GetAppSettingConfig().AsDefaultBool())

@@ -11,7 +11,9 @@ public enum EApplicationConfiguration
     [Display(Name = "HostPort")] HostPort, // - int
     [Display(Name = "HostDomain")] HostDomain, // - string
     [Display(Name = "ConnectionString")] ConnectionString, // - string
+    [Display(Name = "RedisConnectString")] RedisConnectString, // - string
     [Display(Name = "ConnectionNumber")] ConnectionNumber, // - int
+    [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int
 
     [Display(Name = "DnsResolverFactory")]
     DnsResolverFactory, // thời gian làm mới Dns service discovery (gRPC client-side load balancing) - int

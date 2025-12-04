@@ -13,6 +13,7 @@
       <ProjectReference Include="..\CommonObject\CommonObject.csproj" />
       <ProjectReference Include="..\MongoDbExtCm\MongoDbExtCm.csproj" />
       <ProjectReference Include="..\MssqlExtCm\MssqlExtCm.csproj" />
+      <ProjectReference Include="..\RedisExtCm\RedisExtCm.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -5,6 +5,7 @@ using Enums;
 using MongoDbExtCm.Connections;
 using MssqlExtCm.Connections;
 using PostgresExtCm.Connections;
+using RedisExtCm.Connections;
 
 namespace DbFactory.FactoryResults;
 
@@ -59,6 +60,10 @@ public class DbDriverFactoryCreator
                 break;
             case EDb.ScyllaDb:
                 _connectOptions = new CassandraConnectOption().SetConnectionString(connectString);
+                _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
+                break;
+            case EDb.Redis:
+                _connectOptions = new RedisConnectOption().SetConnectionString(connectString);
                 _dbDriverFactory = ConnectionCreator(dbType).GetAwaiter().GetResult();
                 break;
         }

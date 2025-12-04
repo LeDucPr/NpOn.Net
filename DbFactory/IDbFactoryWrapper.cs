@@ -8,6 +8,7 @@ public interface IDbFactoryWrapper
 {
     string? FactoryOptionCode { get; }
     EDb DbType { get; }
+    Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString);
     Task<INpOnWrapperResult?> ExecuteAsync(string queryString, List<NpOnDbCommandParam> parameters);
 

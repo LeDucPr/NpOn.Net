@@ -2,6 +2,7 @@
 using CommonDb.DbCommands;
 using CommonDb.DbResults;
 using Enums;
+using RedisExtCm.Commands;
 using RedisExtCm.Results;
 using StackExchange.Redis;
 
@@ -48,10 +49,36 @@ public class RedisDriver : NpOnDbDriver
         }
     }
 
-    public override Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
+    public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
-        return Task.FromResult<INpOnWrapperResult>(
-            new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.CommandNotSupported));
+        if (!IsValidSession || _connection == null)
+        {
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.Connection);
+        }
+
+        if (command is not RedisDbCommand redisCommand)
+        {
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.CommandNotSupported);
+        }
+
+        try
+        {
+            IDatabase db = _connection.GetDatabase();
+            return redisCommand.CommandType switch
+            {
+                ERedisCommand.Set => new RedisValueWrapper(new RedisValueContainer(
+                    await db.StringSetAsync(redisCommand.Key, redisCommand.Value))),
+                ERedisCommand.Get => new RedisValueWrapper(new RedisValueContainer(
+                    await db.StringGetAsync(redisCommand.Key))),
+                ERedisCommand.Delete => new RedisValueWrapper(new RedisValueContainer(
+                    await db.KeyDeleteAsync(redisCommand.Key))),
+                _ => new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.CommandNotSupported)
+            };
+        }
+        catch (Exception ex)
+        {
+            return new RedisValueWrapper(new RedisValueContainer(RedisValue.Null)).SetFail(EDbError.RedisExecute);
+        }
     }
 
     // public override Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)

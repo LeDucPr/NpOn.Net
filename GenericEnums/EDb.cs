@@ -10,6 +10,7 @@ public enum EDb : byte
     [Display(Name = "Postgres")] Postgres = 3,
     [Display(Name = "MongoDb")] MongoDb = 4,
     [Display(Name = "Mssql")] Mssql = 5,
+    [Display(Name = "Redis")] Redis = 6,
 }
 
 public static class EDbExtension
@@ -24,6 +25,7 @@ public static class EDbExtension
             EDb.Postgres => EDbLanguage.Sql,
             EDb.Mssql => EDbLanguage.Sql,
             EDb.MongoDb => EDbLanguage.Bson,
+            EDb.Redis => EDbLanguage.Json,
             _ => throw new NotSupportedException($"The database language for '{db}' is not supported."),
         };
     }
@@ -36,7 +38,8 @@ public static class EDbExtension
             EDb.ScyllaDb,
             EDb.Postgres,
             EDb.Mssql,
-            EDb.MongoDb
+            EDb.MongoDb,
+            EDb.Redis,
         ];
         if (validTypes.Contains(dbType)) return true;
         return false;

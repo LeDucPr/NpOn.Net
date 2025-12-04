@@ -49,6 +49,24 @@ public class DbFactoryWrapper : IDbFactoryWrapper
 
     public string? FactoryOptionCode => _factory?.DriverOptionKey;
 
+    public async Task<INpOnWrapperResult?> ExecuteAsync(INpOnDbCommand dbCommand)
+    {
+        if (_factory == null) return null;
+        if (_factory.FirstValidConnection == null)
+            await _factory.OpenConnections();
+        if (_factory.FirstValidConnection == null)
+            return null;
+        try
+        {
+            INpOnWrapperResult result = _factory.FirstValidConnection.Driver.Execute(dbCommand).GetAwaiter().GetResult();
+            return result;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+    
     public async Task<INpOnWrapperResult?> ExecuteAsync(string queryString)
     {
         if (_factory == null) return null;

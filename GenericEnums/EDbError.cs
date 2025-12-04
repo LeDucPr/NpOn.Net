@@ -79,6 +79,9 @@ public enum EDbError
 
     [Display(Name = "Redis Value (Result is null)")]
     RedisValueIsNull,
+    
+    [Display(Name = "Redis Execute Error")]
+    RedisExecute,
 
     #endregion Result
 }
