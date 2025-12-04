@@ -13,15 +13,18 @@ public class RedisDbCommand : NpOnDbCommand
     public RedisValue Value { get; }
     public RedisKey[]? Keys { get; }
     public KeyValuePair<RedisKey, RedisValue>[]? KeyValues { get; }
+    public TimeSpan? Expiry { get; }
 
-    public RedisDbCommand(string key, ERedisCommand command, RedisValue value = default) : base(EDb.Redis,
-        $"{command} {key}")
+    public RedisDbCommand(string key, ERedisCommand command, RedisValue value = default, TimeSpan? expiry = null) :
+        base(EDb.Redis, $"{command} {key}")
     {
         CommandType = command;
         Key = key;
         Value = value;
+        Expiry = expiry;
     }
 
+    // get/delete many
     public RedisDbCommand(ERedisCommand command, RedisKey[] keys) : base(EDb.Redis,
         $"{command} {keys.Select(x => x.ToString()).AsArrayJoin()}")
     {
@@ -30,11 +33,12 @@ public class RedisDbCommand : NpOnDbCommand
     }
 
     // Constructor for SetMany
-    public RedisDbCommand(KeyValuePair<RedisKey, RedisValue>[] keyValues) : base(EDb.Redis,
+    public RedisDbCommand(KeyValuePair<RedisKey, RedisValue>[] keyValues, TimeSpan? expiry = null) : base(EDb.Redis,
         $"{ERedisCommand.SetMany} {keyValues.Select(x => x.Key.ToString()).AsArrayJoin()}")
 
     {
         CommandType = ERedisCommand.SetMany;
+        Expiry = expiry;
         KeyValues = keyValues;
     }
 }

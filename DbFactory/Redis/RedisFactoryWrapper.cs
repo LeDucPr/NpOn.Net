@@ -24,9 +24,9 @@ public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
         return ExecuteAsync(command);
     }
 
-    public Task<INpOnWrapperResult?> SetAsync(string key, string value)
+    public Task<INpOnWrapperResult?> SetAsync(string key, string value, TimeSpan? expiry = null)
     {
-        var command = new RedisDbCommand(key, ERedisCommand.Set, value);
+        var command = new RedisDbCommand(key, ERedisCommand.Set, value, expiry ?? TimeSpan.FromMinutes(5));
         return ExecuteAsync(command);
     }
 
@@ -46,9 +46,9 @@ public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
         return result as RedisValueWrapper;
     }
 
-    public async Task<RedisValueWrapper?> SetStringAsync(string key, string value)
+    public async Task<RedisValueWrapper?> SetStringAsync(string key, string value, TimeSpan? expiry = null)
     {
-        var result = await SetAsync(key, value);
+        var result = await SetAsync(key, value, expiry ?? TimeSpan.FromMinutes(5));
         return result as RedisValueWrapper;
     }
 
@@ -75,12 +75,12 @@ public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
         return result;
     }
 
-    public async Task<INpOnWrapperResult?> SetManyAsync(Dictionary<string, string> keyValues)
+    public async Task<INpOnWrapperResult?> SetManyAsync(Dictionary<string, string> keyValues, TimeSpan? expiry = null)
     {
         var pairs = keyValues
             .Select(kvp => new KeyValuePair<RedisKey, RedisValue>(kvp.Key, kvp.Value))
             .ToArray();
-        var command = new RedisDbCommand(pairs);
+        var command = new RedisDbCommand(pairs, expiry ?? TimeSpan.FromMinutes(5));
         var result = await ExecuteAsync(command);
         return result;
     }
@@ -105,12 +105,13 @@ public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
         return result as RedisValueWrapper;
     }
 
-    public async Task<RedisValueWrapper?> SetManyStringAsync(Dictionary<string, string> keyValues)
+    public async Task<RedisValueWrapper?> SetManyStringAsync(Dictionary<string, string> keyValues,
+        TimeSpan? expiry = null)
     {
         var pairs = keyValues
             .Select(kvp => new KeyValuePair<RedisKey, RedisValue>(kvp.Key, kvp.Value))
             .ToArray();
-        var command = new RedisDbCommand(pairs);
+        var command = new RedisDbCommand(pairs, expiry ?? TimeSpan.FromMinutes(5));
         var result = await ExecuteAsync(command);
         return result as RedisValueWrapper;
     }

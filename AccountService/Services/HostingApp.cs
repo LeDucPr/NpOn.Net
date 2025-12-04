@@ -17,7 +17,7 @@ public class HostingApp(
         var value = $"Hello from AccountService at {DateTime.UtcNow:O}";
 
         logger.LogInformation("Setting Redis key '{Key}'", key);
-        await redisFactoryWrapper.SetStringAsync(key, value);
+        await redisFactoryWrapper.SetStringAsync(key, value, TimeSpan.FromMinutes(5));
 
         logger.LogInformation("Getting Redis key '{Key}'", key);
         var result = await redisFactoryWrapper.GetStringAsync(key);

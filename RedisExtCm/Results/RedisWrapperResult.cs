@@ -11,16 +11,28 @@ namespace RedisExtCm.Results;
 /// </summary>
 public class RedisValueContainer
 {
-    public RedisValue Value { get; }
-    public bool HasValue { get; set; }
+    public RedisValue SingleValue { get; }
+    public RedisValue[]? Values { get; }
+    public bool HasValue => IsSingle ? SingleValue.HasValue : (Values?.Length > 0);
+    public bool IsSingle { get; }
 
-    public RedisValueContainer(RedisValue value) => Value = value;
+    public RedisValueContainer(RedisValue value)
+    {
+        SingleValue = value;
+        IsSingle = true;
+    }
+
+    public RedisValueContainer(RedisValue[] values)
+    {
+        Values = values;
+        IsSingle = false;
+    }
 }
 
 /// <summary>
-/// A generic wrapper for a single Redis value result.
+/// A generic wrapper for Redis value results. Can act as a single row or a table depending on the content.
 /// </summary>
-public class RedisValueWrapper : NpOnWrapperResult<RedisValueContainer, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper
+public class RedisValueWrapper : NpOnWrapperResult<RedisValueContainer, IReadOnlyDictionary<string, INpOnCell>>, INpOnRowWrapper, INpOnTableWrapper
 {
     public RedisValueWrapper(RedisValueContainer parent) : base(parent)
     {
@@ -34,25 +46,61 @@ public class RedisValueWrapper : NpOnWrapperResult<RedisValueContainer, IReadOnl
         }
     }
 
+    /// <summary>
+    /// Creates the result dictionary. For a single value, it's a one-cell dictionary. For multiple values, it's the first value.
+    /// </summary>
     protected override IReadOnlyDictionary<string, INpOnCell> CreateResult()
     {
-        // Treat a single value as a row with one column named "value"
-        var cell = new NpOnCell<string?>(Parent.Value.ToString(), System.Data.DbType.String, "redis:string");
+        var valueToUse = Parent.IsSingle ? Parent.SingleValue : (Parent.Values?.FirstOrDefault() ?? RedisValue.Null);
+        var cell = new NpOnCell<string?>(valueToUse.ToString(), System.Data.DbType.String, "redis:string");
         return new Dictionary<string, INpOnCell> { { "value", cell } };
     }
 
+    /// <summary>
+    /// Gets the first value as the specified type.
+    /// </summary>
     public T? As<T>()
     {
-        if (!Parent.Value.HasValue) return default;
+        var valueToUse = Parent.IsSingle ? Parent.SingleValue : (Parent.Values?.FirstOrDefault() ?? RedisValue.Null);
+        if (!valueToUse.HasValue) return default;
+
         // A simple conversion for basic types, assuming JSON for complex types.
         // This can be expanded based on RedisUtils or other helpers.
-        return (T)Convert.ChangeType(Parent.Value, typeof(T));
+        return (T)Convert.ChangeType(valueToUse, typeof(T));
     }
 
+    /// <summary>
+    /// Gets all values as an array of the specified type.
+    /// </summary>
+    public T?[]? AsArray<T>()
+    {
+        if (Parent.IsSingle)
+        {
+            return Parent.SingleValue.HasValue ? new[] { As<T>() } : Array.Empty<T?>();
+        }
+
+        return Parent.Values?.Select(v =>
+        {
+            if (!v.HasValue) return default;
+            return (T)Convert.ChangeType(v, typeof(T));
+        }).ToArray();
+    }
+
+    // INpOnRowWrapper implementation (returns the first value/row)
     public IReadOnlyDictionary<string, INpOnCell> GetRowWrapper()
     {
         return Result;
     }
+
+    // INpOnTableWrapper implementation (for multiple values)
+    public IReadOnlyDictionary<int, INpOnRowWrapper?> RowWrappers =>
+        Parent.Values?.Select((value, index) => new { value, index })
+            .ToDictionary(
+                item => item.index,
+                item => (INpOnRowWrapper?)new RedisValueWrapper(new RedisValueContainer(item.value))
+            ) ?? new Dictionary<int, INpOnRowWrapper?>();
+
+    public INpOnCollectionWrapper CollectionWrappers => throw new NotImplementedException("Collection wrapper is not supported for a simple list of Redis values.");
 }
 
 /// <summary>
