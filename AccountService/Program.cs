@@ -1,9 +1,9 @@
-using AccountService.DbFactories.Redis;
 using AccountService.Services;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication;
-using DbFactory;
+using DbFactory.Generics;
+using DbFactory.Redis;
 using Enums;
 using IAccountService;
 

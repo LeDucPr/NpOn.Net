@@ -12,6 +12,7 @@ using ProjectEntry.QuestionEntries;
 using System.Text.Json;
 using DbFactory;
 using CommonDb.DbResults;
+using DbFactory.Generics;
 using QuestionServiceObject;
 
 namespace QuestionService.Services;

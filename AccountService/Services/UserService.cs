@@ -6,6 +6,7 @@ using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
 using CommonWebApplication.Services;
 using DbFactory;
+using DbFactory.Generics;
 using HandleFlow.ResultConverters;
 using IAccountService;
 using NpgsqlTypes;

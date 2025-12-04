@@ -1,11 +1,9 @@
-﻿using DbFactory;
-using DbFactory.FactoryResults;
+﻿using DbFactory.Generics;
 using Enums;
 using RedisExtCm.Commands;
-using RedisExtCm.Connections;
 using RedisExtCm.Results;
 
-namespace AccountService.DbFactories.Redis;
+namespace DbFactory.Redis;
 
 public class RedisFactoryWrapper : DbFactoryWrapper, IRedisFactoryWrapper
 {

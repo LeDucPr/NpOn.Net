@@ -1,7 +1,7 @@
-﻿using DbFactory;
+﻿using DbFactory.Generics;
 using RedisExtCm.Results;
 
-namespace AccountService.DbFactories.Redis;
+namespace DbFactory.Redis;
 
 public interface IRedisFactoryWrapper : IDbFactoryWrapper
 {

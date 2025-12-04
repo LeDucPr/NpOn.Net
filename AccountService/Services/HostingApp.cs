@@ -1,4 +1,4 @@
-using AccountService.DbFactories.Redis;
+using DbFactory.Redis;
 using IAccountService;
 
 namespace AccountService.Services;
