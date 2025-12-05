@@ -10,6 +10,7 @@ using CommonGrpcObject;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication.Services;
+using DbFactory.Redis;
 // using DbFactory;
 using Enums;
 using GeneralServiceObject.QueryObjects;
@@ -24,6 +25,7 @@ namespace AccountService.Services;
 public class AuthenticationService(
     // IDbFactoryWrapper dbFactoryWrapper,
     IFldMasterPgService fldMasterPgService,
+    IRedisFactoryWrapper redisCachingFactoryWrapper,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
@@ -56,7 +58,8 @@ public class AuthenticationService(
             var existAccountResponse = await fldMasterPgService.Execute(checkExistExecution);
             if (!existAccountResponse.Status)
             {
-                response.SetFail("Could not check Email/PhoneNumber/UserName", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
+                response.SetFail("Could not check Email/PhoneNumber/UserName",
+                    existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
 
@@ -74,7 +77,7 @@ public class AuthenticationService(
                     response.SetFail("UserName is Existed", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
                 return;
             }
-            
+
             var execution = new TblFldExecution
             {
                 Code = AuthenServiceQueryCode.AccountSignin,
@@ -281,14 +284,13 @@ public class AuthenticationService(
 
             AccountLoginInfoObject accountLoginInfoObject = await CreateToken(
                 accountObject, query.AuthType /*, ELoginType.Default*/);
-
+            await DeleteCachingToken(query.SessionIdWithPrefixCode); // delete token key from caching db
             if (!(await SaveLogin(accountLoginInfoObject)).Status)
             {
                 response.SetFail("AccountLogin save failure");
                 return;
             }
 
-            // set 
             response.Data = accountLoginInfoObject;
             response.SetSuccess();
         });
@@ -302,40 +304,74 @@ public class AuthenticationService(
     public async Task<CommonResponse<AccountLoginInfoObject>> GetLogonTokenBySessionId(
         AccountGetLogonInfoBySessionIdQuery query)
     {
-        return await CommonProcess<AccountLoginInfoObject>(async (response) =>
-        {
-            var logoutExecution = new TblFldExecution
+        return await CommonProcess<AccountLoginInfoObject>(
+            async (response) =>
             {
-                Code = AuthenServiceQueryCode.AccountLoginInfoGetBySessionId,
-                ExecParams =
-                [
-                    new TblFldExecutionParam
+                if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
+                {
+                    var accountInfoCache =
+                        await redisCachingFactoryWrapper.GetStringAsync(query.SessionIdWithPrefixCode);
+                    if (accountInfoCache != null)
                     {
-                        ParamName = "session_id",
-                        StringValue = query.SessionId.AsDefaultString(),
-                    },
-                ]
-            };
-            var logoutExecutionResponse = await fldMasterPgService.Execute(logoutExecution);
-            if (!logoutExecutionResponse.Status || logoutExecutionResponse.Data == null)
+                        var cacheValue = accountInfoCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
+                        if (string.IsNullOrEmpty(cacheValue))
+                        {
+                            response.SetSuccess();
+                            return (response, EControlFlow.Continue);
+                        }
+
+                        if (JsonConverter.TryFromJson<AccountLoginInfoObject>(cacheValue, out var accountInfoObject))
+                        {
+                            if (accountInfoObject != null)
+                            {
+                                response.Data = accountInfoObject;
+                                response.SetSuccess();
+                                return (response, EControlFlow.Break); // cache OK => break;
+                            }
+                        }
+                    }
+                }
+
+                response.SetSuccess(); // avoid breaking case
+                return (response, EControlFlow.Continue); // cache fail / unuse cache => continue;
+            },
+            async (response) =>
             {
-                response.SetFail("Could not found data", logoutExecutionResponse.ErrorCode ?? EErrorCode.NotFound);
-                return;
+                var logoutExecution = new TblFldExecution
+                {
+                    Code = AuthenServiceQueryCode.AccountLoginInfoGetBySessionId,
+                    ExecParams =
+                    [
+                        new TblFldExecutionParam
+                        {
+                            ParamName = "session_id",
+                            StringValue = query.SessionId.AsDefaultString(),
+                        },
+                    ]
+                };
+
+                var logoutExecutionResponse = await fldMasterPgService.Execute(logoutExecution);
+                if (!logoutExecutionResponse.Status || logoutExecutionResponse.Data == null)
+                {
+                    response.SetFail("Could not found data", logoutExecutionResponse.ErrorCode ?? EErrorCode.NotFound);
+                    return (response, EControlFlow.Break);
+                }
+
+                AccountLoginInfoObject? accountInfoObject = logoutExecutionResponse.Data?
+                    .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
+                    .Cast<AccountLoginInfoObject>().FirstOrDefault();
+
+                if (accountInfoObject == null)
+                {
+                    response.SetFail("Incorrect data type of AccountInfoAliasTestObject");
+                    return (response, EControlFlow.Break);
+                }
+
+                response.Data = accountInfoObject;
+                response.SetSuccess();
+                return (response, EControlFlow.Break);
             }
-
-            AccountLoginInfoObject? accountInfoObject = logoutExecutionResponse.Data?
-                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
-                .Cast<AccountLoginInfoObject>().FirstOrDefault();
-
-            if (accountInfoObject == null)
-            {
-                response.SetFail("Incorrect data type of AccountInfoAliasTestObject");
-                return;
-            }
-
-            response.Data = accountInfoObject;
-            response.SetSuccess();
-        });
+        );
     }
 
     public async Task<CommonResponse<string>> LogOut(AccountLogoutQuery query)
@@ -372,11 +408,13 @@ public class AuthenticationService(
             }
 
             await SaveLogoutWhenLogoutOrRefreshToken(accountInfoObject);
-
+            await DeleteCachingToken(query.SessionIdWithPrefixCode); // delete token key from caching db
             response.Data = "Logout successful";
             response.SetSuccess();
         });
     }
+
+    #region Private Method
 
     private async Task<CommonResponse> SaveLogin(AccountLoginInfoObject accountLoginInfo)
     {
@@ -514,7 +552,7 @@ public class AuthenticationService(
         });
     }
 
-    private Task<AccountLoginInfoObject> CreateToken(
+    private async Task<AccountLoginInfoObject> CreateToken(
         AccountObject account,
         EAuthentication authType,
         ELoginType loginType = ELoginType.Default,
@@ -579,7 +617,21 @@ public class AuthenticationService(
                 Token = tokenValue,
             };
 
+        if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
+        {
+            await redisCachingFactoryWrapper.SetAsync($"{AccountCachingCode.PrefixCachingAccountToken}{sessionKey}",
+                JsonConverter.ToJson(accountLoginInfo),
+                TimeSpan.FromMinutes(minuteExpire));
+        }
+
         // await authenService.SetLoginInfo(sessionKey, accountLoginInfo, accountLoginInfo.MinuteExpire);
-        return Task.FromResult(accountLoginInfo);
+        return accountLoginInfo;
     }
+
+    private async Task DeleteCachingToken(string cachingTokenKey)
+    {
+        await redisCachingFactoryWrapper.DeleteAsync(cachingTokenKey);
+    }
+
+    #endregion Private Method
 }

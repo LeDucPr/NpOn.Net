@@ -14,6 +14,7 @@ public enum EApplicationConfiguration
     [Display(Name = "RedisConnectString")] RedisConnectString, // - string
     [Display(Name = "ConnectionNumber")] ConnectionNumber, // - int
     [Display(Name = "RedisConnectionNumber")] RedisConnectionNumber, // - int
+    [Display(Name = "IsUseRedisCache")] IsUseRedisCache, // - bool
 
     [Display(Name = "DnsResolverFactory")]
     DnsResolverFactory, // thời gian làm mới Dns service discovery (gRPC client-side load balancing) - int

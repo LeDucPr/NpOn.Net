@@ -1,4 +1,5 @@
-﻿using ProjectEnums.AccountEnums;
+﻿using ProjectEntry.AccountEntries;
+using ProjectEnums.AccountEnums;
 using ProtoBuf;
 
 namespace AccountServiceObject.QueryObjects;
@@ -30,6 +31,7 @@ public class AccountRefreshTokenQuery : BaseAccountCommand
     [ProtoMember(3)] public ELoginType? LoginType { get; set; }
     [ProtoMember(4)] public required EAuthentication AuthType { get; set; }
     [ProtoMember(5)] public required string SessionId { get; set; }
+    public string SessionIdWithPrefixCode => $"{AccountCachingCode.PrefixCachingAccountToken}{SessionId}";
 }
 
 [ProtoContract]
@@ -37,6 +39,7 @@ public class AccountRefreshTokenQuery : BaseAccountCommand
 public class AccountLogoutQuery : BaseAccountCommand
 {
     [ProtoMember(1)] public required string SessionId { get; set; }
+    public string SessionIdWithPrefixCode => $"{AccountCachingCode.PrefixCachingAccountToken}{SessionId}";
 }
 
 [ProtoContract]
