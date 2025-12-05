@@ -9,7 +9,6 @@ using CommonObject;
 using Enums;
 using Microsoft.IdentityModel.Tokens;
 using ProjectEnums.AccountEnums;
-using RabbitMqBroker;
 
 namespace CommonWebApplication.Services;
 

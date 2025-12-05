@@ -1,7 +1,6 @@
 using CommonGrpcObject;
 using CommonObject.CommonObjects;
 using Enums;
-using RabbitMqBroker;
 
 namespace CommonWebApplication.Services;
 
