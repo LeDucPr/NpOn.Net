@@ -11,7 +11,7 @@ namespace IAccountService;
 public interface IAuthenticationService
 {
     [OperationContract]
-    Task<CommonResponse<AccountLoginInfoObject>> Signin(AccountSigninCommand command);
+    Task<CommonResponse<AccountLoginInfoObject>> Signup(AccountSignupCommand command);
     
     [OperationContract]
     Task<CommonResponse<AccountLoginInfoObject>> Login(AccountLoginQuery query);

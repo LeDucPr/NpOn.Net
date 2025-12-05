@@ -10,7 +10,7 @@ namespace AccountServiceObject;
 [ProtoInclude(100, typeof(AccountLoginQuery))]
 [ProtoInclude(200, typeof(AccountRefreshTokenQuery))]
 [ProtoInclude(300, typeof(AccountLogoutQuery))]
-[ProtoInclude(400, typeof(AccountSigninCommand))]
+[ProtoInclude(400, typeof(AccountSignupCommand))]
 public abstract class BaseAccountCommand : CommonAbsQuery
 {
     [ProtoMember(1)] public override bool Status { get; set; }

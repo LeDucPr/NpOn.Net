@@ -29,7 +29,7 @@ public class AuthenticationService(
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
-    public async Task<CommonResponse<AccountLoginInfoObject>> Signin(AccountSigninCommand command)
+    public async Task<CommonResponse<AccountLoginInfoObject>> Signup(AccountSignupCommand command)
     {
         return await CommonProcess<AccountLoginInfoObject>(async (response) =>
         {
@@ -80,7 +80,7 @@ public class AuthenticationService(
 
             var execution = new TblFldExecution
             {
-                Code = AuthenServiceQueryCode.AccountSignin,
+                Code = AuthenServiceQueryCode.AccountSignup,
                 ExecParams =
                 [
                     new TblFldExecutionParam
@@ -283,8 +283,7 @@ public class AuthenticationService(
             }
 
             AccountLoginInfoObject accountLoginInfoObject = await CreateToken(
-                accountObject, query.AuthType /*, ELoginType.Default*/);
-            await DeleteCachingToken(query.SessionIdWithPrefixCode); // delete token key from caching db
+                accountObject, query.AuthType, ELoginType.Default, query.SessionId);
             if (!(await SaveLogin(accountLoginInfoObject)).Status)
             {
                 response.SetFail("AccountLogin save failure");
@@ -556,15 +555,10 @@ public class AuthenticationService(
         AccountObject account,
         EAuthentication authType,
         ELoginType loginType = ELoginType.Default,
-        string? oldRefreshToken = null,
+        string? oldSessionKey = null,
         int expireMinutes = 0
     )
     {
-        if (!string.IsNullOrEmpty(oldRefreshToken))
-        {
-            // await authenService.RemoveLoginInfo(oldRefreshToken);
-        }
-
         string sessionKey = $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuid()}";
         int minuteExpire = expireMinutes == 0
             ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
@@ -619,12 +613,13 @@ public class AuthenticationService(
 
         if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
         {
+            if (!string.IsNullOrEmpty(oldSessionKey))
+                await DeleteCachingToken($"{AccountCachingCode.PrefixCachingAccountToken}{oldSessionKey}");
             await redisCachingFactoryWrapper.SetAsync($"{AccountCachingCode.PrefixCachingAccountToken}{sessionKey}",
                 JsonConverter.ToJson(accountLoginInfo),
                 TimeSpan.FromMinutes(minuteExpire));
         }
 
-        // await authenService.SetLoginInfo(sessionKey, accountLoginInfo, accountLoginInfo.MinuteExpire);
         return accountLoginInfo;
     }
 

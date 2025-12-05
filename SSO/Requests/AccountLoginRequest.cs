@@ -2,7 +2,7 @@
 
 namespace SSO.Requests;
 
-public class AccountSigninRequest
+public class AccountSignupRequest
 {
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }

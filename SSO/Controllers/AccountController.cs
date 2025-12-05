@@ -23,18 +23,18 @@ public class AccountController(
     [Obsolete("Obsolete")]
     [AllowAnonymous]
     [HttpPost]
-    public async Task<CommonApiResponse<object>> SignIn([FromBody] AccountSigninRequest request)
+    public async Task<CommonApiResponse<object>> Signup([FromBody] AccountSignupRequest request)
     {
         return await ProcessRequest<object>(async (response) =>
         {
-            var validator = AccountSigninRequestValidator.ValidateRequest(request);
+            var validator = AccountSignupRequestValidator.ValidateRequest(request);
             if (!validator.IsValid)
             {
                 response.SetFail(validator.Errors.Select(p => p.ToString()));
                 return;
             }
 
-            var signinResponse = await authenticationService.Signin(new AccountSigninCommand
+            var signupResponse = await authenticationService.Signup(new AccountSignupCommand
             {
                 AuthType = request.AuthType,
                 ClientId = contextService.ClientId,
@@ -44,21 +44,21 @@ public class AccountController(
                 Password = CreateHashPassword(request.Password)
                     .AsEmptyString(),
                 LoginType = ELoginType.Default,
-                SigninIp = contextService.GetIp(),
-                DeviceSigninInfo = request.DeviceInfo,
+                SignupIp = contextService.GetIp(),
+                DeviceSignupInfo = request.DeviceInfo,
                 AuthenApplicationId = request.AppId,
                 FullName = request.FullName.AsEmptyString(),
             });
 
-            if (!signinResponse.Status)
+            if (!signupResponse.Status)
             {
-                string errMessages = signinResponse.ErrorMessages.AsArrayJoin();
-                response.SetFail(!string.IsNullOrWhiteSpace(errMessages) ? errMessages : "Signin fail");
+                string errMessages = signupResponse.ErrorMessages.AsArrayJoin();
+                response.SetFail(!string.IsNullOrWhiteSpace(errMessages) ? errMessages : "Signup fail");
                 return;
             }
             response.Data = new
             {
-                Model = signinResponse.Data?.ToModel(),
+                Model = signupResponse.Data?.ToModel(),
             };
             response.SetSuccess();
         });

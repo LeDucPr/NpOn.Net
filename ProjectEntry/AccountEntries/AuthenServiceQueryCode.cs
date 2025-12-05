@@ -4,7 +4,7 @@ public static class AuthenServiceQueryCode
 {
     // account
     public const string AccountGetByUsernameAndPassword = "account_get_by_username_and_password";
-    public const string AccountSignin = "account_signin";
+    public const string AccountSignup = "account_signup";
     public const string AccountGetByUsernameOrPhoneNumberOrEmail = "account_get_by_username_or_phone_number_or_email";
     // account info
     public const string AccountLoginInfoGetByRefreshToken = "account_login_info_get_by_refresh_token";

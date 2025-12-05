@@ -4,9 +4,9 @@ using SSO.Requests;
 
 namespace SSO.Validators;
 
-public class AccountSigninRequestValidator : AbstractValidator<AccountSigninRequest>
+public class AccountSignupRequestValidator : AbstractValidator<AccountSignupRequest>
 {
-    private AccountSigninRequestValidator()
+    private AccountSignupRequestValidator()
     {
         RuleFor(x => x.Email).NotEmpty().EmailAddress();
         RuleFor(x => x.FullName).NotEmpty();
@@ -30,9 +30,9 @@ public class AccountSigninRequestValidator : AbstractValidator<AccountSigninRequ
                hasSpecialChar.IsMatch(pw);
     }
 
-    public static FluentValidation.Results.ValidationResult ValidateRequest(AccountSigninRequest request)
+    public static FluentValidation.Results.ValidationResult ValidateRequest(AccountSignupRequest request)
     {
-        var validationResult = new AccountSigninRequestValidator().Validate(request);
+        var validationResult = new AccountSignupRequestValidator().Validate(request);
         return validationResult;
     }
 }
