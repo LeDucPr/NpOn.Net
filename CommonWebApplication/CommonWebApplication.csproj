@@ -31,6 +31,7 @@
         <ProjectReference Include="..\GenericEnums\GenericEnums.csproj"/>
         <ProjectReference Include="..\CommonMode\CommonMode.csproj"/>
         <ProjectReference Include="..\GrpcAddService\GrpcAddService.csproj" />
+        <ProjectReference Include="..\RabbitMqExtMs\RabbitMqExtMs.csproj" />
     </ItemGroup>
 
 </Project>

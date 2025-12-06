@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationM
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
+using RabbitMqExtMs.Generics;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace CommonWebApplication;
@@ -99,7 +100,7 @@ public abstract class CommonProgram
         services.AddTransient<AuthenService>();
 
         // common controllers
-        services.AddControllers(options => { })
+        services.AddControllers(_ => { })
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -122,81 +123,11 @@ public abstract class CommonProgram
 
         // rabbitMq
         bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
-        // if (isUseRabbitMq)
-        // {
-        //     string rabbitMqHost = EApplicationConfiguration.RabbitMqHost.GetAppSettingConfig().AsDefaultString();
-        //     if (rabbitMqHost.Length > 0)
-        //     {
-        //         string virtualHost =
-        //             EApplicationConfiguration.VirtualHost.GetAppSettingConfig().AsDefaultString();
-        //
-        //         string rabbitMqUserName =
-        //             EApplicationConfiguration.RabbitMqUserName.GetAppSettingConfig().AsDefaultString();
-        //         string rabbitMqPassword =
-        //             EApplicationConfiguration.RabbitMqPassword.GetAppSettingConfig().AsDefaultString();
-        //         services.AddSingleton<RabbitMqConnectionPool>(sp =>
-        //         {
-        //             ILogger<RabbitMqConnectionPool> logger = sp.GetRequiredService<ILogger<RabbitMqConnectionPool>>();
-        //             int poolSize = EApplicationConfiguration.RabbitMqPoolSize.GetAppSettingConfig().AsDefaultInt();
-        //             if (poolSize <= 0)
-        //                 poolSize = 1; // default
-        //             return new RabbitMqConnectionPool(logger, poolSize, [rabbitMqHost], virtualHost,
-        //                 rabbitMqUserName, rabbitMqPassword);
-        //         });
-        //     }
-        //
-        //     if (EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool())
-        //     {
-        //         string rabbitMqExchange =
-        //             EApplicationConfiguration.RabbitMqExchange.GetAppSettingConfig().AsDefaultString();
-        //         string rabbitMqRoutingRoot =
-        //             EApplicationConfiguration.RabbitMqRoutingRoot.GetAppSettingConfig().AsDefaultString();
-        //         string rabbitMqRouting =
-        //             EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig().AsDefaultString();
-        //         string rabbitMqQueues =
-        //             EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig().AsDefaultString();
-        //         string rabbitMqExchangeNotify =
-        //             EApplicationConfiguration.RabbitMqExchangeNotify.GetAppSettingConfig().AsDefaultString();
-        //         string rabbitMqExchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger
-        //             .GetAppSettingConfig().AsDefaultString();
-        //         if (rabbitMqExchange.Length > 0 || rabbitMqExchangeNotify.Length > 0 ||
-        //             rabbitMqExchangesTrigger.Length > 0)
-        //         {
-        //             services.AddSingleton<IRabbitMqEventProcessor, RabbitMqEventProcessor>(sp =>
-        //             {
-        //                 var logger = sp.GetRequiredService<ILogger<RabbitMqEventProcessor>>();
-        //                 var serviceProvider = sp.GetRequiredService<IServiceProvider>();
-        //                 var connectionPool = sp.GetRequiredService<RabbitMqConnectionPool>();
-        //
-        //                 // Đọc các giá trị cấu hình
-        //                 string exchange = EApplicationConfiguration.RabbitMqExchange.GetAppSettingConfig()
-        //                     .AsDefaultString();
-        //                 string exchangeNotify = EApplicationConfiguration.RabbitMqExchangeNotify.GetAppSettingConfig()
-        //                     .AsDefaultString();
-        //                 string filterQueuesConfig = EApplicationConfiguration.EventHandlerFilterQueues
-        //                     .GetAppSettingConfig().AsDefaultString().ToLower();
-        //                 string[] routingKeys = EApplicationConfiguration.RabbitMqRouting.GetAppSettingConfig()
-        //                     .AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
-        //                 string[] topics = EApplicationConfiguration.RabbitMqQueues.GetAppSettingConfig()
-        //                     .AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
-        //                 string exchangeNotifyListen = EApplicationConfiguration.RabbitMqExChangeNotifyListen
-        //                     .GetAppSettingConfig().AsDefaultString();
-        //                 string[] exchangesTrigger = EApplicationConfiguration.RabbitMqExchangesTrigger
-        //                     .GetAppSettingConfig().AsDefaultString().Split(',', StringSplitOptions.RemoveEmptyEntries);
-        //                 string[] workerGroup = EApplicationConfiguration.WorkerGroup.GetAppSettingConfig()
-        //                     .AsDefaultString().ToLower().Split(',',
-        //                         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        //
-        //                 return new RabbitMqEventProcessor(logger, serviceProvider, connectionPool, exchange,
-        //                     exchangeNotify,
-        //                     filterQueuesConfig, routingKeys, topics, exchangeNotifyListen, exchangesTrigger,
-        //                     workerGroup);
-        //             });
-        //
-        //             services.AddHostedService<RabbitMqBusStarter>();
-        //         }
-        //     }
-        // }
+        if (isUseRabbitMq)
+        {
+            string rabbitCnStr = EApplicationConfiguration.RabbitMqConnection.GetAppSettingConfig().AsDefaultString();
+            services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>(_ => new RabbitMqConnection(rabbitCnStr));
+        }
 
         ////// Controller
         // authorization 

@@ -1,4 +1,4 @@
-﻿﻿using System.Text;
+﻿using System.Text;
 using ProtoBuf;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -11,48 +11,48 @@ namespace RabbitMqExtMs;
 
 class Program
 {
-    static async Task Main(string[] args)
-    {
-        Console.WriteLine("Starting RabbitMQ Consumer...");
-
-        IRabbitMqConnection rabbitMqConnection = new RabbitMqConnection("amqp://rabbitmq:password@localhost:5672/");
-        
-        var producer = new RabbitMqProducer(rabbitMqConnection);
-        await producer.AddEvent(new RabbitMqEvent<TestEvent>()
-        {
-            MessageContent = new TestEvent
-            {
-                TestC = "cccccccccccccccccccccccccccccccccccccc"
-            }
-        });
-        
-        var consumer = new TestEventConsumer(rabbitMqConnection,
-            async (message) =>
-            {
-                Console.WriteLine($"[Handler] Received message: {message.TestC}");
-                await Task.Delay(100);
-                Console.WriteLine($"[Handler] Finished processing message: {message.TestC}");
-            });
-
-
-        Console.WriteLine("Consumer is running. Press [Enter] to exit.");
-        Console.ReadLine();
-    }
+    // static async Task Main(string[] args)
+    // {
+    //     Console.WriteLine("Starting RabbitMQ Consumer...");
+    //
+    //     IRabbitMqConnection rabbitMqConnection = new RabbitMqConnection("amqp://rabbitmq:password@localhost:5672/");
+    //     
+    //     var producer = new RabbitMqProducer(rabbitMqConnection);
+    //     await producer.AddEvent(new RabbitMqEvent<TestEvent>()
+    //     {
+    //         MessageContent = new TestEvent
+    //         {
+    //             TestC = "cccccccccccccccccccccccccccccccccccccc"
+    //         }
+    //     });
+    //     
+    //     var consumer = new TestEventConsumer(rabbitMqConnection,
+    //         async (message) =>
+    //         {
+    //             Console.WriteLine($"[Handler] Received message: {message.TestC}");
+    //             await Task.Delay(100);
+    //             Console.WriteLine($"[Handler] Finished processing message: {message.TestC}");
+    //         });
+    //
+    //
+    //     Console.WriteLine("Consumer is running. Press [Enter] to exit.");
+    //     Console.ReadLine();
+    // }
 }
 
-[ProtoContract]
-public class TestEvent : RabbitMqMessageContent
-{
-    [ProtoMember(1)] public required string TestC { get; set; }
-}
-
-public class TestEventConsumer : RabbitMqConsumer<TestEvent>
-{
-    public TestEventConsumer(IRabbitMqConnection rabbitMqConnection, Func<TestEvent, Task> handler, bool autoAck = true)
-        : base(rabbitMqConnection, handler, autoAck)
-    {
-    }
-}
+// [ProtoContract]
+// public class TestEvent : RabbitMqMessageContent
+// {
+//     [ProtoMember(1)] public required string TestC { get; set; }
+// }
+//
+// public class TestEventConsumer : RabbitMqConsumer<TestEvent>
+// {
+//     public TestEventConsumer(IRabbitMqConnection rabbitMqConnection, Func<TestEvent, Task> handler, bool autoAck = true)
+//         : base(rabbitMqConnection, handler, autoAck)
+//     {
+//     }
+// }
 
 internal static class Test
 {

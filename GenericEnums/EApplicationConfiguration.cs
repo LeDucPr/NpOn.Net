@@ -30,21 +30,7 @@ public enum EApplicationConfiguration
     
     #region RabbitMq
     [Display(Name = "IsUseRabbitMq")] IsUseRabbitMq, // bool
-    
-    [Display(Name = "RabbitMqPoolSizes")] RabbitMqPoolSize, // int
-    [Display(Name = "RabbitMqHost")] RabbitMqHost, // string
-    [Display(Name = "RabbitMqUserName")] RabbitMqUserName, // string
-    [Display(Name = "RabbitMqPassword")] RabbitMqPassword, // string
-    [Display(Name = "RabbitMqExchange")] RabbitMqExchange, // string
-    [Display(Name = "RabbitMqRoutingRoot")] RabbitMqRoutingRoot, // string
-    [Display(Name = "RabbitMqRouting")] RabbitMqRouting, // string
-    [Display(Name = "RabbitMqQueues")] RabbitMqQueues, // string
-    [Display(Name = "RabbitMqExchangeNotify")] RabbitMqExchangeNotify, // string
-    [Display(Name = "VirtualHost")] VirtualHost, // string
-    [Display(Name = "RabbitMqExchangesTrigger")] RabbitMqExchangesTrigger, // string
-    [Display(Name = "EventHandlerFilterQueues")] EventHandlerFilterQueues, // string
-    [Display(Name = "RabbitMqExChangeNotifyListen")] RabbitMqExChangeNotifyListen, // string[]
-    [Display(Name = "WorkerGroup")] WorkerGroup, // string[]
+    [Display(Name = "RabbitMqConnection")] RabbitMqConnection, // string
     #endregion RabbitMq
     
     
