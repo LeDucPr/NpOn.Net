@@ -1,4 +1,4 @@
-﻿﻿using AccountServiceObject.EventObjects;
+﻿using AccountServiceObject.EventObjects;
 using IAccountService;
 using RabbitMqExtMs.Generics;
 using RabbitMqExtMs.Receivers;
