@@ -25,11 +25,15 @@ public class CommonUtilityMode
         return IPAddress.TryParse(input, out _);
     }
 
-    public static string GenerateGuid()
+    public static string GenerateGuidAsString()
     {
         return Guid.CreateVersion7().ToString("N");
     }
-
+    
+    public static Guid GenerateGuid()
+    {
+        return Guid.CreateVersion7();
+    }
 
     public static string GenerateCodeFromId(long id, int padLeft = 1)
     {

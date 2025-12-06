@@ -559,7 +559,7 @@ public class AuthenticationService(
         int expireMinutes = 0
     )
     {
-        string sessionKey = $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuid()}";
+        string sessionKey = $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuidAsString()}";
         int minuteExpire = expireMinutes == 0
             ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : expireMinutes;
@@ -605,7 +605,7 @@ public class AuthenticationService(
                 LoginType = loginType,
                 SessionId = sessionKey,
                 MinuteExpire = minuteExpire,
-                RefreshToken = CommonUtilityMode.GenerateGuid(),
+                RefreshToken = CommonUtilityMode.GenerateGuidAsString(),
                 Permission = account.Permission,
                 TokenStatus = ETokenStatus.Active,
                 Token = tokenValue,
