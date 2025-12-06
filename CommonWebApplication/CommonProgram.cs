@@ -22,6 +22,7 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using RabbitMqExtMs.Generics;
+using RabbitMqExtMs.Senders;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace CommonWebApplication;
@@ -126,7 +127,9 @@ public abstract class CommonProgram
         if (isUseRabbitMq)
         {
             string rabbitCnStr = EApplicationConfiguration.RabbitMqConnection.GetAppSettingConfig().AsDefaultString();
-            services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>(_ => new RabbitMqConnection(rabbitCnStr));
+            RabbitMqConnection rabbitMqConnection = new RabbitMqConnection(rabbitCnStr);
+            services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>(_ => rabbitMqConnection);
+            services.AddTransient<IRabbitMqProducer, RabbitMqProducer>(_ => new RabbitMqProducer(rabbitMqConnection));
         }
 
         ////// Controller

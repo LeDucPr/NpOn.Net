@@ -8,14 +8,15 @@ using RabbitMqExtMs.Generics;
 
 namespace RabbitMqExtMs.Receivers;
 
-public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IDisposable where T : RabbitMqMessageContent
+public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsumer<T>, IDisposable
+    where T : RabbitMqMessageContent
 {
-    private ILogger<RabbitMqConsumer<T>> _logger;
+    private readonly ILogger<RabbitMqConsumer<T>>? _logger;
     private readonly IRabbitMqConnection _rabbitMqConnection;
     private Type _typeT;
     private ERabbitMqResponseType _responseType = ERabbitMqResponseType.BasicAck;
-    private Func<T, Task>? _handler;
-    private readonly bool _autoAck = true;
+    protected Func<T, Task>? Handler;
+    private readonly bool _autoAck; // = true;
     private readonly bool _isExternalConnection;
 
     public ERabbitMqResponseType ResponseType
@@ -24,13 +25,18 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IDisposable wh
         set => _responseType = value;
     }
 
-    public RabbitMqConsumer(IRabbitMqConnection rabbitMqConnection, Func<T, Task> handler, bool autoAck = true) // : base()
+    public RabbitMqConsumer(IRabbitMqConnection rabbitMqConnection, bool autoAck = true,
+        ILogger<RabbitMqConsumer<T>>? logger = null) // : base()
     {
         _rabbitMqConnection = rabbitMqConnection;
         _isExternalConnection = true; // Mark connection as external, do not dispose it
         _typeT = typeof(T);
-        _handler = handler;
+        // _handler = handler;
+        _logger = logger;
         _autoAck = autoAck;
+
+        // Call the abstract method to ensure the handler is set by the derived class *before* listening starts.
+        AddHandler();
         UseDefault().GetAwaiter().GetResult();
     }
 
@@ -54,13 +60,13 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IDisposable wh
         {
             byte[] body = ea.Body.ToArray();
             var fullEvent = ProtoMode.ProtoBufDeserialize<RabbitMqEvent<T>>(body, isDecompress);
-            if (_handler != null && fullEvent?.MessageContent != null)
+            if (Handler != null && fullEvent?.MessageContent != null)
             {
                 if (_autoAck)
                 {
                     try
                     {
-                        await _handler(fullEvent.MessageContent);
+                        await Handler(fullEvent.MessageContent);
                         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false); // ack when done (clear)
                     }
                     catch (Exception ex)
@@ -72,7 +78,7 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IDisposable wh
                 }
                 else
                 {
-                    _ = Task.Run(() => _handler(fullEvent.MessageContent)); // run task in background
+                    _ = Task.Run(() => Handler(fullEvent.MessageContent)); // run task in background
                     switch (_responseType)
                     {
                         case ERabbitMqResponseType.BasicAck:
@@ -107,4 +113,6 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IDisposable wh
             disposableConnection.Dispose();
         }
     }
+
+    public abstract void AddHandler();
 }

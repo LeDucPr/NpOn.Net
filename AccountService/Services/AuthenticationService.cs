@@ -4,6 +4,7 @@ using System.Text;
 using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
 using AccountServiceObject.CommandObjects;
+using AccountServiceObject.EventObjects;
 using AccountServiceObject.QueryObjects;
 using CommonDb.DbResults.Grpc;
 using CommonGrpcObject;
@@ -19,6 +20,9 @@ using IGeneralService;
 using Microsoft.IdentityModel.Tokens;
 using ProjectEntry.AccountEntries;
 using ProjectEnums.AccountEnums;
+using RabbitMqExtMs.Events;
+using RabbitMqExtMs.Generics;
+using RabbitMqExtMs.Senders;
 
 namespace AccountService.Services;
 
@@ -26,6 +30,7 @@ public class AuthenticationService(
     // IDbFactoryWrapper dbFactoryWrapper,
     IFldMasterPgService fldMasterPgService,
     IRedisFactoryWrapper redisCachingFactoryWrapper,
+    IRabbitMqProducer rabbitMqProducer,
     ILogger<CommonService> logger
 ) : CommonService(logger), IAuthenticationService
 {
@@ -191,11 +196,16 @@ public class AuthenticationService(
             {
             }
 
-            if (!(await SaveLogin(accountLoginInfoObject)).Status)
+            await rabbitMqProducer.AddEvent(new RabbitMqEvent<AccountSaveLoginEvent>()
             {
-                response.SetFail("AccountLogin save failure");
-                return;
-            }
+                MessageContent = accountLoginInfoObject.ToEvent()
+            });
+
+            // if (!(await SaveLogin(accountLoginInfoObject)).Status)
+            // {
+            //     response.SetFail("AccountLogin save failure");
+            //     return;
+            // }
 
             // set 
             response.Data = accountLoginInfoObject;
@@ -415,7 +425,7 @@ public class AuthenticationService(
 
     #region Private Method
 
-    private async Task<CommonResponse> SaveLogin(AccountLoginInfoObject accountLoginInfo)
+    public async Task<CommonResponse> SaveLogin(AccountLoginInfoObject accountLoginInfo)
     {
         return await CommonProcess(async (response) =>
         {
@@ -559,7 +569,8 @@ public class AuthenticationService(
         int expireMinutes = 0
     )
     {
-        string sessionKey = $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuidAsString()}";
+        string sessionKey =
+            $"{ContextService.SessionIdPrefix}-{account.UserName}-{CommonUtilityMode.GenerateGuidAsString()}";
         int minuteExpire = expireMinutes == 0
             ? EApplicationConfiguration.LoginExpiresTime.GetAppSettingConfig().AsDefaultInt()
             : expireMinutes;

@@ -22,6 +22,7 @@
         <ProjectReference Include="..\ObjectHandleFlow\ObjectHandleFlow.csproj"/>
         <ProjectReference Include="..\ProjectEntry\ProjectEntry.csproj" />
         <ProjectReference Include="..\ProjectEnums\ProjectEnums.csproj" />
+        <ProjectReference Include="..\RabbitMqExtMs\RabbitMqExtMs.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,3 +1,4 @@
+using AccountService.RabbitMqConsumers;
 using AccountService.Services;
 using CommonMode;
 using CommonObject;
@@ -25,7 +26,8 @@ public sealed class Program : CommonProgram
     {
         services.AddSingleton<IDbFactoryWrapper>(factory =>
         {
-            string connectionString = EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
+            string connectionString =
+                EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
             int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IDbFactoryWrapper factoryWrapper =
                 new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber, true);
@@ -34,7 +36,8 @@ public sealed class Program : CommonProgram
 
         services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(factory =>
         {
-            string connectionString = EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
+            string connectionString =
+                EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
             int connectionNumber = EApplicationConfiguration.RedisConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IRedisFactoryWrapper factoryWrapper =
                 new RedisFactoryWrapper(connectionString, EDb.Redis, connectionNumber, true);
@@ -46,10 +49,18 @@ public sealed class Program : CommonProgram
             services.AddHostedService<HostingApp>();
         }
 
+        // rabbitMq
+        bool isUseRabbitMq = EApplicationConfiguration.IsUseRabbitMq.GetAppSettingConfig().AsDefaultBool();
+        if (isUseRabbitMq)
+        {
+            services.AddTransient<AccountSaveLoginConsumer>()
+                .AddHostedService<ConsumerHostedService<AccountSaveLoginConsumer>>();
+        }
+
         // Add Service
         services.AddTransient<IUserService, UserService>();
         services.AddTransient<IAuthenticationService, AuthenticationService>();
-        
+
         return Task.CompletedTask;
     }
 

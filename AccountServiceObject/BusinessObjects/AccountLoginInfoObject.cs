@@ -1,4 +1,5 @@
-﻿using ProjectEnums.AccountEnums;
+﻿using AccountServiceObject.EventObjects;
+using ProjectEnums.AccountEnums;
 using ProtoBuf;
 
 namespace AccountServiceObject.BusinessObjects;
@@ -51,5 +52,35 @@ public sealed class AccountLoginInfoObject : BaseAccountObjectFromGrpcTable
         FieldMap.Add(nameof(MinuteExpire), "minute_expire");
         FieldMap.Add(nameof(CreatedAt), "created_at");
         FieldMap.Add(nameof(UpdatedAt), "updated_at");
+    }
+}
+
+
+public static class AccountLoginInfoObjectExtensions
+{
+    public static AccountSaveLoginEvent ToEvent(this AccountLoginInfoObject loginInfoObject)
+    {
+        return new AccountSaveLoginEvent()
+        {
+            Id = loginInfoObject.Id,
+            AccountId = loginInfoObject.AccountId,
+            UserName = loginInfoObject.UserName,
+            Password = loginInfoObject.Password,
+            AuthType = loginInfoObject.AuthType,
+            LoginType = loginInfoObject.LoginType,
+            Permission = loginInfoObject.Permission,
+            FullName = loginInfoObject.FullName,
+            PhoneNumber = loginInfoObject.PhoneNumber,
+            DeviceId = loginInfoObject.DeviceId,
+            Token = loginInfoObject.Token,
+            RefreshToken = loginInfoObject.RefreshToken,
+            CreatedAt = loginInfoObject.CreatedAt,
+            UpdatedAt = loginInfoObject.UpdatedAt,
+            SessionId = loginInfoObject.SessionId,
+            MinuteExpire = loginInfoObject.MinuteExpire,
+            TokenStatus = loginInfoObject.TokenStatus,
+            Email = loginInfoObject.Email,
+            AvatarUrl = loginInfoObject.AvatarUrl,
+        };
     }
 }

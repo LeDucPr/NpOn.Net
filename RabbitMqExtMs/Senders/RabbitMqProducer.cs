@@ -5,7 +5,7 @@ using RabbitMqExtMs.Generics;
 
 namespace RabbitMqExtMs.Senders;
 
-public class RabbitMqProducer
+public class RabbitMqProducer : IRabbitMqProducer
 {
     private readonly IRabbitMqConnection _rabbitMqConnection;
 

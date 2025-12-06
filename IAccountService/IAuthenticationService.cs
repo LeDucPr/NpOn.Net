@@ -27,4 +27,7 @@ public interface IAuthenticationService
 
     [OperationContract]
     Task<CommonResponse<string>> LogOut(AccountLogoutQuery query);
+
+    [OperationContract]
+    Task<CommonResponse> SaveLogin(AccountLoginInfoObject accountLoginInfo);
 }
