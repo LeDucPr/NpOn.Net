@@ -36,7 +36,7 @@ public abstract class CommonProgram
         Args = args;
     }
 
-    public async Task RunAsync()
+    protected async Task RunAsync()
     {
         var builder = CreateDefaultBuilder(Args);
         builder.Configuration.InitGlobal();
