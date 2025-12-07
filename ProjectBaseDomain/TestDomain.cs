@@ -7,7 +7,9 @@ namespace ProjectBaseDomain;
 [TableLoader("acc_srv_account")]
 public class TestDomain : BaseDomain
 {
-    [Field("id")] public Guid Id { get; set; }
+    [Field("id")] 
+    [Pk("id")]
+    public Guid Id { get; set; }
     [Field("username")] public required string UserName { get; set; }
     [Field("password")] public required string Password { get; set; }
     [Field("full_name")] public string? FullName { get; set; }
