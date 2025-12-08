@@ -1,4 +1,4 @@
-﻿﻿using CommonMode;
+﻿using CommonMode;
 using RabbitMQ.Client;
 
 namespace RabbitMqExtMs.Generics;
@@ -13,13 +13,14 @@ public class RabbitMqConnection : IRabbitMqConnection, IDisposable
     private string _exchangeName = string.Empty;
     private bool _disposed;
 
-    public RabbitMqConnection(string connectString)
+    public RabbitMqConnection(string connectString, string exchangeName)
     {
         _connectionFactory = new ConnectionFactory()
         {
             Uri = new Uri(connectString) // amqp://rabbitmq:password@localhost:5672/
         };
         CreateConnection().GetAwaiter().GetResult();
+        _exchangeName = exchangeName;
         _queueProperties = new Dictionary<string, RabbitMqQueueProperty>();
     }
 
@@ -31,7 +32,7 @@ public class RabbitMqConnection : IRabbitMqConnection, IDisposable
 
     public IChannel Channel => _channel;
     public string RoutingKey => _routingKey;
-    public string ExchangeName => _routingKey;
+    public string ExchangeName => _exchangeName;
 
     public async Task AddDefaultQueue(string exchangeName, string queueName,
         bool isCreateNewExchangeWhenExisted = false, bool isCreateNewQueueWhenExisted = false)

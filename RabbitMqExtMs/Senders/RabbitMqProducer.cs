@@ -14,11 +14,6 @@ public class RabbitMqProducer : IRabbitMqProducer
         _rabbitMqConnection = rabbitMqConnection;
     }
 
-    public RabbitMqProducer(string connectionString)
-    {
-        _rabbitMqConnection = new RabbitMqConnection(connectionString);
-    }
-
     public async Task AddEvent(IRabbitMqEvent @event, bool isCompress = false)
     {
         var eventType = @event.GetType();
@@ -29,10 +24,13 @@ public class RabbitMqProducer : IRabbitMqProducer
         var messageContentType = eventType.GetGenericArguments()[0];
         var componentType = typeof(RabbitMqComponent<>).MakeGenericType(messageContentType);
         dynamic component = Activator.CreateInstance(componentType)!; // ??
-
-        string exchangeName = component.ExchangeName;
+        // string exchangeName = component.ExchangeName;
         string queueName = component.QueueName;
-        string routingKey = component.RoutingKey;
+        // string routingKey = component.RoutingKey;
+        
+        string exchangeName = _rabbitMqConnection.ExchangeName;
+        // string queueName = _rabbitMqConnection.QueueName;
+        string routingKey = _rabbitMqConnection.RoutingKey;
         await _rabbitMqConnection.AddDefaultQueue(exchangeName, queueName);
 
         var body = ProtoMode.ProtoBufSerialize(@event, isCompress);

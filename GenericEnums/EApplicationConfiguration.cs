@@ -31,6 +31,7 @@ public enum EApplicationConfiguration
     #region RabbitMq
     [Display(Name = "IsUseRabbitMq")] IsUseRabbitMq, // bool
     [Display(Name = "RabbitMqConnection")] RabbitMqConnection, // string
+    [Display(Name = "RabbitMqExchangeName")] RabbitMqExchangeName, // string
     #endregion RabbitMq
     
     

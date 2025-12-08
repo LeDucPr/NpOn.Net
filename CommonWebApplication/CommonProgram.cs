@@ -127,7 +127,8 @@ public abstract class CommonProgram
         if (isUseRabbitMq)
         {
             string rabbitCnStr = EApplicationConfiguration.RabbitMqConnection.GetAppSettingConfig().AsDefaultString();
-            RabbitMqConnection rabbitMqConnection = new RabbitMqConnection(rabbitCnStr);
+            string exName = EApplicationConfiguration.RabbitMqExchangeName.GetAppSettingConfig().AsDefaultString();
+            RabbitMqConnection rabbitMqConnection = new RabbitMqConnection(rabbitCnStr, exName);
             services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>(_ => rabbitMqConnection);
             services.AddTransient<IRabbitMqProducer, RabbitMqProducer>(_ => new RabbitMqProducer(rabbitMqConnection));
         }

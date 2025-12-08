@@ -1,4 +1,4 @@
-﻿﻿using CommonMode;
+﻿using CommonMode;
 using Enums;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -52,7 +52,7 @@ public abstract class RabbitMqConsumer<T> : RabbitMqComponent<T>, IRabbitMqConsu
     {
         if (!IsEnableType)
             return;
-        await _rabbitMqConnection.AddDefaultQueue(ExchangeName, QueueName);
+        await _rabbitMqConnection.AddDefaultQueue(_rabbitMqConnection.ExchangeName/* ?? ExchangeName*/, QueueName);
         IChannel channel = _rabbitMqConnection.Channel;
         var consumer = new AsyncEventingBasicConsumer(channel);
 
