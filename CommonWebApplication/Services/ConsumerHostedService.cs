@@ -1,4 +1,4 @@
-﻿namespace AccountService.Services;
+﻿namespace CommonWebApplication.Services;
 
 /// <summary>
 /// A generic hosted service wrapper to manage the lifecycle of any consumer.

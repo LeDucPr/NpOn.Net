@@ -3,6 +3,7 @@ using AccountService.Services;
 using CommonMode;
 using CommonObject;
 using CommonWebApplication;
+using CommonWebApplication.Services;
 using DbFactory.Generics;
 using DbFactory.Redis;
 using Enums;
@@ -24,17 +25,17 @@ public sealed class Program : CommonProgram
 
     protected override Task ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<IDbFactoryWrapper>(factory =>
+        services.AddSingleton<IDbFactoryWrapper>(_ =>
         {
             string connectionString =
                 EApplicationConfiguration.ConnectionString.GetAppSettingConfig().AsDefaultString();
             int connectionNumber = EApplicationConfiguration.ConnectionNumber.GetAppSettingConfig().AsDefaultInt();
             IDbFactoryWrapper factoryWrapper =
-                new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber, true);
+                new DbFactoryWrapper(connectionString, EDb.Postgres, connectionNumber);
             return factoryWrapper;
         });
 
-        services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(factory =>
+        services.AddSingleton<IRedisFactoryWrapper, RedisFactoryWrapper>(_ =>
         {
             string connectionString =
                 EApplicationConfiguration.RedisConnectString.GetAppSettingConfig().AsDefaultString();
