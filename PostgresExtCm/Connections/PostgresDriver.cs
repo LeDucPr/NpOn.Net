@@ -49,6 +49,8 @@ public class PostgresDriver : NpOnDbDriver
         }
     }
 
+    // public   async Task<>
+    
     public override async Task<INpOnWrapperResult> Execute(INpOnDbCommand? command)
     {
         // Kiểm tra trạng thái kết nối hợp lệ.
@@ -100,7 +102,6 @@ public class PostgresDriver : NpOnDbDriver
             await DisconnectAsync();
         }
     }
-
 
     public override async Task<INpOnWrapperResult> ExecuteFunc(INpOnDbExecCommand? execCommand)
     {

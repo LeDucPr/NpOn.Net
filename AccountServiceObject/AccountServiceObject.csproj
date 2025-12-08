@@ -25,4 +25,8 @@
         <ProjectReference Include="..\RabbitMqExtMs\RabbitMqExtMs.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Domains\" />
+    </ItemGroup>
+
 </Project>
