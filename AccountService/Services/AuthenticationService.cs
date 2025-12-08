@@ -304,28 +304,34 @@ public class AuthenticationService(
         return await CommonProcess<AccountLoginInfoObject>(
             async (response) =>
             {
-                if (EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
+                if (!EApplicationConfiguration.IsUseRedisCache.GetAppSettingConfig().AsDefaultBool())
                 {
-                    var accountInfoCache =
-                        await redisCachingFactoryWrapper.GetStringAsync(query.SessionIdWithPrefixCode);
-                    if (accountInfoCache != null)
-                    {
-                        var cacheValue = accountInfoCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
-                        if (string.IsNullOrEmpty(cacheValue))
-                        {
-                            response.SetSuccess();
-                            return (response, EControlFlow.Continue);
-                        }
+                    response.SetSuccess(); // avoid breaking case
+                    return (response, EControlFlow.Continue);
+                }
 
-                        if (JsonConverter.TryFromJson<AccountLoginInfoObject>(cacheValue, out var accountInfoObject))
-                        {
-                            if (accountInfoObject != null)
-                            {
-                                response.Data = accountInfoObject;
-                                response.SetSuccess();
-                                return (response, EControlFlow.Break); // cache OK => break;
-                            }
-                        }
+                var accountInfoCache =
+                    await redisCachingFactoryWrapper.GetStringAsync(query.SessionIdWithPrefixCode);
+                if (accountInfoCache == null)
+                {
+                    response.SetSuccess(); // avoid breaking case
+                    return (response, EControlFlow.Continue); // cache fail / unuse cache => continue;
+                }
+
+                var cacheValue = accountInfoCache.Result.Values.FirstOrDefault()?.ValueAsObject.AsEmptyString();
+                if (string.IsNullOrEmpty(cacheValue))
+                {
+                    response.SetSuccess();
+                    return (response, EControlFlow.Continue);
+                }
+
+                if (JsonConverter.TryFromJson<AccountLoginInfoObject>(cacheValue, out var accountInfoObject))
+                {
+                    if (accountInfoObject != null)
+                    {
+                        response.Data = accountInfoObject;
+                        response.SetSuccess();
+                        return (response, EControlFlow.Break); // cache OK => break;
                     }
                 }
 

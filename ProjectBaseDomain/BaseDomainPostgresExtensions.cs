@@ -5,7 +5,7 @@ using ObjectHandlerFlow.AlgObjs.Attributes;
 
 namespace ProjectBaseDomain;
 
-public static class BaseDomainExtensions
+public static partial class BaseDomainExtensions
 {
     public static NpgsqlCommand ToPostgresParamsInsert(this List<BaseDomain> domains)
     {
