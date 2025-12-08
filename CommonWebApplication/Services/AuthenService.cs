@@ -10,22 +10,14 @@ public class AuthenService(
     IAuthenticationService authenticationService
 ) : CommonService(logger)
 {
+    /// <param name="key">sessionId</param>
+    /// <returns></returns>
     public AccountLoginInfoObject? GetLoginInfoSync(string key)
     {
         if (string.IsNullOrEmpty(key))
-        {
             return null;
-        }
-
-        // Redis 
-        // key = GetKey(key);
-        // RedisValue value = WriteDatabase().StringGet(key);
-        // return ConvertOutput<AccountLoginInfo>(value);
-
-        // TODO:
-        // Chưa có redis lưu tạm Db thường 
-
-        return null;
+        var loginInfo = GetLogonInfoBySessionId(key).GetAwaiter().GetResult();
+        return loginInfo;
     }
 
     public async Task<AccountLoginInfoObject?> GetLogonInfoBySessionId(string sessionId)

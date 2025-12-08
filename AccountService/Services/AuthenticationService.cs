@@ -1,7 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AccountServiceObject;
 using AccountServiceObject.BusinessObjects;
 using AccountServiceObject.CommandObjects;
 using AccountServiceObject.EventObjects;
@@ -21,7 +20,6 @@ using Microsoft.IdentityModel.Tokens;
 using ProjectEntry.AccountEntries;
 using ProjectEnums.AccountEnums;
 using RabbitMqExtMs.Events;
-using RabbitMqExtMs.Generics;
 using RabbitMqExtMs.Senders;
 
 namespace AccountService.Services;
@@ -70,9 +68,7 @@ public class AuthenticationService(
 
             if (existAccountResponse.Data != null) // existed
             {
-                List<AccountObject>? accountObjects = existAccountResponse.Data?
-                    .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
-                    .Cast<AccountObject>().ToList();
+                List<AccountObject>? accountObjects = existAccountResponse.Data?.ToList<AccountObject>();
                 // 
                 if (accountObjects?.Any(x => x.PhoneNumber == command.PhoneNumber) ?? false)
                     response.SetFail("NumberPhone is Existed", existAccountResponse.ErrorCode ?? EErrorCode.NotFound);
@@ -179,10 +175,7 @@ public class AuthenticationService(
                 return;
             }
 
-            AccountObject? accountObject = execAccountResponse.Data?
-                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
-                .Cast<AccountObject>().FirstOrDefault();
-
+            AccountObject? accountObject = execAccountResponse.Data?.ToFirstOrDefault<AccountObject>();
             if (accountObject == null)
             {
                 response.SetFail("Incorrect data type of 'IEnumerable<AccountInfoAliasTestObject>'");
@@ -236,10 +229,8 @@ public class AuthenticationService(
                 return;
             }
 
-            List<AccountLoginInfoObject>? accountInfoObjects = execStringResponse.Data?
-                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
-                .Cast<AccountLoginInfoObject>()
-                .ToList();
+            List<AccountLoginInfoObject>?
+                accountInfoObjects = execStringResponse.Data?.ToList<AccountLoginInfoObject>();
 
             if (accountInfoObjects is not { Count: > 0 })
             {
@@ -282,10 +273,7 @@ public class AuthenticationService(
                 return;
             }
 
-            AccountObject? accountObject = accountExecutionResponse.Data?
-                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountObject))?
-                .Cast<AccountObject>().FirstOrDefault();
-
+            AccountObject? accountObject = accountExecutionResponse.Data?.ToFirstOrDefault<AccountObject>();
             if (accountObject == null)
             {
                 response.SetFail("Incorrect data type of 'IEnumerable<AccountObject>'");
@@ -366,10 +354,8 @@ public class AuthenticationService(
                     return (response, EControlFlow.Break);
                 }
 
-                AccountLoginInfoObject? accountInfoObject = logoutExecutionResponse.Data?
-                    .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
-                    .Cast<AccountLoginInfoObject>().FirstOrDefault();
-
+                AccountLoginInfoObject? accountInfoObject =
+                    logoutExecutionResponse.Data?.ToFirstOrDefault<AccountLoginInfoObject>();
                 if (accountInfoObject == null)
                 {
                     response.SetFail("Incorrect data type of AccountInfoAliasTestObject");
@@ -406,10 +392,8 @@ public class AuthenticationService(
                 return;
             }
 
-            AccountLoginInfoObject? accountInfoObject = logoutExecutionResponse.Data?
-                .ConverterToChildOfBaseAccountObjectFromGrpcTable(typeof(AccountLoginInfoObject))?
-                .Cast<AccountLoginInfoObject>().FirstOrDefault();
-
+            AccountLoginInfoObject? accountInfoObject =
+                logoutExecutionResponse.Data?.ToFirstOrDefault<AccountLoginInfoObject>();
             if (accountInfoObject == null)
             {
                 response.SetFail("Incorrect data type of AccountInfoAliasTestObject");
