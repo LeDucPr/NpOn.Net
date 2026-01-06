@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>MicroServices.General.Service.NpOn.IGeneralService</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+        <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+      <ProjectReference Include="..\..\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj" />
+    </ItemGroup>
+    
+
+</Project>

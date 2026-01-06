@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>Common.Infrastructures.NpOn.DbFactory</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj" />
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\NpOn.CassandraExtCm\NpOn.CassandraExtCm.csproj" />
+      <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+      <ProjectReference Include="..\NpOn.MongoDbExtCm\NpOn.MongoDbExtCm.csproj" />
+      <ProjectReference Include="..\NpOn.MssqlExtCm\NpOn.MssqlExtCm.csproj" />
+      <ProjectReference Include="..\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
+      <ProjectReference Include="..\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
+    </ItemGroup>
+
+</Project>

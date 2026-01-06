@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Extensions.NpOn.CommonBaseDomain</RootNamespace>
+        <AssemblyName>NpOn.CommonBaseDomain</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Infrastructures\NpOn.PostgresExtCm\NpOn.PostgresExtCm.csproj" />
+      <ProjectReference Include="..\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="protobuf-net" Version="3.2.56" />
+    </ItemGroup>
+
+
+
+</Project>

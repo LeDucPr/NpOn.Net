@@ -1,0 +1,25 @@
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Common.Extensions.NpOn.HandleFlow.Attributes;
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Constructor,
+    AllowMultiple = true)]
+public sealed class TableLoaderAttribute(string tableName) : Attribute
+{
+    public string TableName { get; } = tableName;
+}
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Constructor,
+    AllowMultiple = true)]
+public sealed class TableLoaderAttribute<T> : TableAttribute where T : BaseCtrl
+{
+    public Type RelatedType => typeof(T);
+    public string? TableName { get; }
+
+    public TableLoaderAttribute(string tableName) : base(tableName)
+    {
+        if (string.IsNullOrWhiteSpace(tableName))
+            throw new ArgumentNullException(nameof(tableName));
+        TableName = tableName;
+    }
+}

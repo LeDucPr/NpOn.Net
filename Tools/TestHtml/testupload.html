@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <title>HCare Media Upload Test</title>
+    <link href="https://releases.transloadit.com/uppy/v3.3.1/uppy.min.css" rel="stylesheet">
+    <style>
+      body { font-family: sans-serif; padding: 20px; }
+      #result-area { margin-top: 20px; }
+      .file-link { display: block; margin-bottom: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+      .file-link a { color: #007bff; text-decoration: none; font-weight: bold; }
+      .file-link a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <h2>HCare Media Upload (TUS Protocol)</h2>
+    <div id="drag-drop-area"></div>
+    
+    <div id="result-area">
+      <h3>Uploaded Files:</h3>
+      <div id="links"></div>
+    </div>
+
+    <script type="module">
+      import { Uppy, Dashboard, Tus } from "https://releases.transloadit.com/uppy/v3.3.1/uppy.min.mjs"
+
+      // Cấu hình Server URL
+      const SERVER_URL = 'http://localhost:14024';
+      const UPLOAD_ENDPOINT = `${SERVER_URL}/api/Media/Upload`;
+      const TOKEN = 'Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJIQ2FyZS5OcE9uLlNlc2lvbi5Db2RlIjoiU0VTU0lPTklELUtoYUJhbmgtMDE5YjcwNTM0NTZlNzdkYjhlZjQxOTNiZmRiODEwNDAiLCJUb2tlbkNyZWF0ZWRVdGMiOiIyMDI1LTEyLTMxVDAxOjM0OjI0WiIsIlBlcm1pc3Npb25TZXNzaW9uIjoiMSIsIk1pbnV0ZUV4cGlyZSI6IjQ4MCIsInVuaXF1ZV9uYW1lIjoiS2hhQmFuaCIsIkxvZ2luVHlwZSI6IjEiLCJzaWQiOiJhMTNhNTVjOC0yMzBkLTRlMTktYjc5NS0xYTExM2QxOTY2MjYiLCJ0eXAiOiJEZWZhdWx0IiwibmJmIjoxNzY3MTE2MDY0LCJleHAiOjE3NjcxNDQ4NjQsImlhdCI6MTc2NzExNjA2NH0.xdCUegrlSq7SZHwzy0XvsrEYGhfURfmkDXVqN40zscmhRlHgvHwCzS0P3N85qq-N3KZcLmj8fWn439dH-AWrCQ';
+
+      const uppy = new Uppy()
+        .use(Dashboard, {
+          inline: true,
+          target: '#drag-drop-area',
+          width: '100%',
+          height: 400
+        })
+        .use(Tus, {
+          endpoint: UPLOAD_ENDPOINT,
+          headers: {
+            'Authorization': TOKEN
+          },
+          chunkSize: 5 * 1024 * 1024, // 5MB chunk
+          onAfterResponse: (req, res) => {
+             // Debug response headers nếu cần
+             // console.log('Headers:', res.getHeaders());
+          }
+        })
+
+      uppy.on('complete', (result) => {
+        console.log('Upload complete!', result);
+        
+        const linksDiv = document.getElementById('links');
+
+        result.successful.forEach(file => {
+          // Lấy URL từ Header trả về (được expose từ server)
+          // Lưu ý: Header key thường là chữ thường trong JS
+          let downloadPath = file.response.headers['x-media-download-url'];
+          
+          // Nếu server trả về path tương đối (ví dụ /api/Media/Download/...), ta ghép thêm domain
+          let fullUrl = downloadPath;
+          if (downloadPath && !downloadPath.startsWith('http')) {
+             fullUrl = `${SERVER_URL}${downloadPath}`;
+          }
+
+          // Fallback nếu không lấy được header (ví dụ do CORS chặn hoặc lỗi logic)
+          if (!fullUrl) {
+             fullUrl = `${SERVER_URL}/api/Media/Download/${file.name}`; 
+             console.warn('Could not get X-Media-Download-Url header, using fallback URL:', fullUrl);
+          }
+
+          // Hiển thị lên giao diện
+          const div = document.createElement('div');
+          div.className = 'file-link';
+          div.innerHTML = `
+            <span>✅ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span><br/>
+            <a href="${fullUrl}" target="_blank">⬇️ Download Link: ${fullUrl}</a>
+          `;
+          linksDiv.appendChild(div);
+        });
+      })
+      
+      uppy.on('error', (error) => {
+        console.error('Upload error:', error);
+        alert('Upload failed! Check console for details.');
+      })
+    </script>
+  </body>
+</html>

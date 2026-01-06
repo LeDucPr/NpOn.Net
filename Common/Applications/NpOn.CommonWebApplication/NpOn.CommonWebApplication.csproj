@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Common.Extensions.NpOn.CommonWebApplication</RootNamespace>
+        <OutputType>Library</OutputType>
+        <AssemblyName>NpOn.CommonWebApplication</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0"/>
+        <PackageReference Include="Serilog" Version="4.3.0"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
+        <PackageReference Include="protobuf-net" Version="3.2.56"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0"/>
+        <PackageReference Include="tusdotnet" Version="2.7.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Definitions\NpOn.GrpcAddService\NpOn.GrpcAddService.csproj" />
+        <ProjectReference Include="..\..\..\Definitions\NpOn.ProjectEnums\NpOn.ProjectEnums.csproj" />
+        <ProjectReference Include="..\..\..\MicroServices\Account\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj"/>
+        <ProjectReference Include="..\..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj"/>
+        <ProjectReference Include="..\..\..\Share\Definitions\NpOn.GrpcAddService\NpOn.GrpcAddService.csproj"/>
+        <ProjectReference Include="..\..\..\Share\Definitions\NpOn.ProjectEnums\NpOn.ProjectEnums.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj"/>
+        <ProjectReference Include="..\..\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj"/>
+        <ProjectReference Include="..\..\Infrastructures\NpOn.KafkaExtCm\NpOn.KafkaExtCm.csproj"/>
+        <ProjectReference Include="..\..\Infrastructures\NpOn.RabbitMqExtMs\NpOn.RabbitMqExtMs.csproj"/>
+    </ItemGroup>
+    
+</Project>
