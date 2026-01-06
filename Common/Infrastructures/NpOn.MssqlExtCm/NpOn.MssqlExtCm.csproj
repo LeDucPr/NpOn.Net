@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Common.Infrastructures.NpOn.MssqlExtCm</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+      <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.2" />
+      <PackageReference Include="SqlConnection" Version="1.0.4">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+    </ItemGroup>
+</Project>

@@ -1,9 +1,8 @@
 #version: '3.8'
 
 networks:
-  dc1:
-    driver: bridge
-  dc2:
+  scylla_net:
+    name: scylla_net # Ép tên mạng là scylla_net để các file compose khác dùng được
     driver: bridge
   cockroach-cluster:
     driver: bridge
@@ -13,12 +12,12 @@ networks:
     driver: bridge
 
 services:
-    # ScyllaDB Cluster
+  # ScyllaDB Cluster
   scylla1:
     image: scylladb/scylla
-    container_name: ScyllaDB1
+    container_name: scylla1
     networks:
-      - dc1
+      - scylla_net
     ports:
       - 9100:9100 # Node Exporter
       - 9180:9180 # Scylla Metrics
@@ -28,22 +27,21 @@ services:
       # - 10000:10000 # Spark Thrift Server (commented out, can be enabled if needed)
       # - 8080:8080 # Spark Master UI
     volumes:
-      - ScyllaDB1_data:/var/lib/scylla
+      - scylla1_data:/var/lib/scylla
     environment:
       # - SCYLLA_DOCKER_ARGS=--developer-mode=1 --smp 1
       - SCYLLA_LISTEN_ADDRESS=0.0.0.0
       - SCYLLA_RPC_ADDRESS=0.0.0.0
-      - SCYLLA_SEEDS=ScyllaDB1
+      - SCYLLA_SEEDS=scylla1
       - SCYLLA_DC=dc1
       - SCYLLA_RACK=rack1
-    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address ScyllaDB1 --broadcast-rpc-address ScyllaDB1 --seeds ScyllaDB1
-
+    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address scylla1 --broadcast-rpc-address scylla1 --seeds scylla1
 
   scylla2:
     image: scylladb/scylla
-    container_name: ScyllaDB2
+    container_name: scylla2
     networks:
-      - dc1
+      - scylla_net
     ports:
       - 9101:9100 # Node Exporter
       - 9181:9180 # Scylla Metrics
@@ -51,24 +49,23 @@ services:
       - 9161:9160 # Use this port for the thrift protocol 
       - 7200:7199 # Use this port for JMX
     volumes:
-      - ScyllaDB2_data:/var/lib/scylla
+      - scylla2_data:/var/lib/scylla
     depends_on:
       - scylla1
     environment:
       # - SCYLLA_DOCKER_ARGS=--developer-mode=1 --smp 1
       - SCYLLA_LISTEN_ADDRESS=0.0.0.0
       - SCYLLA_RPC_ADDRESS=0.0.0.0
-      - SCYLLA_SEEDS=ScyllaDB1
+      - SCYLLA_SEEDS=scylla1
       - SCYLLA_DC=dc1
       - SCYLLA_RACK=rack1
-    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address ScyllaDB2 --broadcast-rpc-address ScyllaDB2 --seeds ScyllaDB1
-
+    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address scylla2 --broadcast-rpc-address scylla2 --seeds scylla1
 
   scylla3:
     image: scylladb/scylla
-    container_name: ScyllaDB3
+    container_name: scylla3
     networks:
-      - dc2
+      - scylla_net
     ports:
       - 9102:9100 # Node Exporter
       - 9182:9180 # Scylla Metrics
@@ -76,19 +73,41 @@ services:
       - 9162:9160 # Use this port for the thrift protocol
       - 7201:7199 # Use this port for JMX
     volumes:
-      - ScyllaDB3_data:/var/lib/scylla
+      - scylla3_data:/var/lib/scylla
     depends_on:
       - scylla1
     environment:
       # - SCYLLA_DOCKER_ARGS=--developer-mode=1 --smp 1
       - SCYLLA_LISTEN_ADDRESS=0.0.0.0
       - SCYLLA_RPC_ADDRESS=0.0.0.0
-      - SCYLLA_SEEDS=ScyllaDB1
+      - SCYLLA_SEEDS=scylla1
       - SCYLLA_DC=dc2
       - SCYLLA_RACK=rack1
-    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address ScyllaDB3 --broadcast-rpc-address ScyllaDB3 --seeds ScyllaDB1
-    
+    command: --listen-address 0.0.0.0 --rpc-address 0.0.0.0 --broadcast-address scylla3 --broadcast-rpc-address scylla3 --seeds scylla1
+  
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    ports:
+      - "8888:8080"
+    environment:
+      - TRINO_HEAP=2G
+      - TRINO_EXTRA_CONFIG=catalog.management=dynamic
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        rm -rf /etc/trino/catalog/*
+        printf "catalog.management=dynamic\n" >> /etc/trino/config.properties
+        /usr/lib/trino/bin/run-trino
+    volumes:
+      # - ./trino_etc/catalog:/etc/trino/catalog
+      - trino_data:/data/trino
+    networks:
+      - scylla_net
+    restart: always
 
+  
   # # Spark Master and Workers (commented out for now, can be enabled if needed)
   # # Sử dụng Bitnami Spark image để dễ dàng cấu hình và tích hợp
   # spark-master:
@@ -284,38 +303,40 @@ services:
       - mongodb
     restart: always
 
-  # RabbitMQ Message Broker
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq_broker
-    environment:
-      RABBITMQ_DEFAULT_USER: rabbitmq
-      RABBITMQ_DEFAULT_PASS: password
-    ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    restart: always
+#  # RabbitMQ Message Broker
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    container_name: rabbitmq_broker
+#    environment:
+#      RABBITMQ_DEFAULT_USER: rabbitmq
+#      RABBITMQ_DEFAULT_PASS: password
+#    ports:
+#      - "5672:5672"   # AMQP port
+#      - "15672:15672" # Management UI
+#    volumes:
+#      - rabbitmq_data:/var/lib/rabbitmq
+#    restart: always
 
-  # Redis Cache
-  redis:
-    image: redis:latest
-    container_name: redis_cache
-    command: edis-server --requirepass redis --user default redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: always
+#  # Redis Cache
+#  redis:
+#    image: redis:latest
+#    container_name: redis_cache
+#    command: edis-server --requirepass redis --user default redis
+#    ports:
+#      - "6379:6379"
+#    volumes:
+#      - redis_data:/data
+#    restart: always
 
 
 
 
 volumes:
-  ScyllaDB1_data:
-  ScyllaDB2_data:
-  ScyllaDB3_data:
+  scylla1_data:
+  scylla2_data:
+  scylla3_data:
+
+  trino_data:
 
   CockroachDB1_data:
   CockroachDB2_data:
@@ -324,8 +345,9 @@ volumes:
   postgres_data:
   pgadmin_data:
   mongodb_data:
-  rabbitmq_data:
-  redis_data:
+
+#  rabbitmq_data:
+#  redis_data:
 
 
 

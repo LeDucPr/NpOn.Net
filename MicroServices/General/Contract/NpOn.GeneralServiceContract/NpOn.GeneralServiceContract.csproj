@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>MicroServices.General.Contract.GeneralServiceContract</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Npgsql" Version="8.0.3" />
+      <PackageReference Include="protobuf-net.Core" Version="3.2.56" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonBaseDomain\NpOn.CommonBaseDomain.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseRepository\NpOn.BaseRepository.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+    </ItemGroup>
+
+  
+</Project>

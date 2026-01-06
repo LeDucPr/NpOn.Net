@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Download HCare Media</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 15px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-size: 16px; transition: background 0.3s; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+        .section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        #status { margin-top: 10px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📥 Test Download File</h1>
+
+        <div class="section">
+            <label>File URL:</label>
+            <input type="text" id="fileUrl" value="http://localhost:14024/api/Media/Download/en_win_xp_pro_x64_with_sp2_vl_X13-41611_207e3d35-ad6a-4505-bad6-0a50620e8d40.iso">
+
+            <label>Token (Dùng cho Cách 2):</label>
+            <input type="text" id="token" value="eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJIQ2FyZS5OcE9uLlNlc2lvbi5Db2RlIjoiU0VTU0lPTklELUtoYUJhbmgtMDE5YjcwNTM0NTZlNzdkYjhlZjQxOTNiZmRiODEwNDAiLCJUb2tlbkNyZWF0ZWRVdGMiOiIyMDI1LTEyLTMxVDAxOjM0OjI0WiIsIlBlcm1pc3Npb25TZXNzaW9uIjoiMSIsIk1pbnV0ZUV4cGlyZSI6IjQ4MCIsInVuaXF1ZV9uYW1lIjoiS2hhQmFuaCIsIkxvZ2luVHlwZSI6IjEiLCJzaWQiOiJhMTNhNTVjOC0yMzBkLTRlMTktYjc5NS0xYTExM2QxOTY2MjYiLCJ0eXAiOiJEZWZhdWx0IiwibmJmIjoxNzY3MTE2MDY0LCJleHAiOjE3NjcxNDQ4NjQsImlhdCI6MTc2NzExNjA2NH0.xdCUegrlSq7SZHwzy0XvsrEYGhfURfmkDXVqN40zscmhRlHgvHwCzS0P3N85qq-N3KZcLmj8fWn439dH-AWrCQ">
+        </div>
+
+        <!-- CÁCH 1: DOWNLOAD TRỰC TIẾP -->
+        <div class="section">
+            <h3>Cách 1: Download Public (Direct Link)</h3>
+            <p>Dùng cách này nếu bạn đã set <code>IsMediaEnablePublicDownload = true</code> trong config.</p>
+            <button class="btn-primary" onclick="downloadPublic()">⬇️ Download Ngay</button>
+        </div>
+
+        <!-- CÁCH 2: DOWNLOAD CÓ TOKEN -->
+        <div class="section">
+            <h3>Cách 2: Download với Token (Secure)</h3>
+            <p>Dùng cách này nếu server yêu cầu Auth Header.</p>
+            <button class="btn-success" onclick="downloadWithToken()">🔐 Download với Token</button>
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Cách 1: Mở tab mới tải luôn
+        function downloadPublic() {
+            const url = document.getElementById('fileUrl').value;
+            window.open(url, '_blank');
+        }
+
+        // Cách 2: Fetch với Header Authorization -> Blob -> Download
+        async function downloadWithToken() {
+            const url = document.getElementById('fileUrl').value;
+            const token = document.getElementById('token').value;
+            const statusDiv = document.getElementById('status');
+
+            statusDiv.innerText = "⏳ Đang tải xuống (Vui lòng chờ)...";
+            statusDiv.style.color = "blue";
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP! Status: ${response.status}`);
+                }
+
+                // Chuyển response thành Blob (File)
+                const blob = await response.blob();
+                
+                // Tạo URL ảo cho Blob
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                
+                // Lấy tên file từ URL
+                const filename = url.split('/').pop();
+                a.download = filename;
+                
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                
+                // Dọn dẹp bộ nhớ
+                window.URL.revokeObjectURL(downloadUrl);
+                statusDiv.innerText = "✅ Đã bắt đầu tải xuống!";
+                statusDiv.style.color = "green";
+            } catch (error) {
+                console.error('Download failed:', error);
+                statusDiv.innerText = "❌ Lỗi: " + error.message;
+                statusDiv.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>

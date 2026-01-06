@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>MicroServices.Account.StorageAdapter.NpOn.AccountStorageAdapter</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.CommonMode\NpOn.CommonMode.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Extensions\NpOn.HandleFlow\NpOn.HandleFlow.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.BaseRepository\NpOn.BaseRepository.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.CommonDb\NpOn.CommonDb.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.DbFactory\NpOn.DbFactory.csproj" />
+      <ProjectReference Include="..\..\..\..\Common\Infrastructures\NpOn.RedisExtCm\NpOn.RedisExtCm.csproj" />
+      <ProjectReference Include="..\..\..\..\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj" />
+      <ProjectReference Include="..\..\..\..\Share\Definitions\NpOn.ProjectConstant\NpOn.ProjectConstant.csproj" />
+      <ProjectReference Include="..\..\..\General\Contract\NpOn.GeneralServiceContract\NpOn.GeneralServiceContract.csproj" />
+      <ProjectReference Include="..\..\..\General\Service\NpOn.IGeneralService\NpOn.IGeneralService.csproj" />
+      <ProjectReference Include="..\..\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj" />
+      <ProjectReference Include="..\NpOn.IAccountStorageAdapter\NpOn.IAccountStorageAdapter.csproj" />
+    </ItemGroup>
+
+    
+
+
+
+</Project>

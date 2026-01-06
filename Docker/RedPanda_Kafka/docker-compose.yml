@@ -1,0 +1,165 @@
+version: '3.8'
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    networks:
+      - monitoring
+    ports:
+      - "9092:9092"   # Kafka API
+      - "19092:19092" # External Kafka API (Cho C# Client)
+      - "9644:9644"   # Admin API / metrics (Prometheus metrics)
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - "1G"
+      - --reserve-memory
+      - "0M"
+      - --node-id
+      - "0"
+      - --check=false
+      - --set
+      - redpanda.enable_sasl=true
+      - --set
+      - redpanda.superusers=["npon_admin"]
+      - --kafka-addr
+      - "PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092"
+      - --advertise-kafka-addr
+      - "PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: curl -s http://localhost:9644/metrics || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Service này dùng để tạo user cho Redpanda sau khi nó khởi động
+  redpanda-init:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    networks:
+      - monitoring
+    entrypoint: /bin/sh
+    command: -c 'while ! rpk cluster health --api-urls redpanda:9644; do sleep 1; done; rpk acl user create npon_admin -p npon_admin_pass --api-urls redpanda:9644 --mechanism SCRAM-SHA-256 || true'
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    networks:
+      - monitoring
+    ports:
+      - "9090:9090"
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /etc/prometheus
+        cat > /etc/prometheus/prometheus.yml <<'EOF'
+        global:
+          scrape_interval: 15s
+          evaluation_interval: 15s
+        
+        scrape_configs:
+          - job_name: 'redpanda'
+            static_configs:
+              - targets: ['redpanda:9644'] 
+        
+        # Tạo file cấu hình bảo mật web (Basic Auth)
+        # Hash bên dưới là của mật khẩu: npon_prom_pass
+        cat > /etc/prometheus/web-config.yml <<'EOF'
+        basic_auth_users:
+          npon_prom: $2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUX
+        EOF
+        
+        /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.config.file=/etc/prometheus/web-config.yml
+    volumes:
+      - prometheus_data:/prometheus
+    depends_on:
+      - redpanda
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks:
+      - monitoring
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=npon_grafana
+      - GF_SECURITY_ADMIN_PASSWORD=npon_grafana_pass
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    user: root
+    entrypoint:
+      - bash
+      - -c
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        mkdir -p /etc/grafana/provisioning/dashboards
+        
+        cat > /etc/grafana/provisioning/datasources/prometheus.yml <<EOF
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            access: proxy
+            url: http://prometheus:9090
+            isDefault: true
+            editable: true
+        EOF
+        
+        /run.sh
+
+  redpanda-console:
+    container_name: redpanda-console
+    image: docker.redpanda.com/redpandadata/console:latest
+    networks:
+      - monitoring
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+          sasl:
+            enabled: true
+            username: npon_admin
+            password: npon_admin_pass
+            mechanism: SCRAM-SHA-256
+#        login:  #đm bản trả phí
+#          enabled: true
+#          basic_auth:
+#            enabled: true
+#            username: npon_console
+#            password: npon_console_pass
+#          jwtSecret: "npon_secret_key_change_me_please"  
+    ports:
+      - "8001:8080" # Truy cập Console qua port 8001
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      redpanda-init:
+        condition: service_completed_successfully
+
+volumes:
+  redpanda_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  monitoring:
+    driver: bridge

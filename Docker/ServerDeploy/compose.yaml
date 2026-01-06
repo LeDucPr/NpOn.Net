@@ -1,0 +1,192 @@
+﻿
+services:
+
+  #####region SSO Controller
+  sso:
+    container_name: sso
+    build:
+      context: .
+      dockerfile: Share/ShareControllers/HCare.SSO/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:14023
+      - AccountServiceUrl=http://accountservice:40004
+      - GeneralServiceUrl=http://generalservice:40000
+    ports:
+      - "2515:14023"
+    networks:
+      - facare-net
+    depends_on:
+      - accountservice
+      - generalservice
+    volumes:
+      - ./keys/sso:/home/app/.aspnet/DataProtection-Keys
+  #####endregion SSO Controller
+
+
+
+  #####region CMS Controller
+  cms:
+    container_name: cms
+    build:
+      context: .
+      dockerfile: Share/ShareControllers/HCare.CMS/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:14024
+      - AccountServiceUrl=http://accountservice:40004
+      - MedicalServiceUrl=http://medicalservice:40005
+      - MultilingualismServiceUrl=http://multilingualismservice:40003
+      - CrmServiceUrl=http://crmservice:40001
+      - Cors:http://localhost:4400,http://localhost:4401
+      
+      - MediaTempStoragePath=/app/App_Data/Tus_Temp
+      - MediaPublicStoragePath=/app/App_Data/Public_Media
+      - MediaUploadEndpoint=/api/Media/Upload
+      - MediaDownloadUrlPrefix=/api/Media/Download
+      - MediaDeleteTempOnSuccess=true
+      - IsMediaEnablePublicDownload=true
+      - MediaAllowedExtensions=.jpg,.jpeg,.png,.mp4,.pdf,.doc,.docx,.xls,.xlsx
+      - MediaMaxFileSize=104857600
+      - IsMediaDeleteEnabled=true
+      - MediaCdnUrl=http://cms-api-dev.fa.care/api/Media/Download
+    ports:
+      - "2516:14024"
+    networks:
+      - facare-net
+    depends_on:
+      - accountservice
+      - medicalservice
+      - crmservice
+    volumes:
+      - ./keys/sso:/home/app/.aspnet/DataProtection-Keys
+      # Map trực tiếp ổ D của Windows vào trong Container
+      - D:/HCare_Data/Public_Media:/app/App_Data/Public_Media
+      - D:/HCare_Data/Tus_Temp:/app/App_Data/Tus_Temp
+  #####endregion CMS Controller
+  
+  
+
+  #####region Account Service
+  accountservice:
+    container_name: accountservice
+    build:
+      context: .
+      dockerfile: Share/ShareMicroServices/Account/Service/HCare.AccountService/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:40004
+      - GeneralServiceUrl=http://generalservice:40000
+      - ConnectionString=Server=10.17.225.30;Port=5432;Database=dbfacare_account;User Id=anbit_dev;Password=minhandz;
+      - RedisConnectString=172.20.32.1:6379,user=default,password=redis
+      - RabbitMqConnection=amqp://rabbitmq:password@172.20.32.1:5672/
+      - RabbitMqExchangeName=NpOn.AccountService
+    ports:
+      - "40004:40004"
+    networks:
+      - facare-net
+    depends_on:
+      - generalservice
+    volumes:
+      - ./keys/accountservice:/home/app/.aspnet/DataProtection-Keys
+  #####endregion Account Service
+
+
+  #####region Medical Service
+  medicalservice:
+    container_name: medicalservice
+    build:
+      context: .
+      dockerfile: MicroServices/Medical/Service/HCare.MedicalService/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:40005
+      - GeneralServiceUrl=http://generalservice:40000
+      - AccountServiceUrl=http://accountservice:40004
+      - ConnectionString=Server=10.17.225.30;Port=5432;Database=dbfacare_dev_2;User Id=anbit_dev;Password=minhandz;
+      - RedisConnectString=172.20.32.1:6379,user=default,password=redis
+      - RabbitMqConnection=amqp://rabbitmq:password@172.20.32.1:5672/
+      - RabbitMqExchangeName=NpOn.MedicalService
+    ports:
+      - "40005:40005"
+    networks:
+      - facare-net
+    depends_on:
+      - generalservice
+      - accountservice
+    volumes:
+      - ./keys/medicalservice:/home/app/.aspnet/DataProtection-Keys
+  #####endregion Medical Service
+
+
+  #####region Multilingualism Service
+  multilingualismservice:
+    container_name: multilingualismservice
+    build:
+      context: .
+      dockerfile: MicroServices/Multilingualism/Service/HCare.MultilingualismService/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:40003
+      - GeneralServiceUrl=http://generalservice:40000
+      - AccountServiceUrl=http://accountservice:40004
+      - ConnectionString=Server=10.17.225.30;Port=5432;Database=dbfacare_multilingualism;User Id=anbit_dev;Password=minhandz;
+      - RedisConnectString=172.20.32.1:6379,user=default,password=redis
+      - RabbitMqConnection=amqp://rabbitmq:password@172.20.32.1:5672/
+      - RabbitMqExchangeName=NpOn.MultilingualismService
+    ports:
+      - "40003:40003"
+    networks:
+      - facare-net
+    depends_on:
+      - generalservice
+      - accountservice
+    volumes:
+      - ./keys/multilingualismservice:/home/app/.aspnet/DataProtection-Keys
+  #####endregion Multilingualism Service
+
+
+  #####region Crm Service
+  crmservice:
+    container_name: crmservice
+    build:
+      context: .
+      dockerfile: MicroServices/Crm/Service/HCare.CrmService/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:40001
+      - GeneralServiceUrl=http://generalservice:40000
+      - AccountServiceUrl=http://accountservice:40004
+      - ConnectionString=Server=124.158.8.9;Port=5432;Database=dbfacare_product;User Id=anbit_dev;Password=minhandz;
+      - RedisConnectString=172.27.80.1:6379,user=default,password=redis
+      - RabbitMqConnection=amqp://rabbitmq:password@172.27.80.1:5672/
+      - RabbitMqExchangeName=NpOn.CrmService
+    ports:
+      - "40001:40001"
+    networks:
+      - facare-net
+    depends_on:
+      - generalservice
+      - accountservice
+    volumes:
+      - ./keys/crmservice:/home/app/.aspnet/DataProtection-Keys
+  #####endregion Crm Service
+
+
+  #####region General Service
+  generalservice:
+    container_name: generalservice
+    build:
+      context: .
+      dockerfile: Share/ShareMicroServices/General/Service/HCare.GeneralService/Dockerfile
+    ports:
+      - "40000:40000"
+    environment:
+      - ASPNETCORE_URLS=http://+:40000
+      - AccountServiceUrl=http://accountservice:40004
+      - ConnectionString=Server=10.17.225.30;Port=5432;Database=dbfacare_general;User Id=anbit_dev;Password=minhandz;
+      - RabbitMqConnection=amqp://rabbitmq:password@172.20.32.1:5672/
+      - RabbitMqExchangeName=NpOn.MedicalService
+    networks:
+      - facare-net
+    volumes:
+      - ./keys/generalservice:/home/app/.aspnet/DataProtection-Keys
+
+
+networks:
+  facare-net:
+    driver: bridge
