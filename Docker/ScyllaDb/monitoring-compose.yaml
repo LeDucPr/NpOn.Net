@@ -1,0 +1,93 @@
+name: scylla-monitoring-stack
+services:
+
+  alertmanager:
+    container_name: alertmanager-container
+    image: prom/alertmanager:v0.27.0
+    ports:
+    - 9093:9093
+    volumes:
+    - ./monitoring/prometheus/rule_config.yml:/etc/alertmanager/config.yml
+
+  grafana:
+    container_name: grafana-container
+    environment:
+    - GF_PANELS_DISABLE_SANITIZE_HTML=true
+    - GF_PATHS_PROVISIONING=/var/lib/grafana/provisioning
+    - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scylladb-scylla-datasource
+    # This is where you set Grafana security
+    - GF_AUTH_BASIC_ENABLED=false
+    - GF_AUTH_ANONYMOUS_ENABLED=true
+    - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    - GF_SECURITY_ADMIN_PASSWORD=admin
+    # To set your home dashboard uncomment the following line, set VERSION to be your current version
+    #- GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/ver_VERSION/scylla-overview.VERSION.json
+    image: grafana/grafana:10.3.5
+    ports:
+    - 3000:3000
+    volumes:
+    - ./monitoring/grafana/build:/var/lib/grafana/dashboards
+    - ./monitoring/grafana/plugins:/var/lib/grafana/plugins
+    - ./monitoring/grafana/provisioning:/var/lib/grafana/provisioning
+    # Uncomment the following line for grafana persistency
+    # - ./local/grafana:/var/lib/grafana
+    # or use volume
+    - grafana-vol:/var/lib/grafana
+
+  loki:
+    container_name: loki-container
+    command:
+    - --config.file=/mnt/config/loki-config.yaml
+    image: grafana/loki:2.9.5
+    privileged: true
+    user: root
+    ports:
+    - 3100:3100
+    volumes:
+    - ./monitoring/loki/rules:/etc/loki/rules
+    - ./monitoring/loki/conf:/mnt/config
+    # Uncomment the following line for grafana persistency
+    # - ./local/loki/wal:/wal
+    # using volume for persistency
+    - loki-wal:/wal
+
+  promotheus:
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+    container_name: prometheus-container
+    image: prom/prometheus:v2.51.0
+    ports:
+    - 9090:9090
+    volumes:
+    - ./monitoring/prometheus/build/prometheus.yml:/etc/prometheus/prometheus.yml
+    - ./monitoring/prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/scylla_servers.yml
+    - ./monitoring/prometheus/prom_rules/:/etc/prometheus/prom_rules/
+    - ./monitoring/prometheus/scylla_manager_servers.yml:/etc/scylla.d/prometheus/targets/scylla_manager_servers.yml
+    - ./monitoring/prometheus/scylla_servers.yml:/etc/scylla.d/prometheus/targets/node_exporter_servers.yml
+    # Uncomment the following line for prometheus persistency 
+    # - ./local/prometheus:/prometheus/data
+    # or use a volume
+    - prometheus-vol:/prometheus
+
+  promtail:
+    container_name: promtail-container
+    command:
+    - --config.file=/etc/promtail/config.yml
+    image: grafana/promtail:2.9.5
+    ports:
+    - 1514:1514
+    - 9080:9080
+    volumes:
+    - ./monitoring/loki/promtail/promtail_config.compose.yml:/etc/promtail/config.yml
+networks:
+  default:
+    name: scylla-cluster_vnet
+    external: true # join to the scylla-cluster_vnet network
+
+volumes:
+  grafana-vol:
+    driver: local
+  prometheus-vol:
+    driver: local
+  loki-wal:
+    driver: local

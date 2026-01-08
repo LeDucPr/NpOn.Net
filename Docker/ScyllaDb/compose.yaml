@@ -1,0 +1,78 @@
+name: scylla-cluster
+services:
+  scylla-node1:
+    container_name: scylla-node1
+    hostname: scylla-node1
+    image: scylladb/scylla:latest
+    restart: unless-stopped
+    volumes:
+      - scylla1_data:/var/lib/scylla
+      - ./config/node1/scylla.yaml:/etc/scylla/scylla.yaml
+      - ./config/node1/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 7000:7000   # Gossip
+      - 7001:7001   # Gossip SSL
+      - 9042:9042   # CQL
+      - 9180:9180   # Metrics
+      - 9100:9100   # Node exporter
+      - 9160:9160   # Thrift
+      - 7199:7199   # JMX
+    networks:
+      vnet:
+
+  scylla-node2:
+    container_name: scylla-node2
+    hostname: scylla-node2
+    image: scylladb/scylla:latest
+    restart: unless-stopped
+    volumes:
+      - scylla2_data:/var/lib/scylla
+      - ./config/node2/scylla.yaml:/etc/scylla/scylla.yaml
+      - ./config/node2/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 7002:7000   # Gossip
+      - 7003:7001   # Gossip SSL
+      - 9043:9042
+      - 9181:9180
+      - 9101:9100
+      - 9161:9160
+      - 7200:7199
+    depends_on:
+      - scylla-node1
+    networks:
+      vnet:
+
+  scylla-node3:
+    container_name: scylla-node3
+    hostname: scylla-node3
+    image: scylladb/scylla:latest
+    restart: unless-stopped
+    volumes:
+      - scylla3_data:/var/lib/scylla
+      - ./config/node3/scylla.yaml:/etc/scylla/scylla.yaml
+      - ./config/node3/cassandra-rackdc.properties:/etc/scylla/cassandra-rackdc.properties
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 7004:7000   # Gossip
+      - 7005:7001   # Gossip SSL
+      - 9044:9042
+      - 9182:9180
+      - 9102:9100
+      - 9162:9160
+      - 7201:7199
+    depends_on:
+      - scylla-node1
+      - scylla-node2
+    networks:
+      vnet:
+
+networks:
+  vnet:
+    driver: bridge
+
+volumes:
+  scylla1_data:
+  scylla2_data:
+  scylla3_data:
