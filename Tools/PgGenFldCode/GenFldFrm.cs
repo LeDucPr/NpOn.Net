@@ -49,7 +49,7 @@ public partial class GenFldFrm : Form
         //         JOIN ques_srv_answer answer ON question.id = answer.ques_srv_question_id
         //         WHERE survey.id = @survey_id
         //     ";
-        // Analize(sql, "Server=124.158.8.9;Port=5432;Database=dbfacare_dev_2;User Id=anbit_dev;Password=minhandz");
+        // Analize(sql, "Server=124.158.8.9;Port=5432;Database=postgres;User Id=postgres;Password=password");
     }
 
     private void LoadComboBoxItems()

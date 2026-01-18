@@ -25,8 +25,6 @@
         <ProjectReference Include="..\..\..\Definitions\NpOn.ProjectEnums\NpOn.ProjectEnums.csproj" />
         <ProjectReference Include="..\..\..\MicroServices\Account\Contract\NpOn.AccountServiceContract\NpOn.AccountServiceContract.csproj"/>
         <ProjectReference Include="..\..\..\MicroServices\Account\Service\NpOn.IAccountService\NpOn.IAccountService.csproj"/>
-        <ProjectReference Include="..\..\..\Share\Definitions\NpOn.GrpcAddService\NpOn.GrpcAddService.csproj"/>
-        <ProjectReference Include="..\..\..\Share\Definitions\NpOn.ProjectEnums\NpOn.ProjectEnums.csproj"/>
         <ProjectReference Include="..\..\Extensions\NpOn.CommonEnums\NpOn.CommonEnums.csproj"/>
         <ProjectReference Include="..\..\Extensions\NpOn.CommonGrpcContract\NpOn.CommonGrpcContract.csproj"/>
         <ProjectReference Include="..\..\Extensions\NpOn.CommonInternalCache\NpOn.CommonInternalCache.csproj"/>
